@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+
+/* :root {
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -23,4 +24,73 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+} */
+
+/* application color */
+.capsColor {
+  background-color: #4fa2c2;
+  color: white;
+}
+
+/* caps text  */
+.capsText {
+  color: #226b88;
+}
+
+/* caps button */
+.capsButton {
+  background-color: #4fa2c2;
+  color: white;
+  padding: 4px 2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.capsButton:hover {
+  background-color: #226b88;
+  transition: background-color 0.3s ease;
+}
+
+/* caps input field */
+.capsInput {
+  border: 1px solid #226b88;
+  border-radius: 0.5rem;
+  padding: 5px 10px;
+}
+
+
+.capsInput:focus {
+  outline: 1px solid #226b88;
+}
+
+.capsInputError {
+  border: 1px solid #226b88;
+  border-radius: 0.5rem;
+  padding: 5px 10px;
+}
+
+.capsInputError:focus {
+  outline: 1px solid #FF0000;
+}
+
+/* caps select */
+.capsSelect {
+  border: 1px solid #226b88;
+  border-radius: 0.5rem;
+  padding: 5px 10px;
+  cursor: pointer;
+
+}
+
+.capsSelect:focus {
+  outline: 1px solid #226b88;
+}
+
+/* scrollbar styling */
+.chcolor1 {
+  background-color: #226b88;
+}
+
+.chcolor2 {
+  background-color: #def6ff;
 }
