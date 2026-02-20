@@ -557,10 +557,12 @@ export const menuItems = [
                 label: "Transaction Reports ",
                 children: [
                     {
-                        label: "Channel"
+                        label: "Channel",
+                         url:  "/dashboard/reports/transaction-reports/channel"
                     },
                     {
-                        label: "AES API"
+                        label: "AES API",
+                         url:  "/dashboard/reports/transaction-reports/aes-api"
                     },
                 ]
             },
@@ -568,10 +570,12 @@ export const menuItems = [
                 label: "Management Reports ",
                 children: [
                     {
-                        label: "Channel"
+                        label: "Channel",
+                         url:  "/dashboard/reports/management-reports/channel"
                     },
                     {
-                        label: "AES API"
+                        label: "AES API",
+                         url:  "/dashboard/reports/management-reports/aes-api"
                     },
                 ]
             },
@@ -579,10 +583,12 @@ export const menuItems = [
                 label: "Finance Reports ",
                 children: [
                     {
-                        label: "Channel"
+                        label: "Channel",
+                          url:  "/dashboard/reports/finance-reports/channel"
                     },
                     {
-                        label: "AES API"
+                        label: "AES API",
+                         url:  "/dashboard/reports/finance-reports/aes-api"
                     },
                 ]
             },
@@ -729,27 +735,32 @@ export const menuItems = [
         children: [
             {
                 label: "Retail User- View",
+                url: "/dashboard/customer-care-module/retail-user-view"
 
             },
             {
                 label: "PG TB",
                 children: [
                     {
-                        label: "PG User Limit -View"
+                        label: "PG User Limit -View",
+                         url: "/dashboard/customer-care-module/pg-tb/pg-user-limit-view"
                     }
                 ]
 
             },
             {
                 label: "Statements",
+                url: "/dashboard/customer-care-module/statements"
 
             },
             {
                 label: "Aeps Reports",
+                url: "/dashboard/customer-care-module/aeps-reports"
 
             },
             {
                 label: "View Complaints",
+                url: "/dashboard/customer-care-module/view-complaints"
 
             },
 
@@ -761,30 +772,41 @@ export const menuItems = [
         children: [
             {
                 label: "Notice-Alert",
-
+ url: "/dashboard/marketing-module/notice-alert"
             },
             {
                 label: "Slider Upload",
-
+ url: "/dashboard/marketing-module/slider-upload"
             },
             {
                 label: "App Slider Upload",
+                  url: "/dashboard/marketing-module/app-slider-upload"
 
             },
             {
                 label: "SPD Upload",
+                 url: "/dashboard/marketing-module/spd-upload"
+                
 
             },
             {
                 label: "Popup Upload",
+                 url: "/dashboard/marketing-module/popup-upload"
 
             },
             {
                 label: "Mobile Notice-Alert",
+                 url:  "/dashboard/marketing-module/mobile-notice-alert"
 
             },
             {
                 label: "App Offer Alert",
+                 url:  "/dashboard/marketing-module/app-offer-alert"
+
+            },
+              {
+                label: "Agent Categoury",
+                 url:  "/dashboard/marketing-module/agent-categorization"
 
             },
 
