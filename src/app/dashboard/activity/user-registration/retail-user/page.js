@@ -23,6 +23,7 @@ function retailUser() {
             ...prevState,
             [name]: value
         }))
+        
     }
 
     const handleSubmit = () => {

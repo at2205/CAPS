@@ -8,10 +8,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "file-saver": "^2.0.5",
     "next": "^16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-loader-spinner": "^8.0.2"
+    "react-loader-spinner": "^8.0.2",
+    "sweetalert2": "^11.26.18",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "^0.4.2",
