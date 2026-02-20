@@ -60,7 +60,7 @@ function retailUser() {
             setLoading(false);
         }, 5000)
     }
-
+    
     return (
         <div className="p-1 text-[#226b88]">
             <CapsCard

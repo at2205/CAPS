@@ -25,25 +25,32 @@ export const menuItems = [
                 label: "Admin Task",
                 children: [
                     {
-                        label: "Online Sign Agreement PDF"
+                        label: "Online Sign Agreement PDF",
+                        url: "/dashboard/activity/admin-task/online-sign-agreement-pdf"
                     },
                     {
-                        label: "Online Sign Agreement Report"
+                        label: "Online Sign Agreement Report",
+                        url: "/dashboard/activity/admin-task/online-sign-agreement-report"
                     },
                     {
-                        label: "Activity Assignment"
+                        label: "Activity Assignment",
+                        url: "/dashboard/activity/admin-task/activity-assignment"
                     },
                     {
-                        label: "Category Assignment"
+                        label: "Category Assignment",
+                        url: "/dashboard/activity/admin-task/category-assignment"
                     },
                     {
-                        label: "Scheduler Run"
+                        label: "Scheduler Run",
+                        url: "/dashboard/activity/admin-task/schedular-run"
                     },
                     {
-                        label: "DB Tasks"
+                        label: "DB Tasks",
+                        url: "/dashboard/activity/admin-task/db-tasks"
                     },
                     {
-                        label: "Closing Balance"
+                        label: "Closing Balance",
+                        url: "/dashboard/activity/admin-task/closing-balance"
                     },
                 ]
             },
@@ -51,25 +58,32 @@ export const menuItems = [
                 label: "Trade Balance Activity",
                 children: [
                     {
-                        label: "Super Admin"
+                        label: "Super Admin",
+                        url: "/dashboard/activity/trade-balance-activity/super-admin"
                     },
                     {
-                        label: "Finance Admin"
+                        label: "Finance Admin",
+                        url: "/dashboard/activity/trade-balance-activity/finance-admin"
                     },
                     {
-                        label: "Client Activity"
+                        label: "Client Activity",
+                        url: "/dashboard/activity/trade-balance-activity/client-activity"
                     },
                     {
-                        label: "Bank Excel Upload "
+                        label: "Bank Excel Upload ",
+                        url: "/dashboard/activity/trade-balance-activity/bank-excel-upload"
                     },
                     {
-                        label: "Autherized Client Activity"
+                        label: "Autherized Client Activity",
+                        url: "/dashboard/activity/trade-balance-activity/autherized-client-activity"
                     },
                     {
-                        label: "Schedule Auto Debit"
+                        label: "Schedule Auto Debit",
+                        url: "/dashboard/activity/trade-balance-activity/schedule-auto-debit"
                     },
                     {
-                        label: "Auto CDM Transaction"
+                        label: "Auto CDM Transaction",
+                        url: "/dashboard/activity/trade-balance-activity/auto-cdm-transaction"
                     },
                 ]
             },
@@ -77,11 +91,14 @@ export const menuItems = [
                 label: "KYC Management",
                 children: [
                     {
-                        label: "KYC Request"
+                        label: "KYC Request",
+                        url: "/dashboard/activity/kyc-management/kyc-request"
                     }, {
-                        label: "KYC Verification"
+                        label: "KYC Verification",
+                        url: "/dashboard/activity/kyc-management/kyc-verification"
                     }, {
-                        label: "View KYC Documents"
+                        label: "View KYC Documents",
+                        url: "/dashboard/activity/kyc-management/view-kyc-documents"
                     },
                 ]
             },
@@ -89,19 +106,23 @@ export const menuItems = [
                 label: "PG TB",
                 children: [
                     {
-                        label: "PG Status Change"
+                        label: "PG Status Change",
+                        url: "/dashboard/activity/pg-tb/pg-status-change"
                     },
                     {
-                        label: "PG TBRequest Activity"
+                        label: "PG TBRequest Activity",
+                        url: "/dashboard/activity/pg-tb/pg-tbrequest-activity"
                     },
                     {
                         label: "PG User Action",
                         children: [
                             {
-                                label: "PG User Limit"
+                                label: "PG User Limit",
+                                url: "/dashboard/activity/pg-tb/pg-user-limit"
                             },
                             {
-                                label: "PG User Auth"
+                                label: "PG User Auth",
+                                url: "/dashboard/activity/pg-tb/pg-user-auth"
                             },
                         ]
                     },
@@ -132,68 +153,82 @@ export const menuItems = [
                 label: "Move Entity",
                 children: [
                     {
-                        label: "RO Mapping"
+                        label: "RO Mapping",
+                        url: "/dashboard/activity/move-entity/ro-mapping"
                     },
                     {
-                        label: "DS Mapping"
+                        label: "DS Mapping",
+                        url: "/dashboard/activity/move-entity/ds-mapping"
                     },
                 ]
             },
             {
                 label: "Pricing Plan",
-                // children: [
-                //     { label: "SubSub B-1-1" },
-                // ]
+                url: "/dashboard/activity/pricing-plan"
+                
             },
             {
                 label: "Assign Plan",
+                url: "/dashboard/activity/assign-plan"
 
             },
             {
                 label: "Active/Deactive Service",
+                url: "/dashboard/activity/active-deactive-service"
 
             },
             {
                 label: "QR Code",
                 children: [
-                    { label: "Maker" },
-                    { label: "Approver" },
-                    { label: "View List" },
+                    { label: "Maker", 
+                        url: "/dashboard/activity/qr-code/marker" },
+                    { label: "Approver", 
+                        url: "/dashboard/activity/qr-code/approver" },
+                    { label: "View List", 
+                        url: "/dashboard/activity/qr-code/view-list" },
                 ]
             },
             {
                 label: "Billing",
                 children: [
                     {
-                        label: "Billing Request"
+                        label: "Billing Request",
+                        url: "/dashboard/activity/billing/billing-request"
                     },
                     {
-                        label: "Billing Summary"
+                        label: "Billing Summary",
+                        url: "/dashboard/activity/billing/billing-summary"
                     },
 
                 ]
             },
             {
                 label: "Agent Blacklisting",
+                url: "/dashboard/activity/agent-blacklisting"
 
             },
             {
                 label: "MATM Management",
+
                 children: [
                     {
-                        label: "MATM Activation Request"
+                        label: "MATM Activation Request",
+                        url: "/dashboard/activity/matm-management/matm-activation-request"
                     },
                     {
-                        label: "View MATM Documents"
+                        label: "View MATM Documents",
+                        url: "/dashboard/activity/matm-management/view-matm-document"
                     },
 
                 ]
             },
             {
                 label: "User Tracking Details",
+                url: "/dashboard/activity/user-tracking-details"
             },
             {
                 label: "Unblock User OTP",
+                url: "/dashboard/activity/unblock-user-otp"
             },
         ]
     },
@@ -205,22 +240,29 @@ export const menuItems = [
                 label: "Profile Management",
                 children: [
                     {
-                        label: "Self Profile"
+                        label: "Self Profile",
+                        url: "/dashboard/control-panel/profile-management/self-profile"
+
                     },
                     {
-                        label: "Wallet Load Mapping"
+                        label: "Wallet Load Mapping",
+                        url: "/dashboard/control-panel/profile-management/wallet-load-mapping"
                     },
                     {
-                        label: "API Agent Mapping"
+                        label: "API Agent Mapping",
+                        url: "/dashboard/control-panel/profile-management/api-agent-mapping"
                     },
                     {
-                        label: "Internal User"
+                        label: "Internal User",
+                        url: "/dashboard/control-panel/profile-management/internal-user"
                     },
                     {
-                        label: "Corporate User"
+                        label: "Corporate User",
+                        url: "/dashboard/control-panel/profile-management/corporate-user"
                     },
                     {
-                        label: "Retail User"
+                        label: "Retail User",
+                        url: "/dashboard/control-panel/profile-management/retail-user"
                     },
 
 
@@ -230,10 +272,13 @@ export const menuItems = [
                 label: "Cut-Off Management",
                 children: [
                     {
-                        label: "Set Cut-Off Management"
+                        label: "Set Cut-Off Management",
+                        url: "/dashboard/control-panel/cut-off-management/set-cut-off-management"
+
                     },
                     {
-                        label: "View Cut-Off Management"
+                        label: "View Cut-Off Management",
+                        url: "/dashboard/control-panel/cut-off-management/view-cut-off-management"
                     },
                 ]
             },
@@ -242,13 +287,16 @@ export const menuItems = [
                 label: "Inventory Management",
                 children: [
                     {
-                        label: "Car Booking"
+                        label: "Car Booking",
+                        url: "/dashboard/control-panel/inventory-management/car-booking"
                     },
                     {
-                        label: "Holidays Packages"
+                        label: "Holidays Packages",
+                        url: "/dashboard/control-panel/inventory-management/holidays-packages"
                     },
                     {
-                        label: "Holidays Controller"
+                        label: "Holidays Controller",
+                        url: "/dashboard/control-panel/inventory-management/holidays-controllers"
                     },
                 ]
             },
@@ -256,46 +304,60 @@ export const menuItems = [
                 label: "Vendor Management",
                 children: [
                     {
-                        label: "Channel"
+                        label: "Channel",
+                        url: "/dashboard/control-panel/vendor-management/channel"
                     },
                     {
-                        label: "Fino Pull Money"
+                        label: "Fino Pull Money",
+                        url: "/dashboard/control-panel/vendor-management/fino-pull-money"
                     },
                     {
-                        label: "Vendor Master Details"
+                        label: "Vendor Master Details",
+                        url: "/dashboard/control-panel/vendor-management/vendor-master-details"
                     },
                     {
-                        label: "Vendor Transaction Report"
+                        label: "Vendor Transaction Report",
+                        url: "/dashboard/control-panel/vendor-management/vendor-transaction-report"
                     },
                     {
-                        label: "Retail Pricing"
+                        label: "Retail Pricing",
+                        url: "/dashboard/control-panel/vendor-management/retail-pricing"
                     },
                     {
-                        label: "API Pricing"
+                        label: "API Pricing",
+                        url: "/dashboard/control-panel/vendor-management/api-pricing"
                     },
                     {
-                        label: "AEPS API"
+                        label: "AEPS API",
+                        url: "/dashboard/control-panel/vendor-management/aes-api"
                     },
                     {
-                        label: "PG"
+                        label: "PG",
+                        url: "/dashboard/control-panel/vendor-management/pg"
                     },
                     {
-                        label: "AEPS-Bankwise Pipe Change"
+                        label: "AEPS-Bankwise Pipe Change",
+                        url: "/dashboard/control-panel/vendor-management/aeps-bankwise-pipe-change"
                     },
                     {
-                        label: "RazorPay PG Mid"
+                        label: "RazorPay PG Mid",
+                        url: "/dashboard/control-panel/vendor-management/razor-pay-pg-mid"
                     },
                     {
-                        label: "Retail Pricing-PG/Settlement"
+                        label: "Retail Pricing-PG/Settlement",
+                        url: "/dashboard/control-panel/vendor-management/retail-pricing-pg-settlement"
                     },
                     {
-                        label: "AEPS-Retailer Wise Pipe Change"
+                        label: "AEPS-Retailer Wise Pipe Change",
+                        url: "/dashboard/control-panel/vendor-management/aeps-retailer-wise-pipe-change"
                     },
                     {
-                        label: "Zone Wise Pipe Change"
+                        label: "Zone Wise Pipe Change",
+                        url: "/dashboard/control-panel/vendor-management/zone-wise-pipe-change"
                     },
                     {
-                        label: "Billing Price Update"
+                        label: "Billing Price Update",
+                        url: "/dashboard/control-panel/vendor-management/villing-price-update"
                     },
 
                 ]
@@ -304,25 +366,32 @@ export const menuItems = [
                 label: "SKU Management",
                 children: [
                     {
-                        label: "Edit SKU"
+                        label: "Edit SKU",
+                        url: "/dashboard/control-panel/sku-management/edit-sku"
                     },
                     {
-                        label: "Bulk Pricing"
+                        label: "Bulk Pricing",
+                        url: "/dashboard/control-panel/sku-management/bulk-pricing"
                     },
                     {
-                        label: "Copy Pricing"
+                        label: "Copy Pricing",
+                        url: "/dashboard/control-panel/sku-management/copy-pricing"
                     },
                     {
-                        label: "Scheme Management"
+                        label: "Scheme Management",
+                        url: "/dashboard/control-panel/sku-management/scheme-management"
                     },
                     {
-                        label: "Add SKU"
+                        label: "Add SKU",
+                        url: "/dashboard/control-panel/sku-management/add-sku"
                     },
                     {
-                        label: "Coupon Management"
+                        label: "Coupon Management",
+                        url: "/dashboard/control-panel/sku-management/coupon-management"
                     },
                     {
-                        label: "Coupon Status"
+                        label: "Coupon Status",
+                        url: "/dashboard/control-panel/sku-management/coupon-status"
                     },
                 ]
             },
@@ -330,16 +399,20 @@ export const menuItems = [
                 label: "Manage AES API",
                 children: [
                     {
-                        label: "Client Operation Control"
+                        label: "Client Operation Control",
+                        url: "/dashboard/control-panel/manage-aes-api/client-operator-control"
                     },
                     {
-                        label: "API Transaction Refund"
+                        label: "API Transaction Refund",
+                        url: "/dashboard/control-panel/manage-aes-api/api-transaction-refund"
                     },
                     {
-                        label: "Bulk API Transaction Refund"
+                        label: "Bulk API Transaction Refund",
+                        url: "/dashboard/control-panel/manage-aes-api/bulk-api-transaction-refund"
                     },
                     {
-                        label: "AES API Transaction Status"
+                        label: "AES API Transaction Status",
+                        url: "/dashboard/control-panel/manage-aes-api/aes-api-transaction-status"
                     },
                 ]
             },
@@ -347,13 +420,16 @@ export const menuItems = [
                 label: "Margin Set",
                 children: [
                     {
-                        label: "Client- MDS"
+                        label: "Client- MDS",
+                        url: "/dashboard/control-panel/margin-set/client-mps"
                     },
                     {
-                        label: "Agent"
+                        label: "Agent",
+                        url: "/dashboard/control-panel/margin-set/agent"
                     },
                     {
-                        label: "API Client"
+                        label: "API Client",
+                        url: "/dashboard/control-panel/margin-set/api-client"
                     },
 
                 ]
@@ -362,10 +438,12 @@ export const menuItems = [
                 label: "SlabWise Pricing Set",
                 children: [
                     {
-                        label: "MDS Pricing"
+                        label: "MDS Pricing",
+                        url: "/dashboard/control-panel/slabwise-pricing-set/mds-pricing"
                     },
                     {
-                        label: "API Client"
+                        label: "API Client",
+                        url: "/dashboard/control-panel/slabwise-pricing-set/api-client"
                     },
                 ]
             },
@@ -373,25 +451,32 @@ export const menuItems = [
                 label: "Account Management",
                 children: [
                     {
-                        label: "Account Adjustment"
+                        label: "Account Adjustment",
+                        url: "/dashboard/control-panel/account-management/account-adjustment"
                     },
                     {
-                        label: "Comm/TDS Mgmt"
+                        label: "Comm/TDS Mgmt",
+                        url: "/dashboard/control-panel/account-management/comm-tds-mgmt"
                     },
                     {
-                        label: "Bulk Comm/TDS Mgmt"
+                        label: "Bulk Comm/TDS Mgmt",
+                        url: "/dashboard/control-panel/account-management/bulk-comm-tds-mgmt"
                     },
                     {
-                        label: "Bulk-billing/Cashback"
+                        label: "Bulk-billing/Cashback",
+                        url: "/dashboard/control-panel/account-management/bulk-billing-cashback"
                     },
                     {
-                        label: "Refund"
+                        label: "Refund",
+                        url: "/dashboard/control-panel/account-management/bulk-refund"
                     },
                     {
-                        label: "Bulk Refund"
+                        label: "Bulk Refund",
+                        url: "/dashboard/control-panel/account-management/bulk-refund"
                     },
                     {
-                        label: "Bulk Loan Distribution"
+                        label: "Bulk Loan Distribution",
+                        url: "/dashboard/control-panel/account-management/bulk-loan-disbursement"
                     },
                 ]
             },
@@ -399,10 +484,12 @@ export const menuItems = [
                 label: "Add/Modify IFSC Code",
                 children: [
                     {
-                        label: "Other"
+                        label: "Other",
+                        url: "/dashboard/control-panel/add-modify-ifsc-code/others"
                     },
                     {
-                        label: "APMahesh"
+                        label: "APMahesh",
+                        url: "/dashboard/control-panel/add-modify-ifsc-code/ap-mahesh"
                     },
                 ]
             },
@@ -411,10 +498,12 @@ export const menuItems = [
                 label: "Pricing Module",
                 children: [
                     {
-                        label: "Create Price Plan"
+                        label: "Create Price Plan",
+                        url: "/dashboard/control-panel/pricing-module/create-price-plan"
                     },
                     {
-                        label: "Apply Price Plan"
+                        label: "Apply Price Plan",
+                        url: "/dashboard/control-panel/pricing-module/apply-price-plan"
                     },
 
                 ]
@@ -425,28 +514,36 @@ export const menuItems = [
                 children: [
                     {
                         label: "Status Change",
+                        url: "/dashboard/control-panel/status-change"
                     },
                     {
                         label: "Sales Profiling",
+                        url: "/dashboard/control-panel/sales-profiling"
                     },
                     {
                         label: "Park Transactions",
+                        url: "/dashboard/control-panel/park-transactions"
                     },
                     {
                         label: "Set Markup",
+                        url: "/dashboard/control-panel/set-markup"
                     },
                     {
                         label: "Add/Modify Yes BC ID",
+                        url: "/dashboard/control-panel/add-modify-yes-bc-id"
                     },
                     {
                         label: "DMT Refund OTP",
+                        url: "/dashboard/control-panel/dmt-refund"
                     },
                     {
                         label: "Settlement ACC. KYC Upgrade",
+                        url: "/dashboard/control-panel/settlement-acc-kyc-upgrade"
 
                     },
                     {
                         label: "ISERVEU AEPS Onboarding",
+                        url: "/dashboard/control-panel/iserveu-aeps-onboarding"
                     },
                 ]
             }
@@ -601,22 +698,27 @@ export const menuItems = [
         children: [
             {
                 label: "User Search",
+                url: "/dashboard/da-module/user-search"
 
             },
             {
                 label: "Profile Upload",
+                url: "/dashboard/da-module/profile-upload"
 
             },
             {
                 label: "Sales Profiling",
+                url: "/dashboard/da-module/seles-profiling"
 
             },
             {
                 label: "Agent Geography Upload",
+                url: "/dashboard/da-module/agent-geography-upload"
 
             },
             {
                 label: "Capture Geo Location",
+                url: "/dashboard/da-module/capture-geo-location"
 
             },
         ]

@@ -8,10 +8,17 @@
     "start": "next start"
   },
   "dependencies": {
+    "@coreui/react": "^5.9.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.8",
+    "antd": "^6.3.0",
+    "axios": "^1.13.5",
     "next": "^16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-loader-spinner": "^8.0.2"
+    "react-loader-spinner": "^8.0.2",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "^0.4.2",
