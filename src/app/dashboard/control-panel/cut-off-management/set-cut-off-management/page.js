@@ -1,14 +1,23 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const SetCutOffManagement = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const fileInputRef = useRef(null);
+
+  const isExcelFile = (file) =>
+    file.name.endsWith(".xls") || file.name.endsWith(".xlsx");
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
 
-    if (file && (file.name.endsWith(".xls") || file.name.endsWith(".xlsx"))) {
+    if (file && isExcelFile(file)) {
       setSelectedFile(file);
       setMessage("");
     } else {
@@ -17,71 +26,105 @@ const SetCutOffManagement = () => {
     }
   };
 
+  const clearFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+    setSelectedFile(null);
+    setMessage("");
+  };
+
+  const handleSubmit = () => {
+    if (!selectedFile) {
+      setMessage("Please select a file");
+      return;
+    }
+
+    setLoading(true);
+
+    // API CALL HERE
+    setTimeout(() => {
+      setLoading(false);
+      setMessage("");
+      alert("File submitted (demo)");
+    }, 1000);
+  };
+
   return (
-    <div className="min-h-screen flex justify-center items-start bg-white">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Set Cut-Off Management
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Set Cut-Off Management"
+        description="Upload cut-off configuration Excel file"
+      />
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          
-          <div className="p-6 mb-4">
-            <form>
-              
-              {/* FILE ROW */}
-              <div className="mb-4 flex items-center justify-center">
-                
-                <label className="w-[200px] text-right font-semibold text-sm whitespace-nowrap">
-                  Please Upload File :
-                </label>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="mx-3 w-[220px] border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-                />
+            {/* FILE INPUT */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-1">
+              <label className="text-right font-medium">
+                Please Upload File
+              </label>
+              <div className="text-center">:</div>
 
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  .xls / .xlsx format only
-                </span>
-              </div>
+              <input
+                type="file"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="capsInput"
+              />
+            </div>
 
-              {/* MESSAGE */}
-              {message && (
-                <div className="text-red-500 text-center text-sm mb-3">
-                  {message}
-                </div>
-              )}
+            <div className="text-center text-gray-500 text-sm mb-3">
+              (.xls / .xlsx format only)
+            </div>
 
-              {/* DOWNLOAD */}
-              <div className="text-center mb-4 text-sm">
-                <a
-                  href="#"
-                  className="text-blue-600 hover:underline"
-                >
-                  Click here for excel format
-                </a>
-              </div>
+            {/* VALIDATION MESSAGE */}
+            {message && (
+              <p className="text-red-500 text-center text-sm mb-2">
+                {message}
+              </p>
+            )}
 
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  className="px-8 py-1.5 text-white text-sm rounded-md bg-[#4fa2c2] hover:opacity-90 shadow-md"
-                >
-                  Submit
-                </button>
-              </div>
+            {/* DOWNLOAD FORMAT */}
+            <div className="text-center mb-3 text-sm">
+              <a
+                href="#"
+                className="text-blue-600 hover:underline"
+              >
+                Click here
+              </a>{" "}
+              to download excel format
+            </div>
 
-            </form>
+            {/* STATUS */}
+            {loading && (
+              <p className="text-center text-sm text-gray-500 mb-2">
+                Loading...
+              </p>
+            )}
+
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
+              <button
+                onClick={handleSubmit}
+                className="capsButton min-w-[140px]"
+              >
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                onClick={clearFile}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
+              </button>
+            </div>
+
           </div>
-
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

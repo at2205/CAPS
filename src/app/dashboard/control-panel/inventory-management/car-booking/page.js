@@ -1,5 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 function CarBooking() {
   const [loading, setLoading] = useState(false);
@@ -9,6 +12,8 @@ function CarBooking() {
   const [message, setMessage] = useState("");
   const [formValues, setFormValues] = useState({});
 
+  const fileInputRef = useRef(null);
+
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const endPoint = "/";
 
@@ -16,12 +21,19 @@ function CarBooking() {
     typeof window !== "undefined"
       ? localStorage.getItem("secondUserId")
       : null;
+
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
+
+  const isExcelFile = (file) =>
+    file.name.endsWith(".xls") || file.name.endsWith(".xlsx");
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && (file.name.endsWith(".xls") || file.name.endsWith(".xlsx"))) {
+
+    if (file && isExcelFile(file)) {
       setSelectedFile(file);
       setMessage("");
     } else {
@@ -32,6 +44,7 @@ function CarBooking() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
@@ -39,7 +52,7 @@ function CarBooking() {
     }));
   };
 
-  const handleFileUpload = async () => {
+  const handleSubmit = async () => {
     if (!selectedFile) {
       setMessage("Please select a file");
       return;
@@ -68,149 +81,222 @@ function CarBooking() {
         setError("Something went wrong.");
       }
     } catch {
-      setError("Error uploading file.");
+      setError("Error submitting form.");
     } finally {
       setLoading(false);
     }
   };
 
-  const Row = ({ label, children, extra }) => (
-    <div className="flex items-center justify-center mb-2">
-      <div className="w-[260px] text-right font-semibold text-sm">
-        {label}
-      </div>
-      <div className="w-[320px] ml-3">{children}</div>
-      {extra && <div className="w-[200px] ml-3">{extra}</div>}
+  const handleClear = () => {
+    setFormValues({});
+    setSelectedFile(null);
+    setMessage("");
+    setSuccess("");
+    setError("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+  };
+
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
-
   return (
-    <div className="flex justify-center mt-6">
-      <div className="w-[1200px] rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Car Booking
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Car Booking"
+        description="Configure car booking details"
+      />
 
-        <div className="px-10 py-6">
-          <form>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-            <Row label="Car Booking Type :">
-              <select name="carBookingType" onChange={handleInputChange} className={inputStyle}>
-                <option>Select</option>
-                <option>Domistic</option>
-                <option>International</option>
+            <FieldRow label="Car Booking Type">
+              <select
+                name="carBookingType"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="">Select</option>
+                <option value="domestic">Domestic</option>
+                <option value="international">International</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Booking Type :">
-              <select name="bookingType" onChange={handleInputChange} className={inputStyle}>
-                <option>Select</option>
+            <FieldRow label="Booking Type">
+              <select
+                name="bookingType"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="">Select</option>
                 <option>OutStation</option>
                 <option>Local Usage</option>
                 <option>Air/Rail Transfer</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Trip Type :">
-              <select name="tripType" onChange={handleInputChange} className={inputStyle}>
-                <option>Select</option>
+            <FieldRow label="Trip Type">
+              <select
+                name="tripType"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="">Select</option>
                 <option>Round</option>
                 <option>One Way</option>
                 <option>Multi City</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Origin City :">
-              <input name="originCity" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Origin City">
+              <input
+                name="originCity"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Destination City :">
-              <input name="destinationCity" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Destination City">
+              <input
+                name="destinationCity"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Days of Availability :">
-              <select name="dayOfAvailability" onChange={handleInputChange} className={inputStyle}>
+            <FieldRow label="Days of Availability">
+              <select
+                name="dayOfAvailability"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
                 {[...Array(15)].map((_, i) => (
                   <option key={i}>{i + 1} day</option>
                 ))}
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Car Model Name :">
-              <input name="carModelName" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Car Model Name">
+              <input
+                name="carModelName"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Vendor Name :">
-              <input name="venderName" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Vendor Name">
+              <input
+                name="vendorName"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Seating Capacity :">
-              <select name="seatingCapacity" onChange={handleInputChange} className={inputStyle}>
-                {[1,2,3,4,5,6,7,8].map(v => <option key={v}>{v}</option>)}
+            <FieldRow label="Seating Capacity">
+              <select
+                name="seatingCapacity"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                {[1,2,3,4,5,6,7,8].map(v => (
+                  <option key={v}>{v}</option>
+                ))}
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row
-              label="Trip Price :"
-              extra={<input type="number" className={inputStyle} />}
-            >
-              <input type="range" min="10" max="100" step="0.5" className="w-full" />
-            </Row>
+            <FieldRow label="Trip Price">
+              <input type="number" className="capsInput mb-2" />
+              <input type="range" min="10" max="100" step="0.5" />
+            </FieldRow>
 
-            <Row label="Upload Image :">
-              <input type="file" onChange={handleFileChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Upload Image">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Fuel Type :">
-              <select name="fuelType" onChange={handleInputChange} className={inputStyle}>
-                <option>Select</option>
+            <FieldRow label="Fuel Type">
+              <select
+                name="fuelType"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="">Select</option>
                 <option>Petrol</option>
                 <option>Diesel</option>
                 <option>CNG</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Special Offers :">
-              <textarea name="specialOffer" maxLength="1500" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Special Offers">
+              <textarea
+                name="specialOffer"
+                maxLength="1500"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Terms & Conditions :">
-              <textarea name="temsConditions" maxLength="1500" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Terms & Conditions">
+              <textarea
+                name="termsConditions"
+                maxLength="1500"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Cancellation Policy :">
-              <textarea name="cancellationPolicy" maxLength="1500" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Cancellation Policy">
+              <textarea
+                name="cancellationPolicy"
+                maxLength="1500"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
             {/* STATUS */}
             <div className="text-center mt-4 text-sm">
               {success && <p className="text-green-600">{success}</p>}
               {error && <p className="text-red-500">{error}</p>}
               {message && <p className="text-red-500">{message}</p>}
-              {loading && <p className="text-gray-500 animate-pulse">Loading...</p>}
+              {loading && <p className="text-gray-500">Loading...</p>}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
                 type="button"
-                onClick={handleFileUpload}
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
               </button>
             </div>
 
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

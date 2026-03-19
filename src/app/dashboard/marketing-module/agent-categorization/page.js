@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import CapsCard from "@/app/components/caps_card/CapsCard";
 import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const AgentCategorization = () => {
   const [userType, setUserType] = useState("select");
@@ -18,97 +21,186 @@ const AgentCategorization = () => {
     Platinum: { checked: false, fromAmount: "", toAmount: "", file: null },
   });
 
+  /* CHANNEL CHANGE */
+
   const handleChannelChange = (e) => {
     setUserType(e.target.value);
     setShowTable(false);
   };
 
-  const handleSearch = () => {
+  /* SEARCH API */
+
+  const handleSearch = async () => {
     if (userType === "select") {
-      alert("Please Select Channel.");
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Please Select Channel",
+      });
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
-      const mockData = {
-        Bronze: { fromAmount: "0", toAmount: "1000" },
-        Silver: { fromAmount: "1001", toAmount: "5000" },
-      };
+    try {
+      const userId = localStorage.getItem("userId");
 
-      const updated = { ...rows };
+      const res = await axiosInstance.get(
+        endpoints.marketingModuleEndpoints.getChannelCategorizeData,
+        {
+          params: {
+            userType: userType,
+            userId: userId,
+          },
+        },
+      );
 
-      categories.forEach((cat) => {
-        if (mockData[cat]) {
-          updated[cat] = {
-            ...updated[cat],
-            checked: true,
-            fromAmount: mockData[cat].fromAmount,
-            toAmount: mockData[cat].toAmount,
-          };
-        }
+      console.log("API RESPONSE:", res);
+
+      if (res?.data?.status === "0") {
+        const apiData = res.data.data || [];
+
+        const updatedRows = { ...rows };
+
+        apiData.forEach((item) => {
+          const cat = item.category;
+
+          if (updatedRows[cat]) {
+            updatedRows[cat] = {
+              ...updatedRows[cat],
+              checked: true,
+              fromAmount: item.fromSlab || "",
+              toAmount: item.toSlab || "",
+            };
+          }
+        });
+
+        setRows(updatedRows);
+        setShowTable(true);
+      }
+    } catch (err) {
+      console.log("API ERROR:", err);
+      Swal.fire({
+        icon: "error",
+        title: "API Error",
+        text: "Error fetching data",
       });
+    }
 
-      setRows(updated);
-      setShowTable(true);
-      setLoading(false);
-    }, 1000);
+    setLoading(false);
   };
+  /* ROW CHANGE */
 
   const handleRowChange = (category, field, value) => {
     setRows((prev) => ({
       ...prev,
-      [category]: { ...prev[category], [field]: value },
+      [category]: {
+        ...prev[category],
+        [field]: value,
+      },
     }));
   };
 
-  const validateAndSubmit = () => {
+  /* SUBMIT API */
+
+  const validateAndSubmit = async () => {
     const selected = categories.filter((cat) => rows[cat].checked);
 
     if (selected.length === 0) {
-      alert("Please select checkbox");
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Please select at least one category",
+      });
       return;
     }
 
-    for (const cat of selected) {
+    const checkbox = [];
+    const amounts = [];
+    const files = [];
+
+    selected.forEach((cat) => {
       const row = rows[cat];
 
-      if (!row.fromAmount) return alert(`Enter From Slab for ${cat}`);
-      if (!row.toAmount) return alert(`Enter To Slab for ${cat}`);
+      checkbox.push(cat);
 
-      if (parseInt(row.fromAmount) > parseInt(row.toAmount))
-        return alert(`Invalid slab range in ${cat}`);
+      amounts.push({
+        category: cat,
+        fromSlab: row.fromAmount,
+        toSlab: row.toAmount,
+      });
 
-      if (!row.file) return alert(`Upload file for ${cat}`);
+      if (row.file) {
+        files.push(row.file);
+      }
+    });
+
+    const payload = {
+      index: "1",
+      checkbox: checkbox,
+      userType: userType,
+      amounts: amounts,
+    };
+
+    const formData = new FormData();
+
+    formData.append("payload", JSON.stringify(payload));
+    formData.append("userId", localStorage.getItem("userId"));
+
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const res = await axiosInstance.post(
+        endpoints.marketingModuleEndpoints.getCategorizeDetails,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      if (res.data.status === "0") {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: res.data.message || "Data submitted successfully",
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      Swal.fire({
+        icon: "error",
+        title: "Submit Failed",
+        text: "Something went wrong while submitting",
+      });
     }
-
-    alert("Submitted Successfully!");
   };
+
+  /* CANCEL */
 
   const handleCancel = () => {
     setShowTable(false);
   };
 
   return (
-    <div className="p-6  min-h-screen text-[#226b88]">
-
-      {/* HEADER */}
+    <div className="p-6 min-h-screen text-[#226b88]">
       <CapsCard
         title="Agent Categorization"
         description="Manage agent slab categories and uploads"
       />
 
-      {/* MAIN CARD */}
       <PageCard>
-
         {/* CHANNEL SELECT */}
+
         <div className="flex justify-center mb-6">
           <div className="grid grid-cols-[200px_20px_250px] items-center gap-4">
-            <label className="text-right font-medium">
-              Select Channel
-            </label>
+            <label className="text-right font-medium">Select Channel</label>
+
             <div className="text-center">:</div>
+
             <select
               value={userType}
               onChange={handleChannelChange}
@@ -121,6 +213,8 @@ const AgentCategorization = () => {
             </select>
           </div>
         </div>
+
+        {/* SEARCH BUTTON */}
 
         {!showTable && (
           <div className="text-center">
@@ -135,6 +229,7 @@ const AgentCategorization = () => {
         )}
 
         {/* TABLE */}
+
         {showTable && (
           <>
             <div className="capsColor text-center py-2 font-semibold rounded-md mb-4">
@@ -188,9 +283,7 @@ const AgentCategorization = () => {
                         />
                       </td>
 
-                      <td className="p-2 border font-semibold">
-                        {cat}
-                      </td>
+                      <td className="p-2 border font-semibold">{cat}</td>
 
                       <td className="p-2 border">
                         <input
@@ -207,12 +300,8 @@ const AgentCategorization = () => {
               </table>
             </div>
 
-            {/* BUTTONS */}
             <div className="text-center mt-6 space-x-4">
-              <button
-                onClick={validateAndSubmit}
-                className="capsButton"
-              >
+              <button onClick={validateAndSubmit} className="capsButton">
                 Submit
               </button>
 
@@ -225,7 +314,6 @@ const AgentCategorization = () => {
             </div>
           </>
         )}
-
       </PageCard>
     </div>
   );

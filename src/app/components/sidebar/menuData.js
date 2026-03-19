@@ -118,33 +118,38 @@ export const menuItems = [
                         children: [
                             {
                                 label: "PG User Limit",
-                                url: "/dashboard/activity/pg-tb/pg-user-limit"
+                                url: "/dashboard/activity/pg-tb/pg-user-action/pg-user-limit"
                             },
                             {
                                 label: "PG User Auth",
-                                url: "/dashboard/activity/pg-tb/pg-user-auth"
+                                url: "/dashboard/activity/pg-tb/pg-user-action/pg-user-auth"
                             },
                         ]
                     },
                     {
-                        label: "PG Settlement User Limit"
+                        label: "PG Settlement User Limit",
+                        url: "/dashboard/activity/pg-tb/pg-settlement-user-limit"
                     },
                     {
                         label: "PG Service Activation",
                         children: [
                             {
-                                label: "Payment Gateway"
+                                label: "Payment Gateway",
+                                url: "/dashboard/activity/pg-tb/pg-service-activation/payment-gateway"
                             },
                             {
-                                label: "Payment Gateway Mode"
+                                label: "Payment Gateway Mode",
+                                url: "/dashboard/activity/pg-tb/pg-service-activation/pg-service-activation-payment-gateway-mode"
                             },
                         ]
                     },
                     {
-                        label: "Enable/Disable PG Form"
+                        label: "Enable/Disable PG Form",
+                        url: "/dashboard/activity/pg-tb/enable-disable-pg-form"
                     },
                     {
-                        label: "PG Charge Back"
+                        label: "PG Charge Back",
+                        url: "/dashboard/activity/pg-tb/pg-charge-back"
                     },
 
                 ]
@@ -560,25 +565,25 @@ export const menuItems = [
                         label: "Channel",
                          url:  "/dashboard/reports/transaction-reports/channel"
                     },
-                    {
-                        label: "AES API",
-                         url:  "/dashboard/reports/transaction-reports/aes-api"
-                    },
+                    // {
+                    //     label: "AES API",
+                    //      url:  "/dashboard/reports/transaction-reports/aes-api"
+                    // },
                 ]
             },
-            {
-                label: "Management Reports ",
-                children: [
-                    {
-                        label: "Channel",
-                         url:  "/dashboard/reports/management-reports/channel"
-                    },
-                    {
-                        label: "AES API",
-                         url:  "/dashboard/reports/management-reports/aes-api"
-                    },
-                ]
-            },
+            // {
+            //     label: "Management Reports ",
+            //     children: [
+            //         {
+            //             label: "Channel",
+            //              url:  "/dashboard/reports/management-reports/channel"
+            //         },
+            //         {
+            //             label: "AES API",
+            //              url:  "/dashboard/reports/management-reports/aes-api"
+            //         },
+            //     ]
+            // },
             {
                 label: "Finance Reports ",
                 children: [
@@ -586,20 +591,22 @@ export const menuItems = [
                         label: "Channel",
                           url:  "/dashboard/reports/finance-reports/channel"
                     },
-                    {
-                        label: "AES API",
-                         url:  "/dashboard/reports/finance-reports/aes-api"
-                    },
+                    // {
+                    //     label: "AES API",
+                    //      url:  "/dashboard/reports/finance-reports/aes-api"
+                    // },
                 ]
             },
             {
                 label: "Statements",
                 children: [
                     {
-                        label: "Channel"
+                        label: "Channel",
+                            url:  "/dashboard/reports/statements/channel"   
                     },
                     {
-                        label: "AES API"
+                        label: "AES API",
+                        url: "/dashboard/reports/statements/aes-api"
                     },
                 ]
             },
@@ -607,13 +614,16 @@ export const menuItems = [
                 label: "CC Module",
                 children: [
                     {
-                        label: "Transaction Status"
+                        label: "Transaction Status",
+                        url: "/dashboard/reports/cc-module/transaction-status"
                     },
                     {
-                        label: "CC-Information"
+                        label: "CC-Information",
+                        url: "/dashboard/reports/cc-module/cc-information"
                     },
                     {
-                        label: "User Search"
+                        label: "User Search",
+                        url: "/dashboard/reports/cc-module/user-search"
                     },
                 ]
             },
@@ -621,83 +631,86 @@ export const menuItems = [
                 label: "Logs Report",
                 children: [
                     {
-                        label: "Log Report"
+                        label: "Log Report",
+                        url: "/dashboard/reports/logs-report/log-report"
                     },
 
                 ]
             },
-            {
-                label: "Sender/Recipient Report",
-            }
+            // {
+            //     label: "Sender/Recipient Report",
+            //     url: "/dashboard/reports/sender-recipient-report"
+                
+            // }
         ]
     },
-    {
-        index: 4,
-        label: "Card Function",
-        children: [
-            {
-                label: "Card Adjustment",
+    // {
+    //     index: 4,
+    //     label: "Card Function",
+    //     children: [
+    //         {
+    //             label: "Card Adjustment",
 
-            },
-            {
-                label: "Kit Transfer To DS/RO/API/CORP",
+    //         },
+    //         {
+    //             label: "Kit Transfer To DS/RO/API/CORP",
 
-            },
-            {
-                label: "Update Card Information",
+    //         },
+    //         {
+    //             label: "Update Card Information",
 
-            },
-            {
-                label: "Activate/Deactivate Card",
+    //         },
+    //         {
+    //             label: "Activate/Deactivate Card",
 
-            },
-            {
-                label: "Card Reset Pin",
+    //         },
+    //         {
+    //             label: "Card Reset Pin",
 
-            },
-            {
-                label: "Get Card Details",
+    //         },
+    //         {
+    //             label: "Get Card Details",
 
-            },
-            {
-                label: "Refund Transaction",
+    //         },
+    //         {
+    //             label: "Refund Transaction",
 
-            },
-            {
-                label: "Bulkrefund Transaction",
+    //         },
+    //         {
+    //             label: "Bulkrefund Transaction",
 
-            },
-            {
-                label: "More...",
-                children: [
-                    {
-                        label: "Update KYC",
+    //         },
+    //         {
+    //             label: "More...",
+    //             children: [
+    //                 {
+    //                     label: "Update KYC",
 
-                    },
-                    {
-                        label: "Card Txn Permission",
+    //                 },
+    //                 {
+    //                     label: "Card Txn Permission",
 
-                    },
-                    {
-                        label: "Card Txn Permission Approval",
+    //                 },
+    //                 {
+    //                     label: "Card Txn Permission Approval",
 
-                    },
-                    {
-                        label: "Create MCC Card",
+    //                 },
+    //                 {
+    //                     label: "Create MCC Card",
 
-                    },
-                    {
-                        label: "Update MCC Card",
+    //                 },
+    //                 {
+    //                     label: "Update MCC Card",
 
-                    },
-                    {
-                        label: "Add Balance in CJ Portal",
+    //                 },
+    //                 {
+    //                     label: "Add Balance in CJ Portal",
 
-                    },
-                ]
-            }
-        ]
-    },
+    //                 },
+    //             ]
+    //         }
+    //     ]
+    // },
     {
         index: 5,
         label: "DA Module",

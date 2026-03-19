@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const PaymentGatewayMode = () => {
   const [userType, setUserType] = useState("");
@@ -17,22 +19,22 @@ const PaymentGatewayMode = () => {
   /* ===== SELECT ALL ===== */
   const toggleAll = (checked) => {
     setAll(checked);
-    setVendors(vendors.map(v => ({ ...v, checked })));
+    setVendors(vendors.map((v) => ({ ...v, checked })));
   };
 
   /* ===== SINGLE CHECK ===== */
   const toggleVendor = (id, checked) => {
-    const updated = vendors.map(v =>
+    const updated = vendors.map((v) =>
       v.id === id ? { ...v, checked } : v
     );
     setVendors(updated);
-    setAll(updated.every(v => v.checked)); // sync select-all
+    setAll(updated.every((v) => v.checked));
   };
 
   /* ===== ACTION CHANGE ===== */
   const changeAction = (id, value) => {
     setVendors(
-      vendors.map(v =>
+      vendors.map((v) =>
         v.id === id ? { ...v, action: value } : v
       )
     );
@@ -40,12 +42,11 @@ const PaymentGatewayMode = () => {
 
   /* ===== SUBMIT ===== */
   const handleSubmit = (status) => {
-    const updated = vendors.map(v =>
+    const updated = vendors.map((v) =>
       v.checked ? { ...v, status } : v
     );
 
     setVendors(updated);
-    console.log("Updated Vendors:", updated);
     alert(`Selected vendors ${status}`);
   };
 
@@ -54,32 +55,30 @@ const PaymentGatewayMode = () => {
       ? "bg-green-100 text-green-700"
       : "bg-gray-100 text-gray-600";
 
-  const hasSelection = vendors.some(v => v.checked);
+  const hasSelection = vendors.some((v) => v.checked);
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Payment Gateway Mode"
+        description="Manage activation mode for payment vendors"
+      />
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Payment Gateway Mode
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[620px] space-y-4">
 
-        {/* ===== BODY ===== */}
-        <div className="px-5 py-6">
-
-          {/* USER TYPE */}
-          <div className="flex justify-center mb-6">
-            <div className="w-[520px] flex items-center">
-              <label className="font-semibold w-1/2 text-right mr-3">
+            {/* User Type */}
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
                 Select User Type
               </label>
+              <div className="text-center">:</div>
 
               <select
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                className="capsInput"
               >
                 <option value="">Select</option>
                 <option value="Agent">Agent</option>
@@ -89,113 +88,119 @@ const PaymentGatewayMode = () => {
                 </option>
               </select>
             </div>
-          </div>
 
-          {/* TABLE */}
-          {userType && (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full border border-gray-300 text-center text-sm">
-
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border p-2">
-                        <input
-                          type="checkbox"
-                          checked={all}
-                          onChange={(e) => toggleAll(e.target.checked)}
-                          className="w-4 h-4"
-                        />
-                      </th>
-                      <th className="border p-2">S.No</th>
-                      <th className="border p-2">Vendor</th>
-                      <th className="border p-2">Status</th>
-                      <th className="border p-2">Action</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {vendors.map((v, i) => (
-                      <tr
-                        key={v.id}
-                        className={`hover:bg-gray-50 ${
-                          v.checked ? "bg-blue-50" : ""
-                        }`}
-                      >
-                        <td className="border p-2">
+            {/* Table */}
+            {userType && (
+              <>
+                <div className="pt-3 overflow-x-auto">
+                  <table className="w-full border text-sm text-center">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-3 py-2">
                           <input
                             type="checkbox"
-                            checked={v.checked}
+                            checked={all}
                             onChange={(e) =>
-                              toggleVendor(v.id, e.target.checked)
+                              toggleAll(e.target.checked)
                             }
-                            className="w-4 h-4"
                           />
-                        </td>
-
-                        <td className="border p-2">{i + 1}</td>
-
-                        <td className="border p-2 font-semibold">
-                          {v.name}
-                        </td>
-
-                        <td className="border p-2">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${badgeStyle(
-                              v.status
-                            )}`}
-                          >
-                            {v.status}
-                          </span>
-                        </td>
-
-                        <td className="border p-2">
-                          <select
-                            value={v.action}
-                            onChange={(e) =>
-                              changeAction(v.id, e.target.value)
-                            }
-                            className="border border-gray-300 rounded-md px-2 py-1 text-xs
-                                       focus:outline-none focus:ring-1 focus:ring-[#4c95b3]"
-                          >
-                            <option value="">Select</option>
-                            <option value="Activated">Activate</option>
-                            <option value="Deactivated">Deactivate</option>
-                          </select>
-                        </td>
+                        </th>
+                        <th className="border px-3 py-2">S.No</th>
+                        <th className="border px-3 py-2">Vendor</th>
+                        <th className="border px-3 py-2">Status</th>
+                        <th className="border px-3 py-2">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
+                    </thead>
 
-                </table>
-              </div>
+                    <tbody>
+                      {vendors.map((v, i) => (
+                        <tr
+                          key={v.id}
+                          className={`hover:bg-gray-50 ${
+                            v.checked ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <td className="border py-2">
+                            <input
+                              type="checkbox"
+                              checked={v.checked}
+                              onChange={(e) =>
+                                toggleVendor(
+                                  v.id,
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          </td>
 
-              {/* BUTTONS */}
-              <div className="flex justify-center gap-6 mt-6">
-                <button
-                  onClick={() => handleSubmit("Activated")}
-                  disabled={!hasSelection}
-                  className="px-6 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition disabled:opacity-50"
-                >
-                  Activate
-                </button>
+                          <td className="border">{i + 1}</td>
 
-                <button
-                  onClick={() => handleSubmit("Deactivated")}
-                  disabled={!hasSelection}
-                  className="px-6 py-2 rounded-2xl shadow border border-gray-400
-                             hover:bg-gray-100 transition disabled:opacity-50"
-                >
-                  Deactivate
-                </button>
-              </div>
-            </>
-          )}
+                          <td className="border font-semibold">
+                            {v.name}
+                          </td>
 
+                          <td className="border">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${badgeStyle(
+                                v.status
+                              )}`}
+                            >
+                              {v.status}
+                            </span>
+                          </td>
+
+                          <td className="border">
+                            <select
+                              value={v.action}
+                              onChange={(e) =>
+                                changeAction(
+                                  v.id,
+                                  e.target.value
+                                )
+                              }
+                              className="capsInput text-xs py-1"
+                            >
+                              <option value="">Select</option>
+                              <option value="Activated">
+                                Activate
+                              </option>
+                              <option value="Deactivated">
+                                Deactivate
+                              </option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-center gap-6 pt-4">
+                  <button
+                    onClick={() => handleSubmit("Activated")}
+                    disabled={!hasSelection}
+                    className="capsButton px-8 disabled:opacity-50"
+                  >
+                    ACTIVATE
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleSubmit("Deactivated")
+                    }
+                    disabled={!hasSelection}
+                    className="capsButtonSecondary px-6 disabled:opacity-50"
+                  >
+                    DEACTIVATE
+                  </button>
+                </div>
+              </>
+            )}
+
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

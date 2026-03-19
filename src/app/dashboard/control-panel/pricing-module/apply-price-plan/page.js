@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const ApplyPricePlanUser = () => {
   const [formData, setFormData] = useState({
     userType: "select",
@@ -61,142 +64,129 @@ const ApplyPricePlanUser = () => {
     setPlanSuggestions([]);
   };
 
+  const inputClass =
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+
+  const Row = ({ label, children }) => (
+    <div className="flex items-start justify-center mb-3">
+      <label className="w-[240px] text-right text-sm font-semibold pt-1">
+        {label}
+      </label>
+      <div className="w-[280px] ml-3">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="bg-white rounded-xl shadow-sm">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Apply Price Plan"
+        description="Map pricing plans to users"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[18px] px-6 py-4 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          Apply Price Plan
-        </div>
+      <PageCard>
+        {/* SUCCESS MESSAGE */}
+        {message && (
+          <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-        {/* BODY */}
-        <div className="bg-white py-12">
+        {/* FORM */}
+        <form onSubmit={handleSubmit}>
+          <Row label="User Business Model :">
+            <select
+              name="userType"
+              value={formData.userType}
+              onChange={handleChange}
+              disabled={loading}
+              className={`${inputClass} disabled:bg-gray-100`}
+            >
+              <option value="select">Please select User</option>
+              <option value="agent">Agent</option>
+              <option value="distributor">DS</option>
+              <option value="mds">MDS</option>
+            </select>
+          </Row>
 
-          {/* SUCCESS MESSAGE */}
-          {message && (
-            <div className="w-1/2 mx-auto mb-6 text-center bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm">
-              {message}
-            </div>
-          )}
+          <Row label="Full User Id :">
+            <input
+              name="userId"
+              value={formData.userId}
+              onChange={handleChange}
+              placeholder="Enter user ID"
+              disabled={loading || formData.userType === "select"}
+              className={`${inputClass} disabled:bg-gray-100`}
+            />
+          </Row>
 
-          {/* FORM CONTAINER */}
-          <div className="w-[65%] mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-3">
+          <Row label="Price Plan Name/ID :">
+            <input
+              name="planId"
+              value={formData.planId}
+              onChange={handleChange}
+              placeholder="Enter price plan name or ID"
+              disabled={loading || formData.userType === "select"}
+              className={`${inputClass} disabled:bg-gray-100`}
+            />
+          </Row>
 
-              {/* USER TYPE */}
-              <div className="flex items-center">
-                <label className="w-[240px] text-right pr-4 text-sm">
-                  User Business Model :
-                </label>
+          {/* BUTTONS */}
+          <div className="flex justify-center gap-6 mt-4">
+            <button
+              type="submit"
+              disabled={loading || formData.userType === "select"}
+              className="capsButton px-10 disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading && (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              )}
+              {loading ? "Submitting..." : "Submit"}
+            </button>
 
-                <select
-                  name="userType"
-                  value={formData.userType}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-[260px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
-                >
-                  <option value="select">Please select User</option>
-                  <option value="agent">Agent</option>
-                  <option value="distributor">DS</option>
-                  <option value="mds">MDS</option>
-                </select>
-              </div>
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={loading}
+              className="capsButtonSecondary px-10"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
 
-              {/* USER ID */}
-              <div className="flex items-center">
-                <label className="w-[240px] text-right pr-4 text-sm">
-                  Full User Id :
-                </label>
-
-                <input
-                  name="userId"
-                  value={formData.userId}
-                  onChange={handleChange}
-                  placeholder="Enter user ID"
-                  disabled={loading || formData.userType === "select"}
-                  className="w-[260px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6] disabled:bg-gray-100"
-                />
-              </div>
-
-              {/* PLAN ID */}
-              <div className="flex items-center">
-                <label className="w-[240px] text-right pr-4 text-sm">
-                  Price Plan Name/ID :
-                </label>
-
-                <input
-                  name="planId"
-                  value={formData.planId}
-                  onChange={handleChange}
-                  placeholder="Enter price plan name or ID"
-                  disabled={loading || formData.userType === "select"}
-                  className="w-[260px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6] disabled:bg-gray-100"
-                />
-              </div>
-
-              {/* BUTTONS */}
-              <div className="flex justify-center gap-6 pt-4">
-                <button
-                  type="submit"
-                  disabled={loading || formData.userType === "select"}
-                  className="px-8 py-2 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] hover:opacity-90 transition flex items-center gap-2 disabled:opacity-50"
-                >
-                  {loading && (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  )}
-                  {loading ? "Submitting..." : "Submit"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  disabled={loading}
-                  className="px-8 py-2 text-white text-sm rounded-full bg-gradient-to-b from-[#666] to-[#444] hover:opacity-90 transition disabled:opacity-50"
-                >
-                  Clear
-                </button>
-              </div>
-            </form>
+        {/* INFO SECTION */}
+        <div className="flex justify-center gap-6 mt-8">
+          {/* INSTRUCTIONS */}
+          <div className="w-[420px] bg-red-50 rounded-xl p-5 border border-red-100">
+            <h5 className="font-semibold border-b pb-2 mb-3">
+              Instructions
+            </h5>
+            <ul className="text-sm list-disc pl-5 space-y-1">
+              <li>Select the user's business model (Agent, DS, or MDS)</li>
+              <li>Enter the full user ID</li>
+              <li>Enter the price plan name or ID</li>
+              <li>Click Submit to map the price plan</li>
+            </ul>
           </div>
 
-          {/* INFO CARDS */}
-          <div className="flex justify-center gap-6 mt-10">
+          {/* BUSINESS MODEL DETAILS */}
+          <div className="w-[420px] bg-red-50 rounded-xl p-5 border border-red-100">
+            <h5 className="font-semibold border-b pb-2 mb-3">
+              Business Model Details
+            </h5>
 
-            {/* INSTRUCTIONS */}
-            <div className="w-[420px] bg-[#fff1f1] rounded-xl p-5 shadow-md">
-              <h5 className="font-semibold border-b pb-2 mb-3">
-                Instructions
-              </h5>
-              <ul className="text-sm list-disc pl-5 space-y-1">
-                <li>Select the user's business model (Agent, DS, or MDS)</li>
-                <li>Enter the full user ID</li>
-                <li>Enter the price plan name or ID</li>
-                <li>Click Submit to map the price plan to the user</li>
-              </ul>
-            </div>
-
-            {/* BUSINESS MODEL DETAILS */}
-            <div className="w-[420px] bg-[#fff1f1] rounded-xl p-5 shadow-md">
-              <h5 className="font-semibold border-b pb-2 mb-3">
-                Business Model Details
-              </h5>
-
-              <p className="text-sm">
-                <b>Agent:</b> Retail-level user with basic pricing
-              </p>
-              <p className="text-sm">
-                <b>DS (Distributor):</b> Mid-level distributor with volume-based pricing
-              </p>
-              <p className="text-sm">
-                <b>MDS:</b> Top-level distributor with premium pricing plans
-              </p>
-            </div>
+            <p className="text-sm">
+              <b>Agent:</b> Retail-level user with basic pricing
+            </p>
+            <p className="text-sm">
+              <b>DS (Distributor):</b> Mid-level distributor with volume pricing
+            </p>
+            <p className="text-sm">
+              <b>MDS:</b> Top-level distributor with premium pricing
+            </p>
           </div>
-
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

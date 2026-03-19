@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const IfscCode = () => {
   const [searchData, setSearchData] = useState({ ifscCode: "" });
 
@@ -152,189 +155,175 @@ const IfscCode = () => {
     }
   };
 
+  const inputClass =
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+
+  const Row = ({ label, children }) => (
+    <div className="flex items-start justify-center mb-3">
+      <label className="w-[220px] text-right text-sm font-semibold pt-1">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="bg-white rounded-xl shadow-sm">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Add / Modify IFSC Code"
+        description="Search, add or update IFSC bank details"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[16px] px-6 py-3 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          Control Panel &gt; Add / Modify IFSC Code
-        </div>
-
-        {/* BODY */}
-        <div className="p-6">
-
-          {message && (
-            <div className="text-center bg-green-100 text-green-700 py-2 rounded mb-4 text-sm">
-              {message}
-            </div>
-          )}
-
-          {/* INFO BOX */}
-          <div className="mb-4 p-3 rounded bg-[#e9f6fc] border-l-[5px] border-[#4e8fb1] text-sm">
-            Enter an IFSC Code to search, add, or update bank details.
+      <PageCard>
+        {/* MESSAGE */}
+        {message && (
+          <div className="text-center bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded mb-4 text-sm">
+            {message}
           </div>
+        )}
 
-          {/* SEARCH */}
-          <form onSubmit={handleSearch}>
-            <div className="flex justify-center mb-4">
-              <input
-                name="ifscCode"
-                value={searchData.ifscCode}
-                onChange={handleSearchChange}
-                maxLength={11}
-                placeholder="Enter IFSC Code"
-                disabled={loading}
-                className="w-[280px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
-              />
-            </div>
-
-            <div className="flex justify-center gap-4 mb-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                )}
-                Search
-              </button>
-
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={loading}
-                className="px-5 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#666] to-[#444] disabled:opacity-50"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-
-          {/* FORM */}
-          {(flag === "Y" || flag === "N") && (
-            <div className="max-w-xl mx-auto space-y-4">
-
-              {/* BANK */}
-              <div>
-                <label className="text-sm font-medium">Bank Name</label>
-                <select
-                  name="bank"
-                  value={formData.bank}
-                  onChange={handleInputChange}
-                  disabled={loading || flag === "Y"}
-                  className="w-full mt-1 px-3 py-2 text-sm border rounded-lg"
-                >
-                  <option value="">Select Bank</option>
-                  {bankList.map((b, i) => (
-                    <option key={i} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                  {flag === "N" && <option value="others">Others</option>}
-                </select>
-              </div>
-
-              {/* OTHER BANK */}
-              {showOtherBank && (
-                <div>
-                  <label className="text-sm font-medium">
-                    Other Bank Name
-                  </label>
-                  <input
-                    name="otherBank"
-                    value={formData.otherBank}
-                    onChange={handleInputChange}
-                    className="w-full mt-1 px-3 py-2 text-sm border rounded-lg"
-                  />
-                </div>
-              )}
-
-              {/* IFSC */}
-              <div>
-                <label className="text-sm font-medium">IFSC Code</label>
-                <input
-                  name="ifsc"
-                  value={formData.ifsc}
-                  onChange={handleInputChange}
-                  maxLength={11}
-                  disabled={flag === "Y"}
-                  className="w-full mt-1 px-3 py-2 text-sm border rounded-lg"
-                />
-              </div>
-
-              {/* BRANCH */}
-              <div>
-                <label className="text-sm font-medium">Branch Name</label>
-                <input
-                  name="branch"
-                  value={formData.branch}
-                  onChange={handleInputChange}
-                  className="w-full mt-1 px-3 py-2 text-sm border rounded-lg"
-                />
-              </div>
-
-              {/* STATE */}
-              <div>
-                <label className="text-sm font-medium">State</label>
-                <select
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="w-full mt-1 px-3 py-2 text-sm border rounded-lg"
-                >
-                  <option value="">Select State</option>
-                  {states.map((s, i) => (
-                    <option key={i} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* CITY */}
-              <div>
-                <label className="text-sm font-medium">City</label>
-                <select
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  disabled={!formData.state}
-                  className="w-full mt-1 px-3 py-2 text-sm border rounded-lg"
-                >
-                  <option value="">
-                    {formData.state
-                      ? "Select City"
-                      : "Select State First"}
-                  </option>
-
-                  {cities.map((c, i) => (
-                    <option key={i} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* BUTTON */}
-              <div className="text-center pt-2">
-                <button
-                  onClick={handleSubmitDetails}
-                  disabled={loading}
-                  className="px-8 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] flex items-center gap-2 mx-auto disabled:opacity-50"
-                >
-                  {loading && (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  )}
-
-                  {flag === "Y" ? "Update" : "Add"}
-                </button>
-              </div>
-            </div>
-          )}
+        {/* INFO BOX */}
+        <div className="mb-4 p-3 rounded bg-[#e9f6fc] border-l-[5px] border-[#4fa0c2] text-sm">
+          Enter an IFSC Code to search, add, or update bank details.
         </div>
-      </div>
+
+        {/* SEARCH */}
+        <form onSubmit={handleSearch}>
+          <Row label="IFSC Code :">
+            <input
+              name="ifscCode"
+              value={searchData.ifscCode}
+              onChange={handleSearchChange}
+              maxLength={11}
+              placeholder="Enter IFSC Code"
+              disabled={loading}
+              className={`${inputClass} disabled:bg-gray-100`}
+            />
+          </Row>
+
+          <div className="text-center mt-2 space-x-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="capsButton px-8 disabled:opacity-50"
+            >
+              {loading ? "Searching..." : "Search"}
+            </button>
+
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={loading}
+              className="capsButtonSecondary px-8"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+
+        {/* FORM */}
+        {(flag === "Y" || flag === "N") && (
+          <div className="mt-6">
+            <Row label="Bank Name :">
+              <select
+                name="bank"
+                value={formData.bank}
+                onChange={handleInputChange}
+                disabled={loading || flag === "Y"}
+                className={inputClass}
+              >
+                <option value="">Select Bank</option>
+                {bankList.map((b, i) => (
+                  <option key={i} value={b}>
+                    {b}
+                  </option>
+                ))}
+                {flag === "N" && <option value="others">Others</option>}
+              </select>
+            </Row>
+
+            {showOtherBank && (
+              <Row label="Other Bank :">
+                <input
+                  name="otherBank"
+                  value={formData.otherBank}
+                  onChange={handleInputChange}
+                  className={inputClass}
+                />
+              </Row>
+            )}
+
+            <Row label="IFSC Code :">
+              <input
+                name="ifsc"
+                value={formData.ifsc}
+                onChange={handleInputChange}
+                maxLength={11}
+                disabled={flag === "Y"}
+                className={inputClass}
+              />
+            </Row>
+
+            <Row label="Branch Name :">
+              <input
+                name="branch"
+                value={formData.branch}
+                onChange={handleInputChange}
+                className={inputClass}
+              />
+            </Row>
+
+            <Row label="State :">
+              <select
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                className={inputClass}
+              >
+                <option value="">Select State</option>
+                {states.map((s, i) => (
+                  <option key={i} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </Row>
+
+            <Row label="City :">
+              <select
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                disabled={!formData.state}
+                className={`${inputClass} disabled:bg-gray-100`}
+              >
+                <option value="">
+                  {formData.state ? "Select City" : "Select State First"}
+                </option>
+                {cities.map((c, i) => (
+                  <option key={i} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </Row>
+
+            <div className="text-center mt-4">
+              <button
+                onClick={handleSubmitDetails}
+                disabled={loading}
+                className="capsButton px-10 disabled:opacity-50"
+              >
+                {loading
+                  ? "Processing..."
+                  : flag === "Y"
+                  ? "Update"
+                  : "Add"}
+              </button>
+            </div>
+          </div>
+        )}
+      </PageCard>
     </div>
   );
 };

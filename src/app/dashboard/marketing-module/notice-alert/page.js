@@ -3,121 +3,163 @@
 import { useState, useEffect } from "react";
 import CapsCard from "@/app/components/caps_card/CapsCard";
 import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 export default function UserForm() {
-
-  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+  const [clientIds, setClientIds] = useState([]);
   const [userId, setUserId] = useState("");
   const [userType, setUserType] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [clientIds, setClientIds] = useState([]);
-  const [selectedMessages, setSelectedMessages] = useState({});
+
   const [messages, setMessages] = useState({});
+  const [selectedMessages, setSelectedMessages] = useState({});
+  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+
+  const [loading, setLoading] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
 
+  /* ================= CLIENT IDS ================= */
+
   useEffect(() => {
     const fetchClientIds = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8281/noticeAlert/clientDetails"
+        const res = await axiosInstance.get(
+          endpoints.marketingModuleEndpoints.getClientDetails,
         );
-        const data = await response.json();
-        if (data?.data) {
-          const clientIdList = data.data.map((c) => c.clientId);
-          setClientIds(clientIdList);
+
+        console.log("CLIENT API RESPONSE:", res.data);
+
+        if (res.data?.data) {
+          const ids = res.data.data.map((item) => item.clientId);
+
+          setClientIds(ids);
         }
-      } catch (err) {
-        setError("Error fetching client IDs");
-        setVisible(true);
+      } catch (error) {
+        console.log("CLIENT API ERROR:", error);
       }
     };
+
     fetchClientIds();
   }, []);
 
-  /* ================= HANDLE SUBMIT ================= */
+  /* ================= FETCH MESSAGE ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
 
     if (!userId) {
-      setError("Please select User Id.");
-      setVisible(true);
-      setLoading(false);
+      Swal.fire({
+        icon: "warning",
+        title: "Validation",
+        text: "Please select User Id",
+      });
       return;
     }
 
     if (!userType) {
-      setError("Please select User Type.");
-      setVisible(true);
-      setLoading(false);
+      Swal.fire({
+        icon: "warning",
+        title: "Validation",
+        text: "Please select User Type",
+      });
       return;
     }
 
+    setLoading(true);
+
     try {
-      const apiUrl = `http://localhost:8281/noticeAlert/message?id=${userId}&userType=${userType}`;
-      const response = await fetch(apiUrl);
-      const data = await response.json();
+      const res = await axiosInstance.get(
+        `${endpoints.marketingModuleEndpoints.getMessage}?id=${userId}&userType=${userType}`,
+      );
 
-      if (data.status !== "success") throw new Error();
+      console.log("MESSAGE RESPONSE:", res.data);
 
-      setMessages({
-        1: data.data.ticker || "",
-        3: data.data.deal || "",
+      if (res.data.status === "success") {
+        setMessages({
+          1: res.data.data.ticker || "",
+          3: res.data.data.deal || "",
+        });
+
+        setShowAdditionalFields(true);
+      }
+    } catch (err) {
+      console.log("MESSAGE ERROR:", err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error fetching message",
       });
-
-      setShowAdditionalFields(true);
-    } catch {
-      setError("Error fetching messages.");
-      setVisible(true);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
-  /* ================= HANDLE UPDATE ================= */
+  /* ================= UPDATE MESSAGE ================= */
+
   const handleUpdate = async () => {
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      const formData = new URLSearchParams();
-      formData.append("id", userId);
-      formData.append("userType", userType);
-      formData.append("tickerMessage", messages[2] || "");
-      formData.append("dealMessage", messages[4] || "");
+      const payload = new URLSearchParams();
 
-      const response = await fetch(
-        "http://localhost:8281/noticeAlert/updateMessage",
+      payload.append("id", userId);
+      payload.append("userType", userType);
+
+      payload.append("tickerMessage", messages[2] || "");
+      payload.append("dealMessage", messages[4] || "");
+
+      payload.append("portalUserType", localStorage.getItem("adminUserType"));
+      payload.append("userId", localStorage.getItem("userId"));
+
+      const res = await axiosInstance.post(
+        endpoints.marketingModuleEndpoints.updateMessage,
+        payload,
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: formData.toString(),
-        }
+        },
       );
 
-      const data = await response.json();
+      console.log("UPDATE RESPONSE:", res.data);
 
-      if (data.status !== "success") throw new Error();
+      if (res.data.status === "success") {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: res.data.message,
+        }).then(() => {
+          window.location.reload();
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: res.data.message,
+        });
+      }
+    } catch (err) {
+      console.log("UPDATE ERROR:", err);
 
-      setSuccess(data.message || "Message updated successfully.");
-    } catch {
-      setError("Error updating message.");
-    } finally {
-      setVisible(true);
-      setLoading(false);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error updating message",
+      });
     }
+
+    setVisible(true);
+    setLoading(false);
   };
+
+  /* ================= CHECKBOX ================= */
 
   const handleCheckboxChange = (id) => {
     setSelectedMessages((prev) => ({
@@ -135,47 +177,51 @@ export default function UserForm() {
 
   const handleCloseModal = () => {
     setVisible(false);
+
     if (success) window.location.reload();
   };
 
   return (
     <div className="p-6 min-h-screen text-[#226b88]">
-
-      {/* 🔵 HEADER CARD */}
       <CapsCard
         title="Notice Alert Management"
         description="Manage ticker and today's deal messages"
       />
 
-      {/* ⚪ FORM CARD */}
       <PageCard>
-
         <form onSubmit={handleSubmit}>
+          {/* USER SELECT */}
 
-          {/* Top Section */}
           <div className="flex justify-center gap-5 items-center mb-8">
+            {/* CLIENT ID */}
 
             <div className="flex items-center gap-4">
               <label>Select User Id</label>
+
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                className="capsSelect w-50"
+                className="capsSelect w-50 text-black"
               >
                 <option value="">Select</option>
-                <option value="all">All</option>
-                {clientIds.map((id) => (
-                  <option key={id}>{id}</option>
+
+                {clientIds.map((id, index) => (
+                  <option key={index} value={id}>
+                    {id}
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* USER TYPE */}
+
             <div className="flex items-center gap-4">
               <label>Select User Type</label>
+
               <select
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
-                className="capsSelect w-60"
+                className="capsSelect w-60 text-black"
               >
                 <option value="">Select</option>
                 <option value="MD">Master Distributor</option>
@@ -187,10 +233,10 @@ export default function UserForm() {
             <button type="submit" className="capsButton">
               {loading ? "Loading..." : "Go"}
             </button>
-
           </div>
 
-          {/* Date Section */}
+          {/* DATE */}
+
           {showAdditionalFields && (
             <div className="flex justify-center gap-10 mb-8">
               <input
@@ -199,6 +245,7 @@ export default function UserForm() {
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="capsInput"
               />
+
               <input
                 type="date"
                 value={dateTo}
@@ -208,7 +255,8 @@ export default function UserForm() {
             </div>
           )}
 
-          {/* Messages */}
+          {/* MESSAGE BLOCKS */}
+
           {showAdditionalFields &&
             [
               { id: 1, title: "Default Message", check: false },
@@ -217,7 +265,6 @@ export default function UserForm() {
               { id: 4, title: "Write New Today's Deal", check: true },
             ].map(({ id, title, check }) => (
               <div key={id} className="mb-6 border rounded-lg overflow-hidden">
-
                 <div className="capsColor relative text-center py-3 font-semibold">
                   {check && (
                     <input
@@ -227,6 +274,7 @@ export default function UserForm() {
                       onChange={() => handleCheckboxChange(id)}
                     />
                   )}
+
                   {title}
                 </div>
 
@@ -241,11 +289,9 @@ export default function UserForm() {
                     className="capsInput w-full"
                   />
                 </div>
-
               </div>
             ))}
 
-          {/* Update Button */}
           {showAdditionalFields && (
             <div className="text-center mt-6">
               <button
@@ -257,30 +303,11 @@ export default function UserForm() {
               </button>
             </div>
           )}
-
         </form>
-
       </PageCard>
 
-      {/* Modal */}
-      {visible && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h3 className="text-lg font-semibold mb-4">
-              {error ? "Error" : "Success"}
-            </h3>
-            <p className={success ? "text-green-600" : "text-red-600"}>
-              {success || error}
-            </p>
-            <div className="text-right mt-4">
-              <button onClick={handleCloseModal} className="capsButton">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      
+      
     </div>
   );
 }

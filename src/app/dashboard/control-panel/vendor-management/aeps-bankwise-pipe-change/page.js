@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import { Table } from "antd";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function AEPSBankWisePipeChange() {
   const [apiId, setApiId] = useState("Select");
   const [subService, setSubService] = useState("All");
@@ -38,13 +41,13 @@ function AEPSBankWisePipeChange() {
       }
     };
 
-    loadApis();
+    if (baseUrl) loadApis();
   }, [baseUrl]);
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
     if (apiId === "Select") {
-      alert("Please select API");
+      setNoData("Please select API");
       return;
     }
 
@@ -63,11 +66,10 @@ function AEPSBankWisePipeChange() {
       } else {
         setBankList([]);
         setNoData("No Data Found");
-        setShowTable(false);
       }
     } catch (err) {
       console.error(err);
-      alert("Error while fetching data");
+      setNoData("Error while fetching data");
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,9 @@ function AEPSBankWisePipeChange() {
   /* ================= CHECKBOX ================= */
   const toggleCheck = (iin) => {
     setCheckedRows((prev) =>
-      prev.includes(iin) ? prev.filter((x) => x !== iin) : [...prev, iin]
+      prev.includes(iin)
+        ? prev.filter((x) => x !== iin)
+        : [...prev, iin]
     );
   };
 
@@ -86,8 +90,8 @@ function AEPSBankWisePipeChange() {
 
   /* ================= UPDATE ================= */
   const handleUpdate = async () => {
-    if (checkedRows.length === 0) {
-      alert("Select at least one bank");
+    if (!checkedRows.length) {
+      setNoData("Select at least one bank");
       return;
     }
 
@@ -101,6 +105,7 @@ function AEPSBankWisePipeChange() {
         `${baseUrl}/BankwisePipe.action?param=updateBankPipe&apiId=${apiId}&subs=${subService}&list1=${list1}&list2=${list2}`
       );
 
+      setNoData("");
       alert("Updated Successfully");
     } catch {
       alert("Update failed");
@@ -125,10 +130,17 @@ function AEPSBankWisePipeChange() {
           onChange={() => toggleCheck(row.Iin_Number)}
         />
       ),
+      width: 50,
+    },
+    {
+      title: "S.N.",
+      render: (_, __, i) => i + 1,
       width: 60,
     },
-    { title: "S.N.", render: (_, __, i) => i + 1 },
-    { title: "Bank Name", dataIndex: "BankName" },
+    {
+      title: "Bank Name",
+      dataIndex: "BankName",
+    },
     {
       title: "Vendor",
       render: (row) => (
@@ -140,7 +152,7 @@ function AEPSBankWisePipeChange() {
               [row.Iin_Number]: e.target.value,
             }))
           }
-          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
+          className="capsInput"
         >
           <option value="">--Select--</option>
           <option>Airtel Bank</option>
@@ -153,52 +165,45 @@ function AEPSBankWisePipeChange() {
     },
   ];
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
-
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-3">
-      <label className="w-[180px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
-  /* ================= UI ================= */
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="AEPS Bankwise Pipe Change"
+        description="Manage AEPS vendor pipe mapping by bank"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          AEPS Bankwise Pipe Change
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <div className="p-4">
-            <Row label="API ID :">
+            <FieldRow label="API ID">
               <select
                 value={apiId}
                 onChange={(e) => setApiId(e.target.value)}
-                className={inputClass}
+                className="capsInput"
               >
                 <option>Select</option>
                 {apiList.map((a, i) => (
                   <option key={i} value={a.aesApiId}>
-                    {a.aesApiId} {a.companyName}
+                    {a.aesApiId} — {a.companyName}
                   </option>
                 ))}
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Sub Service :">
+            <FieldRow label="Sub Service">
               <select
                 value={subService}
                 onChange={(e) => setSubService(e.target.value)}
-                className={inputClass}
+                className="capsInput"
               >
                 <option>All</option>
                 <option>AEPS-CASH WITHDRAWL</option>
@@ -206,55 +211,53 @@ function AEPSBankWisePipeChange() {
                 <option>AEPS-MINI STATEMENT</option>
                 <option>AEPS-AADHAAR PAY</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <div className="text-center">
+            {/* STATUS */}
+            <div className="text-center text-sm mb-2">
+              {loading && <p className="text-gray-500">Loading...</p>}
+              {noData && <p className="text-red-500">{noData}</p>}
+            </div>
+
+            {/* BUTTONS */}
+            <div className="text-center mt-2">
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
                 Submit
               </button>
             </div>
-          </div>
 
-          {/* STATUS */}
-          <div className="text-center mt-3 text-sm">
-            {loading && (
-              <p className="text-gray-500 animate-pulse">Loading...</p>
+            {/* TABLE */}
+            {showTable && (
+              <>
+                <div className="mt-6">
+                  <Table
+                    columns={columns}
+                    dataSource={bankList}
+                    rowKey="Iin_Number"
+                    pagination={false}
+                    bordered
+                    size="small"
+                  />
+                </div>
+
+                <div className="text-center mt-4">
+                  <button
+                    onClick={handleUpdate}
+                    className="capsButtonSecondary min-w-[140px]"
+                  >
+                    Update
+                  </button>
+                </div>
+              </>
             )}
-            {noData && <p className="text-red-500">{noData}</p>}
+
           </div>
-
-          {/* TABLE */}
-          {showTable && (
-            <>
-              <div className="mt-6">
-                <Table
-                  columns={columns}
-                  dataSource={bankList}
-                  rowKey="Iin_Number"
-                  pagination={false}
-                  bordered
-                  size="small"
-                />
-              </div>
-
-              <div className="text-center mt-4">
-                <button
-                  onClick={handleUpdate}
-                  className="px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90"
-                >
-                  Update
-                </button>
-              </div>
-            </>
-          )}
-
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

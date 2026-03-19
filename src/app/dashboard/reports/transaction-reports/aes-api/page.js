@@ -22,10 +22,8 @@ function TrAESAPI() {
 
   const validateForm = () => {
     if (!formData.reportType) return "Please select report type";
-    if (!formData.from || !formData.to)
-      return "Please select date range";
-    if (formData.from > formData.to)
-      return "Invalid date range";
+    if (!formData.from || !formData.to) return "Please select date range";
+    if (formData.from > formData.to) return "Invalid date range";
     return "";
   };
 
@@ -37,29 +35,44 @@ function TrAESAPI() {
     setLoading(true);
 
     setTimeout(() => {
-      setTableData([
-        {
-          id: "AG48659",
-          txnDate: "06 Feb 2026",
-          txnTime: "10:09:22",
-          connectionNumber: "8630504806",
-          operator: "JIO",
-          txnID: "256M2602061009200837",
-          txnAmount: "209.00",
-          operatorID: "256M2602061009200837",
-          commission: "1.50",
+      const fromDate = new Date(formData.from);
+      const toDate = new Date(formData.to);
+
+      const generatedData = [];
+      let currentDate = new Date(fromDate);
+      let count = 1;
+
+      while (currentDate <= toDate) {
+        generatedData.push({
+          id: "AG" + (48000 + count),
+          txnDate: currentDate.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          txnTime: `${10 + count}:0${count}:22`,
+          connectionNumber: "98" + Math.floor(Math.random() * 100000000),
+          operator: count % 2 === 0 ? "JIO" : "AIRTEL",
+          txnID: "TXN" + Date.now() + count,
+          txnAmount: (100 + count * 75).toFixed(2),
+          operatorID: "OP" + Date.now() + count,
+          commission: (1 + count * 0.5).toFixed(2),
           bankitFee: "0.00",
-          txnStatus: "Pending",
+          txnStatus: count % 2 === 0 ? "Success" : "Pending",
           serviceprovider: "AESAPI",
-        },
-      ]);
+        });
+
+        currentDate.setDate(currentDate.getDate() + 1);
+        count++;
+      }
+
+      setTableData(generatedData);
       setLoading(false);
-    }, 800);
+    }, 500);
   };
 
   const handleDownload = () => {
-    if (!tableData.length)
-      return setError("No data to download");
+    if (!tableData.length) return setError("No data to download");
 
     const headers = Object.keys(tableData[0]).join(",");
     const rows = tableData
@@ -75,138 +88,122 @@ function TrAESAPI() {
 
   return (
     <div className="p-6 min-h-screen text-[#226b88]">
-
       <CapsCard
         title="Transaction Report"
         description="AES API Report View & Download"
       />
 
-      
-          <PageCard>
+      <PageCard>
+        {/* FORM */}
+        <div className="max-w-2xl mx-auto space-y-5">
+          <FormRow label="Report Type">
+            <select
+              name="reportType"
+              value={formData.reportType}
+              onChange={handleChange}
+              className="capsSelect w-80"
+            >
+              <option value="">Select</option>
+              <option value="Bill Pay">Bill Pay</option>
+              <option value="Recharge Transaction">Recharge Transaction</option>
+            </select>
+          </FormRow>
 
-            {/* FORM */}
-            <div className="max-w-2xl mx-auto space-y-5">
+          <FormRow label="From Date">
+            <input
+              type="date"
+              name="from"
+              value={formData.from}
+              onChange={handleChange}
+              className="capsInput w-80"
+            />
+          </FormRow>
 
-              <FormRow label="Report Type">
-                <select
-                  name="reportType"
-                  value={formData.reportType}
-                  onChange={handleChange}
-                  className="capsSelect w-80"
-                >
-                  <option value="">Select</option>
-                  <option value="Bill Pay">Bill Pay</option>
-                  <option value="Recharge Transaction">
-                    Recharge Transaction
-                  </option>
-                </select>
-              </FormRow>
+          <FormRow label="To Date">
+            <input
+              type="date"
+              name="to"
+              value={formData.to}
+              onChange={handleChange}
+              className="capsInput w-80"
+            />
+          </FormRow>
 
-              <FormRow label="From Date">
-                <input
-                  type="date"
-                  name="from"
-                  value={formData.from}
-                  onChange={handleChange}
-                  className="capsInput w-80"
-                />
-              </FormRow>
+          {error && <p className="text-red-600 text-center text-sm">{error}</p>}
 
-              <FormRow label="To Date">
-                <input
-                  type="date"
-                  name="to"
-                  value={formData.to}
-                  onChange={handleChange}
-                  className="capsInput w-80"
-                />
-              </FormRow>
-
-              {error && (
-                <p className="text-red-600 text-center text-sm">
-                  {error}
-                </p>
-              )}
-
-              {loading && (
-                <div className="text-center">
-                  <div className="animate-spin h-6 w-6 border-4 border-[#4c95b3] border-t-transparent rounded-full mx-auto"></div>
-                </div>
-              )}
-
-              {/* BUTTONS */}
-              <div className="text-center pt-2 space-x-3">
-                <button
-                  onClick={handleView}
-                  className="capsButton"
-                >
-                  View
-                </button>
-
-                <button
-                  onClick={handleDownload}
-                  className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
-                >
-                  Download
-                </button>
-              </div>
-
+          {loading && (
+            <div className="text-center">
+              <div className="animate-spin h-6 w-6 border-4 border-[#4c95b3] border-t-transparent rounded-full mx-auto"></div>
             </div>
+          )}
 
-            {/* TABLE */}
-            {tableData.length > 0 && (
-              <div className="overflow-x-auto mt-8 border rounded-lg">
-                <table className="min-w-full text-sm text-center border">
+          {/* BUTTONS */}
+          <div className="text-center pt-2 space-x-3">
+            <button onClick={handleView} className="capsButton">
+              View
+            </button>
 
-                  <thead className="chcolor1 text-white">
-                    <tr>
-                      {[
-                        "Agent ID",
-                        "Txn Date",
-                        "Txn Time",
-                        "Connection Number",
-                        "Operator",
-                        "Txn ID",
-                        "Txn Amount",
-                        "Operator ID",
-                        "Commission",
-                        "Bankit Fee",
-                        "Txn Status",
-                        "Service Provider",
-                      ].map((h) => (
-                        <th key={h} className="border px-3 py-2">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {tableData.map((row, i) => (
-                      <tr key={i} className="border-t hover:bg-gray-50">
-                        <td className="border px-2 py-1">{row.id}</td>
-                        <td className="border px-2 py-1">{row.txnDate}</td>
-                        <td className="border px-2 py-1">{row.txnTime}</td>
-                        <td className="border px-2 py-1">{row.connectionNumber}</td>
-                        <td className="border px-2 py-1">{row.operator}</td>
-                        <td className="border px-2 py-1">{row.txnID}</td>
-                        <td className="border px-2 py-1 text-right">{row.txnAmount}</td>
-                        <td className="border px-2 py-1">{row.operatorID}</td>
-                        <td className="border px-2 py-1">{row.commission}</td>
-                        <td className="border px-2 py-1">{row.bankitFee}</td>
-                        <td className="border px-2 py-1">{row.txnStatus}</td>
-                        <td className="border px-2 py-1">{row.serviceprovider}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-
-                </table>
-              </div>
-            )}
-
-          </PageCard>
+            <button
+              onClick={handleDownload}
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg"
+            >
+              Download
+            </button>
+          </div>
         </div>
-     
+
+        {/* TABLE */}
+        {tableData.length > 0 && (
+          <div className="overflow-x-auto mt-8 border rounded-lg">
+            <table className="min-w-full text-sm text-center border">
+              <thead className="chcolor1 text-white">
+                <tr>
+                  {[
+                    "Agent ID",
+                    "Txn Date",
+                    "Txn Time",
+                    "Connection Number",
+                    "Operator",
+                    "Txn ID",
+                    "Txn Amount",
+                    "Operator ID",
+                    "Commission",
+                    "Bankit Fee",
+                    "Txn Status",
+                    "Service Provider",
+                  ].map((h) => (
+                    <th key={h} className="border px-3 py-2">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {tableData.map((row, i) => (
+                  <tr key={i} className="border-t hover:bg-gray-50">
+                    <td className="border px-2 py-1">{row.id}</td>
+                    <td className="border px-2 py-1">{row.txnDate}</td>
+                    <td className="border px-2 py-1">{row.txnTime}</td>
+                    <td className="border px-2 py-1">{row.connectionNumber}</td>
+                    <td className="border px-2 py-1">{row.operator}</td>
+                    <td className="border px-2 py-1">{row.txnID}</td>
+                    <td className="border px-2 py-1 text-right">
+                      {row.txnAmount}
+                    </td>
+                    <td className="border px-2 py-1">{row.operatorID}</td>
+                    <td className="border px-2 py-1">{row.commission}</td>
+                    <td className="border px-2 py-1">{row.bankitFee}</td>
+                    <td className="border px-2 py-1">{row.txnStatus}</td>
+                    <td className="border px-2 py-1">{row.serviceprovider}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </PageCard>
+    </div>
   );
 }
 

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const PGStatusChange = () => {
   const [transactionId, setTransactionId] = useState("");
@@ -18,52 +20,50 @@ const PGStatusChange = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > PG Status Change"
+        description="Update payment gateway transaction status"
+      />
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          PG Status Change
-        </div>
+      <PageCard>
+        <form onSubmit={handleSubmit}>
+          <div className="flex justify-center">
+            <div className="w-[520px] space-y-4">
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-8">
-          <form onSubmit={handleSubmit} className="flex justify-center">
-            <div className="w-[600px]">
-
-              {/* INPUT ROW */}
-              <div className="flex items-center mb-6">
-                <label className="font-semibold w-[150px] text-right mr-4">
+              {/* Transaction ID */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
                   Transaction Id
                 </label>
+                <div className="text-center">:</div>
 
                 <input
                   type="text"
                   value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
+                  onChange={(e) =>
+                    setTransactionId(e.target.value)
+                  }
                   maxLength={40}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
-                             focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                  className="capsInput"
+                  placeholder="Enter Transaction ID"
                 />
               </div>
 
-              {/* BUTTON */}
-              <div className="text-center">
+              {/* Button */}
+              <div className="text-center pt-2">
                 <button
                   type="submit"
-                  className="px-6 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition"
+                  className="capsButton px-10"
                 >
-                  Submit
+                  SUBMIT
                 </button>
               </div>
 
             </div>
-          </form>
-        </div>
-      </div>
+          </div>
+        </form>
+      </PageCard>
     </div>
   );
 };

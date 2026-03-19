@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Table } from "antd";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const CouponStatus = () => {
   const [couponData, setCouponData] = useState([]);
   const [message, setMessage] = useState("");
@@ -74,7 +77,7 @@ const CouponStatus = () => {
       render: (_, record) => (
         <button
           onClick={() => downloadFile(record.batchNo)}
-          className="px-3 py-1 text-sm rounded-md text-white bg-[#4fa2c2] hover:opacity-90"
+          className="capsButton text-xs px-3 py-1"
         >
           Download
         </button>
@@ -83,42 +86,43 @@ const CouponStatus = () => {
   ];
 
   return (
-    <div className="flex justify-center items-start">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-lg rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          {headerName}
+      {/* HEADER */}
+      <CapsCard
+        title={headerName}
+        description="View coupon batches and download status reports"
+      />
+
+      <PageCard>
+
+        {/* STATUS / LOADER */}
+        <div className="text-center mb-3 min-h-[24px]">
+          {loading && (
+            <p className="text-sm text-gray-500 animate-pulse">
+              Loading...
+            </p>
+          )}
+
+          {message && (
+            <p className="text-sm text-red-500">
+              {message}
+            </p>
+          )}
         </div>
 
-        {/* BODY */}
-        <div className="px-6 py-5">
+        {/* TABLE */}
+        <Table
+          dataSource={couponData}
+          columns={columns}
+          bordered
+          size="small"
+          pagination={false}
+          rowKey={(record, index) => index}
+          scroll={{ x: "max-content" }}
+        />
 
-          {/* MESSAGE / LOADER */}
-          <div className="text-center mb-3 min-h-[24px]">
-            {loading && (
-              <div className="text-sm text-gray-500 animate-pulse">
-                Loading...
-              </div>
-            )}
-
-            {message && (
-              <p className="text-red-500 text-sm">{message}</p>
-            )}
-          </div>
-
-          {/* TABLE */}
-          <Table
-            dataSource={couponData}
-            columns={columns}
-            bordered
-            size="small"
-            pagination={false}
-            rowKey={(record, index) => index}
-            scroll={{ x: "max-content" }}
-          />
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

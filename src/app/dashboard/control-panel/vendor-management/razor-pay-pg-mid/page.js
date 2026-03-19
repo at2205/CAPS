@@ -2,8 +2,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function RazorPayPGMid() {
-  /* ================= STATES ================= */
   const [midList, setMidList] = useState([]);
   const [selectedMid, setSelectedMid] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,9 +29,7 @@ function RazorPayPGMid() {
   }, []);
 
   /* ================= SUBMIT ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!selectedMid) {
       setError("Please select MID");
       return;
@@ -53,80 +53,88 @@ function RazorPayPGMid() {
     }
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setSelectedMid("");
+    setSuccess("");
+    setError("");
+  };
+
+  const formatMidLabel = (userId) => {
+    if (userId === "pawan.thakur@bankit.in")
+      return `T+1 — ${userId}`;
+
+    if (userId === "gaurav.chauhan@bankit.in")
+      return `T+0 — ${userId}`;
+
+    return userId;
+  };
+
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">
+        {label}
+      </label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
+    </div>
+  );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="RazorPay PG MID"
+        description="Update RazorPay payment gateway MID"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          RazorPay PG MID
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
+            {/* MID */}
+            <FieldRow label="Select MID">
+              <select
+                className="capsInput"
+                value={selectedMid}
+                onChange={(e) => setSelectedMid(e.target.value)}
+              >
+                <option value="">Select</option>
 
-          <form onSubmit={handleSubmit}>
-
-            {/* MID SELECT */}
-            <div className="flex items-center justify-center mb-4">
-              <label className="w-[120px] text-right text-sm font-semibold">
-                MID <span className="text-red-500">*</span> :
-              </label>
-
-              <div className="w-[260px] ml-3">
-                <select
-                  className={inputClass}
-                  value={selectedMid}
-                  onChange={(e) => setSelectedMid(e.target.value)}
-                >
-                  <option value="">Select</option>
-
-                  {midList.map((m, i) => (
-                    <option key={i} value={m.UserId}>
-                      {m.UserId === "pawan.thakur@bankit.in"
-                        ? `T+1 - ${m.UserId}`
-                        : m.UserId === "gaurav.chauhan@bankit.in"
-                        ? `T+0 - ${m.UserId}`
-                        : m.UserId}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                {midList.map((m, i) => (
+                  <option key={i} value={m.UserId}>
+                    {formatMidLabel(m.UserId)}
+                  </option>
+                ))}
+              </select>
+            </FieldRow>
 
             {/* STATUS */}
-            <div className="text-center min-h-[24px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-500 text-sm">{error}</p>
-              )}
-              {loading && (
-                <p className="text-gray-500 text-sm animate-pulse">
-                  Processing...
-                </p>
-              )}
+            <div className="text-center text-sm mb-2">
+              {success && <p className="text-green-600">{success}</p>}
+              {error && <p className="text-red-500">{error}</p>}
+              {loading && <p className="text-gray-500">Processing...</p>}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-4">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={!selectedMid || loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${(!selectedMid || loading) ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
                 Submit
               </button>
+
+              <button
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
+              </button>
             </div>
 
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

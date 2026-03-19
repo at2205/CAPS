@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const ActivateDeactivateService = () => {
   const [formData, setFormData] = useState({
@@ -28,67 +30,74 @@ const ActivateDeactivateService = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Activate / Deactivate Service
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* BODY */}
-        <div className="px-10 py-10">
-          <div className="flex justify-center">
-            <div className="w-[520px]">
+      {/* HEADER */}
+      <CapsCard
+        title="Activate / Deactivate Service"
+        description="Manage service activation status"
+      />
 
-              {/* SERVICE */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Select Service
-                </label>
-                <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                  name="service"
-                  value={formData.service}
-                  onChange={handleChange}
-                >
-                  <option value="">-- Select --</option>
-                  <option value="AADHAR">AADHAR</option>
-                </select>
-              </div>
+      {/* MAIN CARD */}
+      <PageCard>
 
-              {/* ACTION */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Select Action
-                </label>
-                <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                  name="action"
-                  value={formData.action}
-                  onChange={handleChange}
-                >
-                  <option value="">-- Select --</option>
-                  <option value="Activate">Activate</option>
-                  <option value="Deactivate">Deactivate</option>
-                </select>
-              </div>
+        <div className="flex justify-center">
+          <div>
 
-              {/* BUTTON */}
-              <div className="text-center mt-6">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="px-6 py-2 text-white rounded-2xl shadow bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90 transition"
-                >
-                  Continue
-                </button>
-              </div>
+            {/* SERVICE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
+                Select Service
+              </label>
 
+              <div className="text-center">:</div>
+
+              <select
+                name="service"
+                value={formData.service}
+                onChange={handleChange}
+                className="capsSelect"
+              >
+                <option value="">-- Select --</option>
+                <option value="AADHAR">AADHAR</option>
+              </select>
             </div>
+
+            {/* ACTION */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+              <label className="text-right font-medium">
+                Select Action
+              </label>
+
+              <div className="text-center">:</div>
+
+              <select
+                name="action"
+                value={formData.action}
+                onChange={handleChange}
+                className="capsSelect"
+              >
+                <option value="">-- Select --</option>
+                <option value="Activate">Activate</option>
+                <option value="Deactivate">Deactivate</option>
+              </select>
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="capsButton min-w-[120px]"
+              >
+                Continue
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

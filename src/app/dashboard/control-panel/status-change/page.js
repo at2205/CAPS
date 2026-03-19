@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const PendingTransaction = () => {
   const [searchData, setSearchData] = useState({
     service: "DMR-ARemit",
@@ -78,8 +81,28 @@ const PendingTransaction = () => {
       await new Promise((r) => setTimeout(r, 1200));
 
       const mockTranList = [
-        ["AGENT001", "TXN001", "DMR-ARemit", "2024-01-15", "14:30:45", "₹5,000.00", "₹50.00", "Pending", "CLIENT001"],
-        ["AGENT002", "TXN002", "AccountVerification-AREMIT", "2024-01-15", "15:45:22", "₹2,500.00", "₹25.00", "Pending", "CLIENT002"],
+        [
+          "AGENT001",
+          "TXN001",
+          "DMR-ARemit",
+          "2024-01-15",
+          "14:30:45",
+          "₹5,000.00",
+          "₹50.00",
+          "Pending",
+          "CLIENT001",
+        ],
+        [
+          "AGENT002",
+          "TXN002",
+          "AccountVerification-AREMIT",
+          "2024-01-15",
+          "15:45:22",
+          "₹2,500.00",
+          "₹25.00",
+          "Pending",
+          "CLIENT002",
+        ],
       ];
 
       setTranList(mockTranList);
@@ -129,26 +152,35 @@ const PendingTransaction = () => {
     new Date(dateString).toLocaleDateString("en-GB");
 
   const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+
+  const Row = ({ label, children }) => (
+    <div className="flex items-center justify-center mb-3">
+      <label className="w-[200px] text-right text-sm font-semibold">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto py-6">
-      {/* HEADER */}
-      <div className="rounded-xl shadow-lg border">
-        <div className="bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6] text-white text-lg font-bold text-center py-3 rounded-t-xl">
-          Pending Transaction Process
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Pending Transaction Process"
+        description="Search and update pending transactions"
+      />
 
-        <div className="p-6">
-          {/* MESSAGE */}
-          {message && (
-            <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-md py-2">
-              {message}
-            </div>
-          )}
+      <PageCard>
+        {/* MESSAGE */}
+        {message && (
+          <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-          {/* SEARCH FORM */}
-          <form onSubmit={handleSearch} className="grid md:grid-cols-4 gap-4">
+        {/* SEARCH FORM */}
+        <form onSubmit={handleSearch}>
+          <div className="grid md:grid-cols-4 gap-4 mb-3">
             <div>
               <label className="text-sm font-semibold">Services</label>
               <select
@@ -158,12 +190,16 @@ const PendingTransaction = () => {
                 className={inputClass}
               >
                 <option value="DMR-ARemit">DMR-ARemit</option>
-                <option value="AccountVerification-AREMIT">AccountVerification-AREMIT</option>
+                <option value="AccountVerification-AREMIT">
+                  AccountVerification-AREMIT
+                </option>
               </select>
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Txn No / Txn Id</label>
+              <label className="text-sm font-semibold">
+                Txn No / Txn Id
+              </label>
               <input
                 name="tranId"
                 value={searchData.tranId}
@@ -194,27 +230,32 @@ const PendingTransaction = () => {
                 className={inputClass}
               />
             </div>
+          </div>
 
-            <div className="md:col-span-4 flex justify-center gap-3 mt-2">
-              <button className="px-6 py-2 rounded-full text-white bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6] text-sm">
-                {loading ? "Searching..." : "Submit"}
-              </button>
+          {/* BUTTONS */}
+          <div className="flex justify-center gap-4 mt-2">
+            <button
+              className="capsButton px-10"
+              disabled={loading}
+            >
+              {loading ? "Searching..." : "Submit"}
+            </button>
 
-              <button
-                type="button"
-                onClick={handleClear}
-                className="px-5 py-2 rounded-full bg-gray-500 text-white text-sm"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="capsButtonSecondary px-10"
+              disabled={loading}
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      </PageCard>
 
       {/* TABLE */}
       {tranList.length > 0 && (
-        <div className="mt-6 rounded-xl shadow-lg border p-4">
+        <PageCard>
           <div className="font-semibold mb-3">
             Pending Transactions ({tranList.length})
           </div>
@@ -262,7 +303,9 @@ const PendingTransaction = () => {
                       <td className="border">{tran[8]}</td>
                       <td className="border">{tran[1]}</td>
                       <td className="border">{tran[2]}</td>
-                      <td className="border">{formatDate(tran[3])}</td>
+                      <td className="border">
+                        {formatDate(tran[3])}
+                      </td>
                       <td className="border">{tran[4]}</td>
                       <td className="border">{tran[5]}</td>
                       <td className="border">{tran[6]}</td>
@@ -283,16 +326,16 @@ const PendingTransaction = () => {
               <button
                 type="submit"
                 disabled={!selectedTransactions.length}
-                className="px-5 py-2 rounded-full bg-green-600 text-white text-sm disabled:opacity-50"
+                className="capsButtonSuccess px-8 disabled:opacity-50"
               >
                 {submitLoading ? "Updating..." : "Update Selected"}
               </button>
             </div>
           </form>
-        </div>
+        </PageCard>
       )}
 
-      {/* LOADER OVERLAY */}
+      {/* LOADER */}
       {(loading || submitLoading) && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white px-6 py-4 rounded-lg shadow-lg text-center">

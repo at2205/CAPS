@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { Table } from "antd";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function AESAPI() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -10,87 +13,89 @@ function AESAPI() {
   const [showTable, setShowTable] = useState(false);
 
   const columns = [
-    { title: "S.N.", dataIndex: "sn", key: "sn" },
-    { title: "Service Type", dataIndex: "serviceType", key: "serviceType" },
-    { title: "Service", dataIndex: "service", key: "service" },
-    { title: "Action", dataIndex: "action", key: "action" },
-    { title: "Pipe Status", dataIndex: "pipeStatus", key: "pipeStatus" },
-    { title: "Vendor", dataIndex: "vendor", key: "vendor" },
-    { title: "Status", dataIndex: "status", key: "status" },
+    { title: "S.N.", dataIndex: "sn", key: "sn", width: 70 },
+    { title: "Service Type", dataIndex: "serviceType" },
+    { title: "Service", dataIndex: "service" },
+    { title: "Action", dataIndex: "action" },
+    { title: "Pipe Status", dataIndex: "pipeStatus" },
+    { title: "Vendor", dataIndex: "vendor" },
+    { title: "Status", dataIndex: "status" },
   ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
-
-    if (!formValues.apiId || !formValues.mainService) {
+  const handleSubmit = () => {
+    if (!formValues?.apiId || !formValues?.mainService) {
       setError("Please check input value");
-      setLoading(false);
       setShowTable(false);
       return;
     }
 
+    setLoading(true);
+    setSuccess("");
+    setError("");
+
+    // 🔴 API CALL HERE
     setTimeout(() => {
-      setSuccess("Submit successfully.");
       setLoading(false);
+      setSuccess("Submit successfully.");
       setShowTable(true);
     }, 800);
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setFormValues({});
+    setSuccess("");
+    setError("");
+    setShowTable(false);
+  };
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-3">
-      <label className="w-[160px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="API Vendor Management"
+        description="Manage API vendor & service control"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          API Vendor Management
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            <Row label="API ID :">
+            <FieldRow label="API ID">
               <select
                 name="apiId"
-                className={inputClass}
+                value={formValues?.apiId || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">Select</option>
-                <option value="1">item one</option>
-                <option value="2">item two</option>
-                <option value="3">item three</option>
+                <option value="1">Item One</option>
+                <option value="2">Item Two</option>
+                <option value="3">Item Three</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Main Service :">
+            <FieldRow label="Main Service">
               <select
                 name="mainService"
-                className={inputClass}
+                value={formValues?.mainService || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">Select</option>
                 <option value="Recharge">Recharge</option>
@@ -100,53 +105,53 @@ function AESAPI() {
                 <option value="BBPS">BBPS</option>
                 <option value="Settlement">Settlement</option>
               </select>
-            </Row>
+            </FieldRow>
 
             {/* STATUS */}
-            <div className="text-center min-h-[28px] mb-2">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-600 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+            <div className="text-center text-sm mb-2">
+              {success && <p className="text-green-600">{success}</p>}
+              {error && <p className="text-red-500">{error}</p>}
+              {loading && <p className="text-gray-500">Loading...</p>}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
                 Submit
               </button>
+
+              <button
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
+              </button>
             </div>
-          </form>
 
-          {/* TABLE */}
-          {showTable && (
-            <>
-              <div className="text-white font-semibold text-center py-2 mb-3 mt-6 rounded-md bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-                Service Control (APIall)
+            {/* TABLE */}
+            {showTable && (
+              <div className="mt-6">
+                <div className="font-semibold mb-2 text-center">
+                  Service Control (APIall)
+                </div>
+
+                <Table
+                  dataSource={[]}
+                  columns={columns}
+                  bordered
+                  pagination={false}
+                  size="small"
+                />
               </div>
+            )}
 
-              <Table
-                dataSource={[]}
-                columns={columns}
-                bordered
-                pagination={false}
-              />
-            </>
-          )}
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import axios from "axios";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const ViewKYCDocument = () => {
   const [platform, setPlatform] = useState("");
@@ -56,96 +58,92 @@ const ViewKYCDocument = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          View KYC Documents
+      {/* HEADER */}
+      <CapsCard
+        title="View KYC Documents"
+        description="Search and view uploaded KYC documents"
+      />
+
+      {/* MAIN CARD */}
+      <PageCard>
+
+        {/* SEARCH FORM */}
+        <div className="flex justify-center mb-6">
+          <div>
+
+            {/* PLATFORM */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+              <label className="text-right font-medium">
+                Platform
+              </label>
+
+              <div className="text-center">:</div>
+
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={platform === "bankit"}
+                    onChange={() => setPlatform("bankit")}
+                  />
+                  <span className="text-sm font-medium">BANKIT</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={platform === "findi"}
+                    onChange={() => setPlatform("findi")}
+                  />
+                  <span className="text-sm font-medium">FINDI</span>
+                </label>
+              </div>
+            </div>
+
+            {/* AGENT ID */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+              <label className="text-right font-medium">
+                Agent ID
+              </label>
+
+              <div className="text-center">:</div>
+
+              <input
+                type="text"
+                placeholder="Enter Full Agent ID"
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className="capsInput"
+              />
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center">
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="capsButton min-w-[120px]"
+              >
+                {loading ? "Please wait..." : "Submit"}
+              </button>
+            </div>
+
+          </div>
         </div>
 
-        {/* ===== BODY ===== */}
-        <div className="px-5 py-5">
-
-          {/* ===== SEARCH FORM ===== */}
-          <div className="flex justify-center mb-6">
-            <div className="w-[520px]">
-
-              {/* PLATFORM */}
-              <div className="mb-5 flex items-center">
-                <label className="font-semibold w-1/2 text-right mr-3">
-                  Platform
-                </label>
-
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={platform === "bankit"}
-                      onChange={() => setPlatform("bankit")}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm font-medium">BANKIT</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={platform === "findi"}
-                      onChange={() => setPlatform("findi")}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm font-medium">FINDI</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* AGENT ID */}
-              <div className="mb-6 flex items-center">
-                <label className="font-semibold w-1/2 text-right mr-3">
-                  Agent ID
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter Full Agent ID"
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                />
-              </div>
-
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="px-6 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition disabled:opacity-60"
-                >
-                  {loading ? "Please wait..." : "Submit"}
-                </button>
-              </div>
-
+        {/* KYC DETAILS TABLE */}
+        {kycData && (
+          <>
+            <div className="capsColor text-center py-2 font-semibold rounded-md mb-4">
+              KYC Details
             </div>
-          </div>
 
-          {/* ===== KYC DETAILS TABLE ===== */}
-          {kycData && (
             <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300 text-sm">
+              <table className="min-w-full border border-[#226b88] text-sm">
 
                 <tbody>
-                  <tr className="bg-gray-100">
-                    <th
-                      colSpan="2"
-                      className="border p-3 text-center font-semibold"
-                    >
-                      KYC Details
-                    </th>
-                  </tr>
-
                   <tr>
                     <td className="border p-2 font-medium w-[30%]">
                       Agent ID
@@ -156,7 +154,9 @@ const ViewKYCDocument = () => {
                   </tr>
 
                   <tr>
-                    <td className="border p-2 font-medium">Platform</td>
+                    <td className="border p-2 font-medium">
+                      Platform
+                    </td>
                     <td className="border p-2">
                       {kycData.platform || platform}
                     </td>
@@ -180,7 +180,7 @@ const ViewKYCDocument = () => {
                     </td>
                   </tr>
 
-                  {/* ===== FINDI ===== */}
+                  {/* FINDI */}
                   {platform === "findi" && (
                     <>
                       <tr>
@@ -204,7 +204,7 @@ const ViewKYCDocument = () => {
                     </>
                   )}
 
-                  {/* ===== BANKIT ===== */}
+                  {/* BANKIT */}
                   {platform === "bankit" && (
                     <>
                       <tr>
@@ -228,12 +228,13 @@ const ViewKYCDocument = () => {
                     </>
                   )}
                 </tbody>
+
               </table>
             </div>
-          )}
+          </>
+        )}
 
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

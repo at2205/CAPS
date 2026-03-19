@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function DmtRefundOtp() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -14,7 +17,6 @@ function DmtRefundOtp() {
   });
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
-  const endPoint = "/";
 
   const userId =
     typeof window !== "undefined"
@@ -35,6 +37,9 @@ function DmtRefundOtp() {
       [name]: value,
       userId: userId,
     }));
+
+    setError("");
+    setSuccess("");
   };
 
   /* ================= GET OTP ================= */
@@ -64,16 +69,13 @@ function DmtRefundOtp() {
     );
 
     try {
-      const response = await fetch(
-        `${baseUrl}${endPoint}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: token,
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch(`${baseUrl}/`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+        },
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error("Network response was not ok");
@@ -83,98 +85,92 @@ function DmtRefundOtp() {
 
       if (result.status === "0") {
         setSuccess("OTP sent successfully.");
-        setError("");
       } else {
         setError(
           result.message ||
             "Something went wrong, please try again"
         );
-        setSuccess("");
       }
     } catch (err) {
       console.error(err);
       setError("Error processing request.");
-      setSuccess("");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-gray-50">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="DA Module > DMT Refund OTP"
+        description="Generate OTP for refund transaction validation"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 rounded-t-xl text-[18px] bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          DMT Refund OTP
-        </div>
+      <PageCard>
+        <form onSubmit={handleGetOtp}>
+          <div className="flex justify-center">
+            <div className="w-[520px] space-y-4">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <form onSubmit={handleGetOtp} className="space-y-4">
+              {/* Transaction ID */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  Service Delivery TID
+                </label>
+                <div className="text-center">:</div>
 
-            {/* TRANSACTION ID */}
-            <div className="flex justify-center items-center gap-4">
-              <label className="text-sm font-medium whitespace-nowrap w-[320px] text-right">
-                Service Delivery TID / Transaction ID :
-              </label>
+                <input
+                  type="text"
+                  name="transactionId"
+                  placeholder="Enter TID / Transaction ID"
+                  value={formValues.transactionId}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className="capsInput"
+                />
+              </div>
 
-              <input
-                type="text"
-                name="transactionId"
-                placeholder="Enter TID / Transaction ID"
-                value={formValues.transactionId}
-                onChange={handleInputChange}
-                className="w-[250px] px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-              />
-            </div>
-
-            {/* MESSAGE / SPINNER */}
-            <div className="text-center min-h-[30px]">
-
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="w-5 h-5 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
-
-              {success && (
-                <p className="text-green-600 text-sm mt-2">
-                  {success}
-                </p>
-              )}
-
-              {error && (
-                <p className="text-red-600 text-sm mt-2">
-                  {error}
-                </p>
-              )}
-
-              {message && (
-                <p className="text-red-600 text-sm mt-2">
-                  {message}
-                </p>
-              )}
-            </div>
-
-            {/* BUTTON */}
-            <div className="flex justify-center pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-1.5 text-sm text-white rounded-md bg-[#4fa2c2] hover:bg-[#3d89a6] transition disabled:opacity-50 flex items-center gap-2"
-              >
+              {/* STATUS AREA */}
+              <div className="text-center min-h-[32px]">
                 {loading && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex justify-center">
+                    <div className="w-5 h-5 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
                 )}
 
-                {loading ? "Sending OTP..." : "GET OTP"}
-              </button>
-            </div>
+                {success && (
+                  <p className="text-green-600 text-sm">
+                    {success}
+                  </p>
+                )}
 
-          </form>
-        </div>
-      </div>
+                {error && (
+                  <p className="text-red-500 text-sm">
+                    {error}
+                  </p>
+                )}
+
+                {message && (
+                  <p className="text-red-500 text-sm">
+                    {message}
+                  </p>
+                )}
+              </div>
+
+              {/* Button */}
+              <div className="text-center pt-1">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="capsButton px-10"
+                >
+                  {loading ? "Sending OTP..." : "GET OTP"}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </form>
+      </PageCard>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const CommissionTDSManagement = () => {
   const [formData, setFormData] = useState({
@@ -36,32 +37,24 @@ const CommissionTDSManagement = () => {
     }
   };
 
-  const validateSearchForm = () => {
+  const handleSearch = async (e) => {
+    e.preventDefault();
+
     if (formData.UserType === "select") {
       alert("Please choose correct user type");
-      return false;
+      return;
     }
 
     if (!formData.RequestUserId.trim()) {
       alert("Please enter user ID");
-      return false;
+      return;
     }
 
-    return true;
-  };
+    setLoading(true);
+    setMessage("");
+    setAccountData(null);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-
-    if (!validateSearchForm()) return;
-
-    try {
-      setLoading(true);
-      setMessage("");
-      setAccountData(null);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    setTimeout(() => {
       const mockAccountData = {
         agencyName: "XYZ Enterprises Ltd.",
         Name: "Michael Johnson",
@@ -73,77 +66,32 @@ const CommissionTDSManagement = () => {
 
       setAccountData(mockAccountData);
       setMessage("Account details loaded successfully");
-
-      setUpdateForm({
-        actionOn: "select",
-        amount: "",
-        internalRemark: "",
-        externalRemark: "",
-      });
-    } catch (error) {
-      console.error("Error fetching account details:", error);
-      setMessage("Error fetching account details. Please try again.");
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
-  const validateUpdateForm = () => {
-    const { actionOn, amount, internalRemark, externalRemark } = updateForm;
-
-    if (actionOn === "select") {
+  const handleUpdateSubmit = () => {
+    if (updateForm.actionOn === "select") {
       alert("Please choose any action");
-      return false;
+      return;
     }
 
-    if (!internalRemark.trim()) {
-      alert("Please insert Internal Remark");
-      return false;
-    }
-
-    if (!externalRemark.trim()) {
-      alert("Please insert External Remark");
-      return false;
-    }
-
-    if (!amount.trim()) {
+    if (!updateForm.amount) {
       alert("Please enter Amount");
-      return false;
+      return;
     }
 
-    if (isNaN(amount) || parseFloat(amount) < 0) {
-      alert("Please enter a valid positive number for amount");
-      return false;
+    if (!updateForm.internalRemark.trim()) {
+      alert("Please insert Internal Remark");
+      return;
     }
 
-    return true;
-  };
-
-  const handleUpdateSubmit = async () => {
-    if (!validateUpdateForm()) return;
-
-    try {
-      setLoading(true);
-
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      alert("Commission/TDS adjustment completed successfully!");
-      setMessage("Commission/TDS adjustment completed successfully");
-
-      await handleSearch({ preventDefault: () => {} });
-
-      setUpdateForm({
-        actionOn: "select",
-        amount: "",
-        internalRemark: "",
-        externalRemark: "",
-      });
-    } catch (error) {
-      console.error("Error updating commission/TDS:", error);
-      alert("Error updating commission/TDS. Please try again.");
-    } finally {
-      setLoading(false);
+    if (!updateForm.externalRemark.trim()) {
+      alert("Please insert External Remark");
+      return;
     }
+
+    alert("Commission/TDS adjustment completed successfully!");
   };
 
   const handleClear = () => {
@@ -162,245 +110,203 @@ const CommissionTDSManagement = () => {
   };
 
   const userTypeOptions = [
-    { value: "select", label: "Select" },
-    { value: "Agent", label: "Agent" },
-    { value: "Distributor", label: "Distributor" },
-    { value: "Master Distributor", label: "Master Distributor" },
-    { value: "AES API Partner", label: "AES API Partner" },
-    { value: "Portal", label: "Portal" },
+    "Agent",
+    "Distributor",
+    "Master Distributor",
+    "AES API Partner",
+    "Portal",
   ];
 
-  const actionOnOptions = [
-    { value: "select", label: "Select Action Type" },
-    { value: "Commision", label: "Commission" },
-    { value: "TDS", label: "TDS" },
-  ];
+  const actionOnOptions = ["Commission", "TDS"];
 
   return (
-    <div className="flex justify-center mt-6">
-      <div className="w-[850px] bg-white rounded-xl shadow-sm overflow-hidden">
-        
-        {/* HEADER */}
-        <div className="bg-gradient-to-r from-[#4c95b3] to-[#3d89a6] text-white text-center font-bold text-lg py-3">
-          Commission / TDS Management
-        </div>
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Commission / TDS Management"
+        description="Adjust commission or TDS for users"
+      />
 
-        <div className="p-6">
+      <PageCard>
+        {message && (
+          <p className="text-center text-sm font-semibold text-green-600 mb-3">
+            {message}
+          </p>
+        )}
 
-          {/* MESSAGE */}
-          {message && (
-            <div className="bg-blue-100 text-blue-700 text-sm text-center px-3 py-2 rounded-md mb-4">
-              {message}
-            </div>
-          )}
-
-          {/* SEARCH FORM */}
+        <form onSubmit={handleSearch}>
           <div className="flex justify-center">
-            <table className="w-[70%] mt-4 text-sm">
-              <tbody>
+            <div className="w-[520px] space-y-4">
 
-                <tr className="h-10">
-                  <td className="text-right font-semibold w-[35%]">
-                    User Type
-                  </td>
-                  <td className="text-center w-[5%]">:</td>
-                  <td className="w-[60%]">
-                    <select
-                      name="UserType"
-                      value={formData.UserType}
-                      onChange={handleInputChange}
-                      className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                    >
-                      {userTypeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
+              {/* User Type */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  User Type
+                </label>
+                <div className="text-center">:</div>
 
-                <tr className="h-10">
-                  <td className="text-right font-semibold">
-                    User ID
-                  </td>
-                  <td className="text-center">:</td>
-                  <td>
-                    <input
-                      type="text"
-                      name="RequestUserId"
-                      value={formData.RequestUserId}
-                      onChange={handleInputChange}
-                      className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                    />
-                  </td>
-                </tr>
+                <select
+                  name="UserType"
+                  value={formData.UserType}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                >
+                  <option value="select">Select</option>
+                  {userTypeOptions.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
 
-              </tbody>
-            </table>
+              {/* User ID */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  User ID
+                </label>
+                <div className="text-center">:</div>
+
+                <input
+                  type="text"
+                  name="RequestUserId"
+                  value={formData.RequestUserId}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="text-center pt-2 space-x-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="capsButton px-8"
+                >
+                  {loading ? "Searching..." : "SUBMIT"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  disabled={loading}
+                  className="capsButtonSecondary px-6"
+                >
+                  CLEAR
+                </button>
+              </div>
+
+            </div>
           </div>
+        </form>
 
-          {/* SEARCH BUTTONS */}
-          <div className="text-center mt-5 mb-5">
-            <button
-              onClick={handleSearch}
-              disabled={loading}
-              className="bg-[#4FA2C2] text-white text-sm px-5 py-1.5 rounded-md hover:bg-[#3d8daa] transition disabled:opacity-50 mr-2"
-            >
-              {loading ? "Searching..." : "Submit"}
-            </button>
+        {/* Account Details */}
+        {accountData && (
+          <div className="pt-6 flex justify-center">
+            <div className="w-[620px] space-y-4">
 
-            <button
-              onClick={handleClear}
-              disabled={loading}
-              className="bg-gray-500 text-white text-sm px-5 py-1.5 rounded-md hover:bg-gray-600 transition disabled:opacity-50"
-            >
-              Clear
-            </button>
-          </div>
-
-          {/* ACCOUNT DETAILS */}
-          {accountData && (
-            <>
-              <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm">
+              <div className="text-center font-semibold border-b pb-2">
                 Account Details
               </div>
 
-              <div className="flex justify-center">
-                <table className="w-[70%] mt-4 text-sm">
-                  <tbody>
+              {[
+                ["Corporate Name", accountData.agencyName],
+                ["Authorised Person", accountData.Name],
+                ["Status", accountData.Status],
+                ["Balance", accountData.AvilableBalance],
+                ["Registered Mobile", accountData.mobileNo],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="grid grid-cols-[200px_10px_1fr] items-center"
+                >
+                  <label className="text-sm font-semibold text-right">
+                    {label}
+                  </label>
+                  <div className="text-center">:</div>
+                  <div className="text-sm">{value}</div>
+                </div>
+              ))}
 
-                    <tr className="h-9">
-                      <td className="text-right font-semibold w-[35%]">
-                        Corporate Name
-                      </td>
-                      <td className="text-center w-[5%]">:</td>
-                      <td>{accountData.agencyName}</td>
-                    </tr>
+              {/* Action On */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  Action On
+                </label>
+                <div className="text-center">:</div>
 
-                    <tr className="h-9">
-                      <td className="text-right font-semibold">
-                        Authorised Person
-                      </td>
-                      <td className="text-center">:</td>
-                      <td>{accountData.Name}</td>
-                    </tr>
-
-                    <tr className="h-9">
-                      <td className="text-right font-semibold">
-                        Status
-                      </td>
-                      <td className="text-center">:</td>
-                      <td className="text-green-600 font-medium">
-                        {accountData.Status}
-                      </td>
-                    </tr>
-
-                    <tr className="h-9">
-                      <td className="text-right font-semibold">
-                        Balance
-                      </td>
-                      <td className="text-center">:</td>
-                      <td className="text-blue-600 font-medium">
-                        {accountData.AvilableBalance}
-                      </td>
-                    </tr>
-
-                    <tr className="h-9">
-                      <td className="text-right font-semibold">
-                        Registered Mobile
-                      </td>
-                      <td className="text-center">:</td>
-                      <td>{accountData.mobileNo}</td>
-                    </tr>
-
-                    <tr className="h-10">
-                      <td className="text-right font-semibold">
-                        Action On
-                      </td>
-                      <td className="text-center">:</td>
-                      <td>
-                        <select
-                          name="actionOn"
-                          value={updateForm.actionOn}
-                          onChange={handleUpdateInputChange}
-                          className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                        >
-                          {actionOnOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                    </tr>
-
-                    <tr className="h-10">
-                      <td className="text-right font-semibold">
-                        Amount
-                      </td>
-                      <td className="text-center">:</td>
-                      <td>
-                        <input
-                          type="text"
-                          name="amount"
-                          value={updateForm.amount}
-                          onChange={handleUpdateInputChange}
-                          className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                        />
-                      </td>
-                    </tr>
-
-                    <tr className="h-10">
-                      <td className="text-right font-semibold">
-                        Internal Remark
-                      </td>
-                      <td className="text-center">:</td>
-                      <td>
-                        <input
-                          type="text"
-                          name="internalRemark"
-                          value={updateForm.internalRemark}
-                          onChange={handleUpdateInputChange}
-                          className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                        />
-                      </td>
-                    </tr>
-
-                    <tr className="h-10">
-                      <td className="text-right font-semibold">
-                        External Remark
-                      </td>
-                      <td className="text-center">:</td>
-                      <td>
-                        <input
-                          type="text"
-                          name="externalRemark"
-                          value={updateForm.externalRemark}
-                          onChange={handleUpdateInputChange}
-                          className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                        />
-                      </td>
-                    </tr>
-
-                  </tbody>
-                </table>
+                <select
+                  name="actionOn"
+                  value={updateForm.actionOn}
+                  onChange={handleUpdateInputChange}
+                  className="capsInput"
+                >
+                  <option value="select">Select</option>
+                  {actionOnOptions.map((opt) => (
+                    <option key={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* UPDATE BUTTON */}
-              <div className="text-center mt-4">
+              {/* Amount */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  Amount
+                </label>
+                <div className="text-center">:</div>
+
+                <input
+                  type="text"
+                  name="amount"
+                  value={updateForm.amount}
+                  onChange={handleUpdateInputChange}
+                  className="capsInput"
+                />
+              </div>
+
+              {/* Internal Remark */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  Internal Remark
+                </label>
+                <div className="text-center">:</div>
+
+                <input
+                  type="text"
+                  name="internalRemark"
+                  value={updateForm.internalRemark}
+                  onChange={handleUpdateInputChange}
+                  className="capsInput"
+                />
+              </div>
+
+              {/* External Remark */}
+              <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                <label className="text-sm font-semibold text-right">
+                  External Remark
+                </label>
+                <div className="text-center">:</div>
+
+                <input
+                  type="text"
+                  name="externalRemark"
+                  value={updateForm.externalRemark}
+                  onChange={handleUpdateInputChange}
+                  className="capsInput"
+                />
+              </div>
+
+              {/* Update Button */}
+              <div className="text-center pt-3">
                 <button
                   onClick={handleUpdateSubmit}
-                  disabled={loading}
-                  className="bg-[#4FA2C2] text-white text-sm px-6 py-1.5 rounded-md hover:bg-[#3d8daa] transition disabled:opacity-50"
+                  className="capsButton px-10"
                 >
-                  {loading ? "Updating..." : "Submit"}
+                  SUBMIT
                 </button>
               </div>
-            </>
-          )}
-        </div>
-      </div>
+
+            </div>
+          </div>
+        )}
+      </PageCard>
     </div>
   );
 };

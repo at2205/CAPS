@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const EditAPICommission = () => {
   const [formData, setFormData] = useState({
     apiId: "",
@@ -18,6 +21,7 @@ const EditAPICommission = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
 
+  /* ================= VENDORS ================= */
   useEffect(() => {
     setVendorList([
       { vendor_id: "1", vendor_name: "Airtel" },
@@ -28,6 +32,7 @@ const EditAPICommission = () => {
     ]);
   }, []);
 
+  /* ================= INPUT ================= */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -46,9 +51,8 @@ const EditAPICommission = () => {
 
     if (field === "selected") {
       let rows = [...selectedRows];
-      if (value && !rows.includes(index)) rows.push(index);
-      if (!value) rows = rows.filter((i) => i !== index);
-      setSelectedRows(rows);
+      value ? rows.push(index) : (rows = rows.filter((i) => i !== index));
+      setSelectedRows([...new Set(rows)]);
     }
   };
 
@@ -68,6 +72,7 @@ const EditAPICommission = () => {
     setSelectedRows(rows);
   };
 
+  /* ================= VALIDATION ================= */
   const validateForm = () => {
     if (!formData.apiId.trim()) {
       alert("Please enter API ID");
@@ -80,8 +85,9 @@ const EditAPICommission = () => {
     return true;
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!validateForm()) return;
 
     try {
@@ -129,6 +135,7 @@ const EditAPICommission = () => {
     }
   };
 
+  /* ================= OTP ================= */
   const handleSendOtp = async () => {
     if (selectedRows.length === 0) {
       alert("Please select at least one row");
@@ -156,7 +163,7 @@ const EditAPICommission = () => {
     alert("API Commission Updated Successfully");
     setShowOtpVerification(false);
     setOtp("");
-    handleSubmit({ preventDefault: () => {} });
+    handleSubmit();
   };
 
   const handleClear = () => {
@@ -181,98 +188,92 @@ const EditAPICommission = () => {
   const inputClass =
     "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
 
-  const labelClass = "text-sm font-semibold text-right";
-  const rowClass = "grid grid-cols-[220px_20px_1fr] items-center mb-3";
+  const Row = ({ label, children }) => (
+    <div className="flex items-center justify-center mb-3">
+      <label className="w-[220px] text-right text-sm font-semibold">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
-      {message && (
-        <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
-          {message}
-        </div>
-      )}
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-      <div className="rounded-xl shadow-xl border border-gray-300">
-        {/* HEADER */}
-        <div className="text-white font-bold text-lg px-5 py-3 rounded-t-xl bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6]">
-          Edit API Commission / Charge
-        </div>
+      <CapsCard
+        title="Customer Care Module > Edit API Commission / Charge"
+        description="Modify API level commission & charge slabs"
+      />
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <form onSubmit={handleSubmit}>
-            {/* API ID */}
-            <div className={rowClass}>
-              <div className={labelClass}>API ID</div>
-              <div>:</div>
-              <input
-                name="apiId"
-                value={formData.apiId}
-                onChange={handleInputChange}
-                placeholder="Enter API ID"
-                className={inputClass}
-                disabled={loading}
-              />
-            </div>
+      <PageCard>
 
-            {/* OPERATOR */}
-            <div className={rowClass}>
-              <div className={labelClass}>Select Operator</div>
-              <div>:</div>
-              <select
-                name="service"
-                value={formData.service}
-                onChange={handleInputChange}
-                className={inputClass}
-                disabled={loading}
-              >
-                <option value="">Select Operator</option>
-                {vendorList.map((v) => (
-                  <option key={v.vendor_id} value={v.vendor_id}>
-                    {v.vendor_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {message && (
+          <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-            {/* BUTTONS */}
-            <div className="text-center mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-1.5 text-sm text-white rounded-full bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6]"
-              >
-                {loading ? "Loading..." : "Submit"}
-              </button>
+        <form onSubmit={handleSubmit}>
 
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={loading}
-                className="ml-3 px-5 py-1.5 text-sm rounded-full bg-gray-500 text-white"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-        </div>
+          <Row label="API ID :">
+            <input
+              name="apiId"
+              value={formData.apiId}
+              onChange={handleInputChange}
+              placeholder="Enter API ID"
+              className={inputClass}
+              disabled={loading}
+            />
+          </Row>
 
-        {/* TABLE */}
+          <Row label="Select Operator :">
+            <select
+              name="service"
+              value={formData.service}
+              onChange={handleInputChange}
+              className={inputClass}
+              disabled={loading}
+            >
+              <option value="">Select Operator</option>
+              {vendorList.map((v) => (
+                <option key={v.vendor_id} value={v.vendor_id}>
+                  {v.vendor_name}
+                </option>
+              ))}
+            </select>
+          </Row>
+
+          <div className="text-center mt-4">
+            <button type="submit" disabled={loading} className="capsButton px-8">
+              {loading ? "Loading..." : "Submit"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={loading}
+              className="ml-3 capsButtonSecondary px-6"
+            >
+              Clear
+            </button>
+          </div>
+
+        </form>
+
+        {/* ================= TABLE ================= */}
         {pricingData.length > 0 && (
-          <div className="px-6 pb-6">
-            <hr className="mb-4" />
+          <div className="mt-6">
 
             <div className="overflow-x-auto">
               <table className="w-full border border-gray-300 text-sm">
-                <thead className="bg-gray-100">
-                  <tr className="text-center font-semibold">
+                <thead className="bg-[#4fa2c2] text-white text-center">
+                  <tr>
                     <th className="border px-2 py-1">
                       <input
                         type="checkbox"
                         checked={selectAll}
                         onChange={handleSelectAll}
-                      />{" "}
-                      S.N
+                      /> S.N
                     </th>
                     <th className="border">API ID</th>
                     <th className="border">Vendor</th>
@@ -294,7 +295,7 @@ const EditAPICommission = () => {
                       <tr
                         key={index}
                         className={`text-center ${
-                          selected ? "bg-blue-50" : ""
+                          selected ? "bg-[#eaf5fa]" : ""
                         }`}
                       >
                         <td className="border">
@@ -308,13 +309,12 @@ const EditAPICommission = () => {
                                 e.target.checked
                               )
                             }
-                          />{" "}
-                          {index + 1}
+                          /> {index + 1}
                         </td>
 
                         <td className="border">{item.api_id}</td>
 
-                        <td className="border px-1">
+                        <td className="border">
                           <select
                             className="border rounded px-2 py-1"
                             value={row.vendorId || item.vendor_id}
@@ -354,7 +354,7 @@ const EditAPICommission = () => {
                           </select>
                         </td>
 
-                        <td className="border px-1">
+                        <td className="border">
                           <input
                             className="border rounded px-2 py-1 w-20"
                             value={row.commission || item.commission}
@@ -385,7 +385,7 @@ const EditAPICommission = () => {
                           </select>
                         </td>
 
-                        <td className="border px-1">
+                        <td className="border">
                           <input
                             className="border rounded px-2 py-1 w-20"
                             value={row.charge || item.charge}
@@ -402,19 +402,18 @@ const EditAPICommission = () => {
             </div>
 
             <div className="flex justify-end mt-3">
-              <button
-                onClick={handleSendOtp}
-                className="px-4 py-1.5 text-sm rounded-full bg-yellow-500 text-white"
-              >
+              <button onClick={handleSendOtp} className="capsButtonWarning px-5">
                 Send OTP
               </button>
             </div>
+
           </div>
         )}
 
-        {/* OTP */}
+        {/* ================= OTP ================= */}
         {showOtpVerification && (
-          <div className="border-t px-6 py-5">
+          <div className="border-t mt-5 pt-5">
+
             <div className="max-w-sm mx-auto">
               <input
                 value={otp}
@@ -427,22 +426,24 @@ const EditAPICommission = () => {
                 <button
                   disabled={otp.length !== 6}
                   onClick={handleVerifyOtp}
-                  className="px-4 py-1.5 text-sm rounded-full bg-green-600 text-white disabled:opacity-50"
+                  className="capsButtonSuccess px-5 disabled:opacity-50"
                 >
                   Verify OTP
                 </button>
 
                 <button
                   onClick={handleSendOtp}
-                  className="px-4 py-1.5 text-sm rounded-full bg-gray-500 text-white"
+                  className="capsButtonSecondary px-5"
                 >
                   Resend OTP
                 </button>
               </div>
             </div>
+
           </div>
         )}
-      </div>
+
+      </PageCard>
     </div>
   );
 };

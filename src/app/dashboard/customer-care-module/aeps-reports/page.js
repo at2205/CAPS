@@ -3,13 +3,17 @@
 import React, { useState } from "react";
 import CapsCard from "@/app/components/caps_card/CapsCard";
 import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const AepsReports = () => {
   const [selectType, setSelectType] = useState("all");
   const [agentId, setAgentId] = useState("");
-  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [apiMessage, setApiMessage] = useState("");
+  const [errors, setErrors] = useState({});
+
+  /* ================= VALIDATION ================= */
 
   const validateForm = () => {
     const err = {};
@@ -17,93 +21,129 @@ const AepsReports = () => {
     if (selectType === "-1") {
       if (!agentId.trim()) {
         err.agentId = "Agent ID is required";
+        Swal.fire("Validation Error", "Agent ID is required", "warning");
       } else if (!agentId.startsWith("AG")) {
         err.agentId = "Agent ID must start with AG";
+        Swal.fire("Validation Error", "Agent ID must start with AG", "warning");
       } else if (agentId.length < 5) {
         err.agentId = "Agent ID must be at least 5 characters";
+        Swal.fire(
+          "Validation Error",
+          "Agent ID must be at least 5 characters",
+          "warning",
+        );
       }
     }
 
     setErrors(err);
+
     return Object.keys(err).length === 0;
   };
+
+  /* ================= FILE DOWNLOAD FUNCTION ================= */
+
+  const downloadFile = async (downloadUrl, fileName) => {
+    try {
+      const fileResponse = await axiosInstance.get(downloadUrl, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([fileResponse.data]);
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName || "AEPS_Report.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  /* ================= API CALL ================= */
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
       setLoading(true);
-      setApiMessage("Downloading Excel...");
 
-      const body =
-        selectType === "-1"
-          ? `allAgent=-1&agentId=${encodeURIComponent(agentId)}`
-          : "allAgent=all";
-
-      const res = await fetch(
-        "http://localhost:8281/CustomerModule/download",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body,
-        }
-      );
-
-      if (!res.ok) throw new Error("Download failed");
-
-      const blob = await res.blob();
-      const excelBlob = new Blob([blob], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      Swal.fire({
+        title: "Generating AEPS Report...",
+        text: "Please wait",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
-      const url = window.URL.createObjectURL(excelBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `AEPS_${selectType === "-1" ? agentId : "ALL"}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const agent = selectType === "-1" ? agentId : "all";
 
-      setApiMessage("Excel downloaded successfully ✅");
+      const response = await axiosInstance.get(
+        endpoints.customerCareEndpoints.downloadAepsReport,
+        {
+          params: { agentId: agent },
+        },
+      );
+
+      if (response.data.status !== "success") {
+        throw new Error(response.data.message);
+      }
+
+      const downloadUrl = response.data.downloadUrl;
+      const fileName = response.data.fileName;
+
+      await downloadFile(downloadUrl, fileName);
+
+      /* CLOSE LOADING ALERT */
+      Swal.close();
+
+      /* SUCCESS ALERT */
+      Swal.fire({
+        icon: "success",
+        title: "Download Completed",
+        text: "Excel downloaded successfully",
+        confirmButtonColor: "#226b88",
+      });
     } catch (error) {
       console.error(error);
-      setApiMessage("Download failed ❌");
+
+      Swal.close();
+
+      Swal.fire({
+        icon: "error",
+        title: "Download Failed",
+        text: "Failed to download report",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6  min-h-screen text-[#226b88]">
-
-      {/* HEADER CARD */}
+    <div className="p-6 min-h-screen text-[#226b88]">
+      {/* HEADER */}
       <CapsCard
         title="AEPS Reports"
-        description="Download AEPS Excel reports (All or ID-Wise)"
+        description="Download AEPS Excel Reports (All / Agent ID Wise)"
       />
 
       {/* FORM CARD */}
       <PageCard>
-
-        {/* STATUS MESSAGE */}
-        {apiMessage && (
-          <div className="text-center mb-4 text-sm font-medium text-blue-700 bg-blue-100 py-2 rounded">
-            {apiMessage}
-          </div>
-        )}
-
         <div className="flex justify-center">
           <div className="grid gap-4 w-full max-w-xl">
-
             {/* SELECT TYPE */}
             <div className="grid grid-cols-[180px_20px_1fr] items-center gap-3">
-              <label className="text-right font-medium">
-                Select
-              </label>
+              <label className="text-right font-medium">Select</label>
+
               <div className="text-center">:</div>
+
               <select
                 className="capsSelect"
                 value={selectType}
@@ -118,25 +158,21 @@ const AepsReports = () => {
               </select>
             </div>
 
-            {/* AGENT ID FIELD */}
+            {/* AGENT ID */}
             {selectType === "-1" && (
               <div className="grid grid-cols-[180px_20px_1fr] items-start gap-3">
-                <label className="text-right font-medium">
-                  Agent ID
-                </label>
+                <label className="text-right font-medium">Agent ID</label>
+
                 <div className="text-center">:</div>
+
                 <div>
                   <input
                     type="text"
-                    placeholder="Enter Agent ID (AGxxxx)"
+                    placeholder="Enter Agent ID (AGXXXX)"
                     value={agentId}
-                    onChange={(e) =>
-                      setAgentId(e.target.value.toUpperCase())
-                    }
+                    onChange={(e) => setAgentId(e.target.value.toUpperCase())}
                     className={`w-full ${
-                      errors.agentId
-                        ? "capsInputError"
-                        : "capsInput"
+                      errors.agentId ? "capsInputError" : "capsInput"
                     }`}
                   />
 
@@ -149,27 +185,18 @@ const AepsReports = () => {
               </div>
             )}
 
-            {/* SUBMIT BUTTON */}
+            {/* BUTTON */}
             <div className="flex justify-center mt-6">
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="capsButton min-w-[220px] flex justify-center items-center gap-2"
+                className="capsButton min-w-[220px]"
               >
-                {loading ? (
-                  <>
-                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    Downloading...
-                  </>
-                ) : (
-                  "Submit & Download"
-                )}
+                Download Report
               </button>
             </div>
-
           </div>
         </div>
-
       </PageCard>
     </div>
   );

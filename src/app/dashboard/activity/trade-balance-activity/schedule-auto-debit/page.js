@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 function ScheduleAutoDebit() {
   const [formData, setFormData] = useState({
@@ -23,107 +25,91 @@ function ScheduleAutoDebit() {
     setSubmitted(true);
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
-  const inputSm =
-    "w-full border border-gray-300 rounded-md px-2 py-1 text-sm " +
-    "focus:outline-none focus:ring-1 focus:ring-[#4c95b3]";
-
-  const selectSm =
-    "w-full border border-gray-300 rounded-md px-2 py-1 text-sm bg-white " +
-    "focus:outline-none focus:ring-1 focus:ring-[#4c95b3]";
-
-  const buttonStyle =
-    "px-6 py-2 text-white rounded-xl shadow-md text-sm font-medium " +
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
-
-  const buttonSm =
-    "px-3 py-1 text-white rounded-lg shadow text-sm font-medium " +
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
-
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Schedule Auto Debit
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Schedule Auto Debit"
+        description="Configure and manage auto debit settings"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-6">
+      {/* MAIN CARD */}
+      <PageCard>
 
-          {/* ===== SEARCH FORM ===== */}
-          <form onSubmit={handleSubmit} className="flex justify-center">
-            <div className="w-[520px]">
+        {/* SEARCH FORM */}
+        <form onSubmit={handleSubmit} className="flex justify-center mb-6">
+          <div className="grid grid-cols-[200px_20px_250px] items-center gap-4">
 
-              <div className="mb-5 flex items-center">
-                <label className="w-1/2 text-right pr-4 font-semibold text-sm">
-                  Agent / DS / SDS / MDS / API ID
-                </label>
+            <label className="text-right font-medium">
+              Agent / DS / SDS / MDS / API ID
+            </label>
 
-                <input
-                  type="text"
-                  name="agentId"
-                  className={inputStyle}
-                  value={formData.agentId}
-                  onChange={handleChange}
-                />
-              </div>
+            <div className="text-center">:</div>
 
-              <div className="text-center mb-4">
-                <button type="submit" className={buttonStyle}>
-                  Submit
-                </button>
-              </div>
+            <input
+              type="text"
+              name="agentId"
+              value={formData.agentId}
+              onChange={handleChange}
+              className="capsInput"
+            />
 
+          </div>
+
+          <div className="ml-6">
+            <button type="submit" className="capsButton min-w-[120px]">
+              Submit
+            </button>
+          </div>
+        </form>
+
+        {/* RESULT TABLE */}
+        {submitted && (
+          <>
+            <div className="capsColor text-center py-2 font-semibold rounded-md mb-4">
+              Auto Debit Details
             </div>
-          </form>
 
-          {/* ===== RESULT TABLE ===== */}
-          {submitted && (
-            <div className="mt-6 overflow-x-auto">
-              <table className="w-full border border-gray-300 text-sm text-center">
-                <thead className="bg-[#f1f8fb] font-semibold">
-                  <tr>
-                    <th className="border px-3 py-2">ID</th>
-                    <th className="border px-3 py-2">Name</th>
-                    <th className="border px-3 py-2">Wallet</th>
-                    <th className="border px-3 py-2">Hold Balance</th>
-                    <th className="border px-3 py-2">Partial Adj</th>
-                    <th className="border px-3 py-2">Services</th>
-                    <th className="border px-3 py-2">Remarks</th>
-                    <th className="border px-3 py-2">Action</th>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-[#226b88] text-sm text-center">
+                <thead>
+                  <tr className="capsColor">
+                    <th className="border p-2">ID</th>
+                    <th className="border p-2">Name</th>
+                    <th className="border p-2">Wallet</th>
+                    <th className="border p-2">Hold Balance</th>
+                    <th className="border p-2">Partial Adj</th>
+                    <th className="border p-2">Services</th>
+                    <th className="border p-2">Remarks</th>
+                    <th className="border p-2">Action</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  <tr className="hover:bg-gray-50">
-                    <td className="border px-3 py-2">AG12345</td>
-                    <td className="border px-3 py-2">
+                  <tr>
+                    <td className="border p-2">AG12345</td>
+                    <td className="border p-2">
                       DANGI NARVATBHAI RAMANBHAI
                     </td>
-                    <td className="border px-3 py-2">0.00</td>
+                    <td className="border p-2">0.00</td>
 
-                    <td className="border px-2 py-1">
+                    <td className="border p-1">
                       <input
                         type="text"
                         name="balance"
-                        className={inputSm}
                         value={formData.balance}
                         onChange={handleChange}
+                        className="capsInput px-2 py-1 text-sm"
                       />
                     </td>
 
-                    <td className="border px-2 py-1">
+                    <td className="border p-1">
                       <select
                         name="partialAdjustmentAllowed"
-                        className={selectSm}
                         value={formData.partialAdjustmentAllowed}
                         onChange={handleChange}
+                        className="capsSelect px-2 py-1 text-sm"
                       >
                         <option value="">--select--</option>
                         <option value="Yes">Yes</option>
@@ -131,29 +117,29 @@ function ScheduleAutoDebit() {
                       </select>
                     </td>
 
-                    <td className="border px-2 py-1">
+                    <td className="border p-1">
                       <select
                         name="services"
-                        className={selectSm}
                         value={formData.services}
                         onChange={handleChange}
+                        className="capsSelect px-2 py-1 text-sm"
                       >
                         <option value="">--select--</option>
                       </select>
                     </td>
 
-                    <td className="border px-2 py-1">
+                    <td className="border p-1">
                       <input
                         type="text"
                         name="remarks"
-                        className={inputSm}
                         value={formData.remarks}
                         onChange={handleChange}
+                        className="capsInput px-2 py-1 text-sm"
                       />
                     </td>
 
-                    <td className="border px-3 py-2">
-                      <button className={buttonSm}>
+                    <td className="border p-2">
+                      <button className="capsButton px-4 py-1 text-sm">
                         Submit
                       </button>
                     </td>
@@ -161,10 +147,10 @@ function ScheduleAutoDebit() {
                 </tbody>
               </table>
             </div>
-          )}
+          </>
+        )}
 
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

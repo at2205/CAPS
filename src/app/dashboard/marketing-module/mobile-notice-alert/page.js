@@ -1,249 +1,404 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CapsCard from "@/app/components/caps_card/CapsCard";
 import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
-const MobileNoticeAlert = () => {
+function MobileNoticeAlert() {
+  const [formData, setFormData] = useState({
+    title: "",
+    notificationType: "",
+    message: "",
+    sentTo: "",
+    datetime: "",
+  });
 
-  const [title, setTitle] = useState("");
-  const [notificationType, setNotificationType] = useState("");
-  const [message, setMessage] = useState("");
-  const [image, setImage] = useState(null);
-  const [sentTo, setSentTo] = useState("");
-  const [agentFile, setAgentFile] = useState(null);
-  const [dateTime, setDateTime] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [excelFile, setExcelFile] = useState(null);
+
+  const [notifications, setNotifications] = useState([]);
 
   const [showText, setShowText] = useState(false);
   const [showImage, setShowImage] = useState(false);
-  const [showAgentFile, setShowAgentFile] = useState(false);
+  const [showExcel, setShowExcel] = useState(false);
 
-  const [tableData, setTableData] = useState([]);
+  const [error, setError] = useState("");
 
-  /* ================= HANDLERS ================= */
+  /* ---------------- FETCH NOTIFICATION LIST ---------------- */
+  const loadNotifications = async () => {
+    try {
+      const res = await axiosInstance.get(endpoints.mobileAlertList);
 
-  const handleNotificationType = (val) => {
-    setNotificationType(val);
-    setShowText(val === "1" || val === "3");
-    setShowImage(val === "2" || val === "3");
-  };
+      console.log("API RESPONSE:", res.data);
 
-  const handleSentTo = (val) => {
-    setSentTo(val);
-    setShowAgentFile(val === "Selected" || val === "selected-ds");
-  };
-
-  const validateImage = (file) => {
-    if (file.size > 1048576) {
-      alert("Image must be less than 1MB");
-      return false;
+      if (Array.isArray(res.data)) {
+        setNotifications(res.data);
+      } else if (Array.isArray(res.data.data)) {
+        setNotifications(res.data.data);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.log("Notification list error", error);
     }
-    if (!["image/jpeg", "image/jpg"].includes(file.type)) {
-      alert("Only JPG/JPEG allowed");
-      return false;
-    }
-    return true;
   };
 
-  const validateExcel = (file) => {
-    const ext = file.name.split(".").pop();
-    if (!["xls", "xlsx"].includes(ext)) {
-      alert("Only .xls/.xlsx allowed");
-      return false;
-    }
-    return true;
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  /* ---------------- INPUT CHANGE ---------------- */
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  /* ---------------- NOTIFICATION TYPE ---------------- */
 
-    if (!title) return alert("Enter Notification Title");
-    if (!notificationType) return alert("Select Notification Type");
-    if (!sentTo) return alert("Select Sent To");
-    if (!dateTime) return alert("Select Date Time");
+  const handleNotificationType = (e) => {
+    const value = e.target.value;
 
-    if (showText && !message) return alert("Enter Message");
-    if (showImage && !image) return alert("Upload Image");
-    if (showAgentFile && !agentFile) return alert("Upload Agent File");
+    setFormData({
+      ...formData,
+      notificationType: value,
+    });
 
-    console.log("Form Submitted");
+    if (value === "1") {
+      setShowText(true);
+      setShowImage(false);
+    } else if (value === "2") {
+      setShowText(false);
+      setShowImage(true);
+    } else if (value === "3") {
+      setShowText(true);
+      setShowImage(true);
+    } else {
+      setShowText(false);
+      setShowImage(false);
+    }
+  };
+
+  /* ---------------- SENT TO ---------------- */
+
+  const handleSentTo = (e) => {
+    const value = e.target.value;
+
+    setFormData({
+      ...formData,
+      sentTo: value,
+    });
+
+    if (value === "Selected" || value === "selected-ds") {
+      setShowExcel(true);
+    } else {
+      setShowExcel(false);
+    }
+  };
+
+  /* ---------------- SUBMIT API ---------------- */
+
+  const handleSubmit = async () => {
+    if (!formData.title) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Enter notification title",
+      });
+      return;
+    }
+
+    if (!formData.notificationType) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Select notification type",
+      });
+      return;
+    }
+
+    if (!formData.sentTo) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Select Sent To",
+      });
+      return;
+    }
+
+    if (!formData.datetime) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Select notification date/time",
+      });
+      return;
+    }
+
+    try {
+      const form = new FormData();
+
+      form.append("titleName", formData.title);
+      form.append("selectBox", formData.notificationType);
+      form.append("sentToAgent", formData.sentTo);
+      form.append("textBox", formData.message);
+      form.append("notificationDate", formData.datetime);
+
+      if (imageFile) {
+        form.append("file1", imageFile);
+      }
+
+      if (excelFile) {
+        form.append("file2", excelFile);
+      }
+
+      await axiosInstance.post(endpoints.mobileAlertUpload, form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Notification Scheduled",
+        text: "Notification scheduled successfully",
+      });
+
+      setFormData({
+        title: "",
+        notificationType: "",
+        message: "",
+        sentTo: "",
+        datetime: "",
+      });
+
+      setImageFile(null);
+      setExcelFile(null);
+
+      loadNotifications();
+    } catch (err) {
+      console.log("Upload error", err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: err?.response?.data?.message || "Failed to submit notification",
+      });
+    }
+  };
+
+  /* ---------------- DOWNLOAD EXCEL ---------------- */
+
+  const handleDownload = async (id) => {
+    try {
+      const res = await axiosInstance.get(
+        `${endpoints.mobileAlertDownload}/${id}`,
+      );
+
+      window.open(res.data, "_blank");
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Download Failed",
+        text: "Unable to download file",
+      });
+    }
+  };
+
+  /* ---------------- DEACTIVATE ---------------- */
+
+  const handleDeactivate = async (id) => {
+    try {
+      await axiosInstance.post(`${endpoints.mobileAlertDeactivate}/${id}`);
+
+      loadNotifications();
+    } catch (err) {
+      console.log("Deactivate error", err);
+    }
   };
 
   return (
-    
-    <div className="p-6  min-h-screen text-[#226b88]">
-
-      {/* HEADER */}
+    <div className="p-6 min-h-screen text-[#226b88]">
       <CapsCard
-        title="Mobile Notice – Alert"
-        description="Send scheduled mobile notifications"
+        title="Mobile Notice Alert"
+        description="Send Notification to Agents / Distributors"
       />
 
-      {/* FORM CARD */}
-      <PageCard>
- <div className='flex justify-center'>
-        <form onSubmit={handleSubmit}>
+      {/* ---------------- FORM ---------------- */}
 
+      <PageCard>
+        <div className="max-w-2xl mx-auto space-y-6">
           <FormRow label="Notification Title">
             <input
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
               className="capsInput w-80"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
             />
           </FormRow>
 
           <FormRow label="Select Notification Type">
             <select
+              value={formData.notificationType}
+              onChange={handleNotificationType}
               className="capsSelect w-80"
-              onChange={(e) =>
-                handleNotificationType(e.target.value)
-              }
             >
               <option value="">Select</option>
-              <option value="2">Image Notification</option>
               <option value="1">Text Notification</option>
-              <option value="3">
-                Link Notification with Image
-              </option>
+              <option value="2">Image Notification</option>
+              <option value="3">Link Notification</option>
             </select>
           </FormRow>
 
           {showText && (
-            <FormRow label="Notification Message / Link">
+            <FormRow label="Message / Link">
               <textarea
-                rows={3}
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
                 className="capsInput w-80"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
               />
             </FormRow>
           )}
 
           {showImage && (
-            <FormRow label="Image (jpg < 1MB)">
+            <FormRow label="Upload Image">
               <input
                 type="file"
-                accept="image/jpeg,image/jpg"
-                className="capsInput w-full"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (validateImage(file)) setImage(file);
-                }}
+                onChange={(e) => setImageFile(e.target.files[0])}
               />
             </FormRow>
           )}
 
           <FormRow label="Sent To">
             <select
+              value={formData.sentTo}
+              onChange={handleSentTo}
               className="capsSelect w-80"
-              onChange={(e) => handleSentTo(e.target.value)}
             >
               <option value="">Select</option>
               <option value="ALL">ALL Agents</option>
               <option value="Selected">Selected Agents</option>
               <option value="ALL-DS">All Distributors</option>
-              <option value="selected-ds">
-                Selected Distributors
-              </option>
+              <option value="selected-ds">Selected Distributors</option>
             </select>
           </FormRow>
 
-          {showAgentFile && (
-            <FormRow label="Full AgentId (.xls/.xlsx)">
+          {showExcel && (
+            <FormRow label="Upload Excel">
               <input
                 type="file"
-                className="capsInput w-80"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (validateExcel(file)) setAgentFile(file);
-                }}
+                onChange={(e) => setExcelFile(e.target.files[0])}
               />
             </FormRow>
           )}
 
-          <FormRow label="Notification Date/Time">
+          <FormRow label="Notification Date / Time">
             <input
               type="datetime-local"
+              name="datetime"
+              value={formData.datetime}
+              onChange={handleChange}
               className="capsInput w-80"
-              value={dateTime}
-              onChange={(e) =>
-                setDateTime(e.target.value)
-              }
             />
           </FormRow>
 
-          <div className="text-center mt-8">
-            <button className="capsButton min-w-[120px]">
+          {error && <p className="text-red-600 text-center">{error}</p>}
+
+          <div className="text-center">
+            <button onClick={handleSubmit} className="capsButton min-w-[220px]">
               Submit
             </button>
           </div>
-
-        </form>
-</div>
+        </div>
       </PageCard>
 
-      {/* TABLE CARD */}
+      {/* ---------------- TABLE ---------------- */}
+
       <PageCard>
-        <h3 className="capsText font-semibold mb-4 text-center">
-          Scheduled Notification
-        </h3>
+        <h2 className="text-lg font-semibold mb-4">Scheduled Notification</h2>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full border border-[#226b88] text-sm">
-            <thead>
-              <tr className="bg-[#a74312] text-white">
-                <th className="p-2 border">Sr</th>
-                <th className="p-2 border">ID</th>
+          <table className="w-full border text-center">
+            <thead
+              style={{
+                background: "#226b88",
+                color: "#fff",
+              }}
+            >
+              <tr>
+                <th className="p-2 border">Sr No</th>
+
                 <th className="p-2 border">Title</th>
+
                 <th className="p-2 border">Type</th>
-                <th className="p-2 border">User</th>
+
+                <th className="p-2 border">User Type</th>
+
                 <th className="p-2 border">Date</th>
-                <th className="p-2 border">Action</th>
+
                 <th className="p-2 border">Download</th>
+
+                <th className="p-2 border">Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {tableData.map((row, i) => (
-                <tr key={i} className="text-center">
-                  <td className="p-2 border">{i + 1}</td>
-                  <td className="p-2 border">{row.id}</td>
-                  <td className="p-2 border">{row.title}</td>
-                  <td className="p-2 border">{row.type}</td>
-                  <td className="p-2 border">{row.user}</td>
-                  <td className="p-2 border">{row.date}</td>
-                  <td className="p-2 border">
-                    <button className="bg-red-600 text-white px-3 py-1 rounded text-xs">
-                      Disable
-                    </button>
-                  </td>
-                  <td className="p-2 border">
-                    <button className="bg-gray-600 text-white px-3 py-1 rounded text-xs">
-                      Download
-                    </button>
+              {notifications.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="p-4 text-center">
+                    No Notifications Found
                   </td>
                 </tr>
-              ))}
+              ) : (
+                notifications.map((item, index) => (
+                  <tr key={index}>
+                    <td className="border p-2">{index + 1}</td>
+                    <td className="border p-2">{item.titleName}</td>
+                    <td className="border p-2">{item.selectBox}</td>
+                    <td className="border p-2">{item.sentToAgent}</td>
+                    <td className="border p-2">{item.notificationDate}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => handleDownload(item.id)}
+                        className="capsButton"
+                      >
+                        Download
+                      </button>
+                    </td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => handleDeactivate(item.id)}
+                        className="capsButton bg-red-500"
+                      >
+                        Deactivate
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </PageCard>
-
     </div>
   );
-};
-
-/* ===== FIXED ALIGNMENT ROW ===== */
+}
 
 const FormRow = ({ label, children }) => (
-  <div className="grid grid-cols-[250px_20px_1fr] items-center gap-4 mb-6">
-    <label className="text-right font-medium">
-      {label}
-    </label>
-    <div className="text-center">:</div>
-    <div className="max-w-2xl">
-      {children}
-    </div>
+  <div className="grid grid-cols-[180px_20px_1fr] items-center gap-4">
+    <div className="text-right font-medium">{label}</div>
+
+    <div>:</div>
+
+    <div>{children}</div>
   </div>
 );
 

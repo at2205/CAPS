@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 function DSMapping() {
   const [formData, setFormData] = useState({
@@ -24,23 +26,28 @@ function DSMapping() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Move Entity
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Move Entity"
+        description="Map distributor under selected master distributor"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-10 flex justify-center">
-          <div className="w-[520px]">
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <div className="flex justify-center">
+          <div>
 
             {/* MASTER DISTRIBUTOR ID */}
-            <div className="mb-5 flex items-center">
-              <label className="font-semibold w-1/2 text-right mr-3">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+
+              <label className="text-right font-medium">
                 Master Distributor ID
               </label>
+
+              <div className="text-center">:</div>
 
               <input
                 type="text"
@@ -48,16 +55,18 @@ function DSMapping() {
                 placeholder="Full MDS Id"
                 value={formData.masterDistributorId}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                className="capsInput"
               />
             </div>
 
             {/* DISTRIBUTOR ID */}
-            <div className="mb-6 flex items-start">
-              <label className="font-semibold w-1/2 text-right mr-3 pt-2">
+            <div className="grid grid-cols-[200px_20px_250px] items-start gap-4 mb-6">
+
+              <label className="text-right font-medium pt-2">
                 Distributor ID
               </label>
+
+              <div className="text-center pt-2">:</div>
 
               <textarea
                 name="distributorId"
@@ -65,18 +74,15 @@ function DSMapping() {
                 placeholder="Full DS Id (Use comma for separating multiple ids)"
                 value={formData.distributorId}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                className="capsInput"
               />
             </div>
 
             {/* BUTTON */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-4">
               <button
                 onClick={handleSubmit}
-                className="px-6 py-2 text-white rounded-2xl shadow
-                           bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                           hover:opacity-90 transition"
+                className="capsButton min-w-[120px]"
               >
                 Submit
               </button>
@@ -84,7 +90,8 @@ function DSMapping() {
 
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 }

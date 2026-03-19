@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const PGUserLimit = () => {
   const [clientId, setClientId] = useState("");
@@ -30,77 +32,78 @@ const PGUserLimit = () => {
     alert("PG User Limit submitted (frontend only)");
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
-  const selectStyle = inputStyle;
+  const updateField = (key, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > PG User Limit"
+        description="Configure PG limits for agents"
+      />
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          PG User Limit
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[620px] space-y-4">
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-8">
-
-          {/* ===== CLIENT ID ===== */}
-          <div className="flex justify-center mb-6">
-            <div className="w-[600px] flex items-center gap-3">
-
-              <label className="font-semibold w-[120px] text-right">
+            {/* Client ID */}
+            <div className="grid grid-cols-[200px_10px_1fr_auto] items-center gap-2">
+              <label className="text-sm font-semibold text-right">
                 Client Id
               </label>
+              <div className="text-center">:</div>
 
               <input
                 value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-                className={inputStyle}
+                onChange={(e) =>
+                  setClientId(e.target.value)
+                }
+                className="capsInput"
+                placeholder="Enter Client ID"
               />
 
               <button
                 onClick={handleGo}
-                className="px-4 py-2 text-white rounded-lg shadow
-                           bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                           hover:opacity-90 transition"
+                className="capsButton px-5 py-2"
               >
                 GO
               </button>
             </div>
-          </div>
 
-          {/* ===== RADIO ===== */}
-          {showForms && (
-            <div className="flex justify-center gap-10 mb-6">
-              <label className="flex items-center gap-2 font-semibold cursor-pointer">
-                <input
-                  type="radio"
-                  checked={selectedForm === "single"}
-                  onChange={() => setSelectedForm("single")}
-                />
-                Single Agent
-              </label>
+            {/* Radio */}
+            {showForms && (
+              <div className="flex justify-center gap-10 pt-2 text-sm font-semibold">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={selectedForm === "single"}
+                    onChange={() =>
+                      setSelectedForm("single")
+                    }
+                  />
+                  Single Agent
+                </label>
 
-              <label className="flex items-center gap-2 font-semibold cursor-pointer">
-                <input
-                  type="radio"
-                  checked={selectedForm === "bulk"}
-                  onChange={() => setSelectedForm("bulk")}
-                />
-                Bulk Upload
-              </label>
-            </div>
-          )}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={selectedForm === "bulk"}
+                    onChange={() =>
+                      setSelectedForm("bulk")
+                    }
+                  />
+                  Bulk Upload
+                </label>
+              </div>
+            )}
 
-          {/* ===== SINGLE AGENT FORM ===== */}
-          {selectedForm === "single" && (
-            <div className="flex justify-center">
-              <div className="w-[600px] space-y-4">
+            {/* ================= SINGLE AGENT ================= */}
+            {selectedForm === "single" && (
+              <div className="pt-3 space-y-3">
 
                 {[
                   {
@@ -121,22 +124,29 @@ const PGUserLimit = () => {
                   {
                     label: "Sub Service",
                     key: "subService",
-                    options: ["Digital Mall Charges", "PGTopUp"],
+                    options: [
+                      "Digital Mall Charges",
+                      "PGTopUp",
+                    ],
                   },
                 ].map((field) => (
-                  <div key={field.key} className="flex items-center gap-3">
-                    <label className="font-semibold w-[120px] text-right">
+                  <div
+                    key={field.key}
+                    className="grid grid-cols-[200px_10px_1fr] items-center"
+                  >
+                    <label className="text-sm font-semibold text-right">
                       {field.label}
                     </label>
+                    <div className="text-center">:</div>
 
                     <select
-                      className={selectStyle}
+                      className="capsInput"
                       value={formData[field.key]}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          [field.key]: e.target.value,
-                        })
+                        updateField(
+                          field.key,
+                          e.target.value
+                        )
                       }
                     >
                       <option value="">Select</option>
@@ -147,99 +157,100 @@ const PGUserLimit = () => {
                   </div>
                 ))}
 
-                {/* FULL AGENT ID */}
-                <div className="flex items-center gap-3">
-                  <label className="font-semibold w-[120px] text-right">
+                {/* Full Agent ID */}
+                <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                  <label className="text-sm font-semibold text-right">
                     Full Agent Id
                   </label>
+                  <div className="text-center">:</div>
 
                   <input
-                    className={inputStyle}
+                    className="capsInput"
                     value={formData.fullAgentId}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        fullAgentId: e.target.value,
-                      })
+                      updateField(
+                        "fullAgentId",
+                        e.target.value
+                      )
                     }
+                    placeholder="Enter Full Agent ID"
                   />
                 </div>
 
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ===== BULK UPLOAD ===== */}
-          {selectedForm === "bulk" && (
-            <div className="flex justify-center">
-              <div className="w-[600px] space-y-4">
+            {/* ================= BULK UPLOAD ================= */}
+            {selectedForm === "bulk" && (
+              <div className="pt-3 space-y-3">
 
-                {/* FILE */}
-                <div className="flex items-center gap-3">
-                  <label className="font-semibold w-[120px] text-right">
+                {/* File */}
+                <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                  <label className="text-sm font-semibold text-right">
                     Select File
                   </label>
+                  <div className="text-center">:</div>
 
                   <input
                     type="file"
-                    className={inputStyle}
+                    className="capsInput"
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        file: e.target.files[0],
-                      })
+                      updateField(
+                        "file",
+                        e.target.files[0]
+                      )
                     }
                   />
                 </div>
 
-                {/* DOWNLOAD */}
+                {/* Download */}
                 <div className="text-center text-sm">
                   <a
                     href="#"
-                    className="font-semibold text-[#3d89a6] hover:underline"
+                    className="font-semibold text-indigo-600 hover:underline"
                   >
                     Click To Download Format
                   </a>
                 </div>
 
-                {/* AGENT ID */}
-                <div className="flex items-center gap-3">
-                  <label className="font-semibold w-[120px] text-right">
+                {/* Agent ID */}
+                <div className="grid grid-cols-[200px_10px_1fr] items-center">
+                  <label className="text-sm font-semibold text-right">
                     Agent Id
                   </label>
+                  <div className="text-center">:</div>
 
                   <input
-                    className={inputStyle}
+                    className="capsInput"
                     value={formData.agentId}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        agentId: e.target.value,
-                      })
+                      updateField(
+                        "agentId",
+                        e.target.value
+                      )
                     }
+                    placeholder="Enter Agent ID"
                   />
                 </div>
 
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ===== SUBMIT ===== */}
-          {selectedForm && (
-            <div className="text-center mt-8">
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-2 text-white rounded-2xl shadow
-                           bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                           hover:opacity-90 transition"
-              >
-                Continue
-              </button>
-            </div>
-          )}
+            {/* Submit */}
+            {selectedForm && (
+              <div className="text-center pt-4">
+                <button
+                  onClick={handleSubmit}
+                  className="capsButton px-10"
+                >
+                  CONTINUE
+                </button>
+              </div>
+            )}
 
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

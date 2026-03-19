@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import { Table } from "antd";
 import { ToastContainer, toast, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useRouter } from "next/navigation";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 function RetailUser() {
   const [loading, setLoading] = useState(false);
@@ -14,17 +16,13 @@ function RetailUser() {
   const [form, setForm] = useState(true);
   const [tableData, setTableData] = useState();
   const [mdsTable, setMdsTable] = useState(false);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 100,
-  });
+  const [pagination] = useState({ current: 1, pageSize: 100 });
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
   const [formValues, setFormValues] = useState({
     userId: "",
     userStatusType: "all",
   });
-
-  const router = useRouter();
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const endPoint3 = "/api/getPortalIdList";
@@ -33,8 +31,12 @@ function RetailUser() {
     typeof window !== "undefined"
       ? localStorage.getItem("secondUserId")
       : null;
+
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
+
   const userType =
     typeof window !== "undefined"
       ? localStorage.getItem("adminUserType")
@@ -99,6 +101,7 @@ function RetailUser() {
       }
     } catch (err) {
       console.error(err);
+      setError("Error fetching portal list.");
     }
   };
 
@@ -106,14 +109,12 @@ function RetailUser() {
     getPortalList();
   }, []);
 
-  /* ---------------- TABLE SELECTION ---------------- */
+  /* ---------------- TABLE ---------------- */
 
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
   };
-
-  const hasSelected = selectedRowKeys.length > 0;
 
   const start = () => {
     setLoading(true);
@@ -134,7 +135,7 @@ function RetailUser() {
     setMdsTable(true);
   };
 
-  /* ---------------- COLUMNS (shortened demo) ---------------- */
+  /* ---------------- COLUMNS ---------------- */
 
   const mdsColumn = [
     {
@@ -151,106 +152,130 @@ function RetailUser() {
   ];
 
   return (
-    <div className="flex justify-center mt-4">
-      <div className="w-full max-w-[850px] rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-2 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Retail User
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Retail User"
+        description="Search and manage retail hierarchy users"
+      />
 
-        {/* FORM */}
-        {form && (
-          <div className="px-6 py-4 space-y-4">
-            
-            {/* USER TYPE */}
-            <div className="flex justify-center items-center">
-              <label className="w-40 text-right font-semibold">
-                Select User Type :
-              </label>
-              <select
-                name="userType"
-                onChange={handleInputChange}
-                className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-              >
-                <option value="">Select</option>
-                <option value="mds">Master Distributor</option>
-                <option value="distributor">Distributor</option>
-                <option value="agent">Agent</option>
-              </select>
-            </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-            {/* CLIENT ID */}
-            <div className="flex justify-center items-center">
-              <label className="w-40 text-right font-semibold">
-                Select Client ID :
-              </label>
-              <select
-                name="clientId"
-                onChange={handleInputChange}
-                className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-              >
-                <option value="">Select</option>
-                {portalList?.map((item, i) => (
-                  <option key={i} value={item.portalId}>
-                    {item.portalId} - {item.companyName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {form && (
+              <>
+                {/* USER TYPE */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    Select User Type
+                  </label>
+                  <div className="text-center">:</div>
 
-            {/* USER ID */}
-            <div className="flex justify-center items-center">
-              <label className="w-40 text-right font-semibold">
-                User ID :
-              </label>
-              <input
-                name="userId"
-                placeholder="Enter user id"
-                onChange={handleInputChange}
-                className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-              />
-            </div>
+                  <select
+                    name="userType"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="">Select</option>
+                    <option value="mds">Master Distributor</option>
+                    <option value="distributor">Distributor</option>
+                    <option value="agent">Agent</option>
+                  </select>
+                </div>
 
-            {/* STATUS */}
-            <div className="flex justify-center items-center">
-              <label className="w-40 text-right font-semibold">
-                User Status Type :
-              </label>
-              <select
-                name="userStatusType"
-                onChange={handleInputChange}
-                className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-              >
-                <option value="all">All</option>
-                <option value="Activate">Active</option>
-                <option value="Deactive">Deactive</option>
-              </select>
-            </div>
+                {/* CLIENT ID */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    Select Client ID
+                  </label>
+                  <div className="text-center">:</div>
 
-            {/* MESSAGE */}
-            <div className="text-center text-sm">
-              {success && <p className="text-green-600">{success}</p>}
-              {error && <p className="text-red-500">{error}</p>}
-              {loading && <p className="text-gray-500">Loading...</p>}
-            </div>
+                  <select
+                    name="clientId"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="">Select</option>
+                    {portalList?.map((item, i) => (
+                      <option key={i} value={item.portalId}>
+                        {item.portalId} — {item.companyName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* BUTTON */}
-            <div className="text-center">
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-1.5 text-white text-sm rounded-md bg-[#4fa2c2] hover:opacity-90"
-              >
-                Submit
-              </button>
-            </div>
+                {/* USER ID */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    User ID
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <input
+                    name="userId"
+                    placeholder="Enter user id"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  />
+                </div>
+
+                {/* STATUS */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    User Status Type
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <select
+                    name="userStatusType"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="all">All</option>
+                    <option value="Activate">Active</option>
+                    <option value="Deactive">Deactive</option>
+                  </select>
+                </div>
+
+                {/* MESSAGE */}
+                <div className="text-center text-sm mb-2">
+                  {success && <p className="text-green-600">{success}</p>}
+                  {error && <p className="text-red-500">{error}</p>}
+                  {loading && <p className="text-gray-500">Loading...</p>}
+                </div>
+
+                {/* BUTTONS */}
+                <div className="text-center mt-4 flex justify-center gap-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="capsButton min-w-[140px]"
+                  >
+                    Submit
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setFormValues({
+                        userId: "",
+                        userStatusType: "all",
+                      });
+                      setError("");
+                      setSuccess("");
+                    }}
+                    className="capsButtonSecondary min-w-[140px]"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         {/* TABLE */}
         {mdsTable && (
-          <div className="px-6 pb-6">
-            <p className="font-semibold mb-2">
+          <>
+            <p className="font-semibold mt-6 mb-2">
               Retail User &gt; Master Distributor
             </p>
 
@@ -263,29 +288,21 @@ function RetailUser() {
               size="small"
               bordered
               footer={() => (
-                <div className="flex flex-wrap justify-between gap-2">
+                <div className="flex justify-between">
                   <button
                     onClick={start}
-                    disabled={!hasSelected}
-                    className="px-3 py-1 text-sm border rounded-md"
+                    className="capsButtonSecondary"
                   >
                     Reload
                   </button>
-
-                  <div className="flex gap-2">
-                    <button className="btn-action">Active</button>
-                    <button className="btn-action">Deactive</button>
-                    <button className="btn-action">Block</button>
-                    <button className="btn-action">Unblock</button>
-                  </div>
                 </div>
               )}
             />
-          </div>
+          </>
         )}
+      </PageCard>
 
-        <ToastContainer />
-      </div>
+      <ToastContainer />
     </div>
   );
 }

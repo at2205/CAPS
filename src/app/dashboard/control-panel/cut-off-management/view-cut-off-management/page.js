@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function ViewCutOffManagement() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -33,69 +36,74 @@ function ViewCutOffManagement() {
     }, 1000);
   };
 
+  const handleClear = () => {
+    setFormValues({ fullId: "" });
+    setSuccess("");
+    setError("");
+  };
+
   return (
-    <div className="min-h-screen flex justify-center items-start bg-white">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          View Cut-Off Management
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="View Cut-Off Management"
+        description="View cut-off configuration by Full ID"
+      />
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <div className="p-6">
-            <form>
-              
-              {/* FULL ID ROW */}
-              <div className="mb-4 flex items-center justify-center">
-                <label className="w-[200px] text-right font-semibold text-sm whitespace-nowrap">
-                  Enter Full Id :
-                </label>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-                <input
-                  type="text"
-                  name="fullId"
-                  placeholder="Enter full id"
-                  onChange={handleInputChange}
-                  className="ml-3 w-[220px] border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-                />
-              </div>
+            {/* FULL ID */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+              <label className="text-right font-medium">
+                Enter Full Id
+              </label>
+              <div className="text-center">:</div>
 
-              {/* STATUS MESSAGE */}
-              <div className="flex justify-center items-center gap-3 mb-3 text-sm">
-                {success && (
-                  <span className="text-green-600">{success}</span>
-                )}
-                {error && (
-                  <span className="text-red-500">{error}</span>
-                )}
-                {loading && (
-                  <span className="text-gray-500 animate-pulse">
-                    Loading...
-                  </span>
-                )}
-              </div>
+              <input
+                type="text"
+                name="fullId"
+                value={formValues.fullId}
+                placeholder="Enter full id"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </div>
 
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className={`px-5 py-1.5 text-white text-sm rounded-md shadow-md
-                    bg-[#4fa2c2] hover:opacity-90
-                    ${loading ? "opacity-60 cursor-not-allowed" : ""}
-                  `}
-                >
-                  Submit
-                </button>
-              </div>
+            {/* STATUS MESSAGE */}
+            <div className="text-center text-sm mb-2">
+              {success && (
+                <p className="text-green-600">{success}</p>
+              )}
+              {error && (
+                <p className="text-red-500">{error}</p>
+              )}
+              {loading && (
+                <p className="text-gray-500">Loading...</p>
+              )}
+            </div>
 
-            </form>
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="capsButton min-w-[140px]"
+              >
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

@@ -11,7 +11,7 @@ export default function Sidebar() {
   const [hoverMain, setHoverMain] = useState(null);
   const [hoverSub, setHoverSub] = useState(null);
 
-  // ✅ Safe navigation handler
+  // Safe navigation handler
   const handleNavigation = (e, url) => {
     e.stopPropagation();
 

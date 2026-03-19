@@ -1,149 +1,317 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
-const CaptureGeoLocation = () => {
+function CaptureGeoLocation() {
+
   const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
   const [showResult, setShowResult] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const [result, setResult] = useState({
+    successCount: 0,
+    failedCount: 0
+  });
+
+  // =========================
+  // Upload File
+  // =========================
+
+  const handleSubmit = async () => {
+
     if (!file) {
-      setMessage("Please select file.");
+      Swal.fire({
+        icon: "warning",
+        title: "File Required",
+        text: "Please Select File."
+      });
       return;
     }
 
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      setMessage("Please upload file having extension .xlsx only.");
+      Swal.fire({
+        icon: "error",
+        title: "Invalid File",
+        text: "Please Upload File Having Extension .xlsx Only."
+      });
       return;
     }
 
-    setMessage("File uploaded successfully.");
-    setShowResult(true);
+    setLoading(true);
+    setShowResult(false);
+
+    try {
+
+      const formData = new FormData();
+
+      formData.append("file1", file);
+
+      const adminPayload = {
+        userId: localStorage.getItem("userId"),
+        loginType: localStorage.getItem("adminUserType")
+      };
+
+      formData.append(
+        "adminUserFormBean",
+        JSON.stringify(adminPayload)
+      );
+
+      const response = await axiosInstance.post(
+        endpoints.daModuleEndpoints.captureGeoLocation,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
+
+      const data =
+        typeof response.data === "string"
+          ? JSON.parse(response.data)
+          : response.data;
+
+      if (data?.status === "1") {
+
+        Swal.fire({
+          icon: "error",
+          title: "Upload Failed",
+          text: data?.message || "Upload failed"
+        });
+
+        return;
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: data?.message || "File Uploaded Successfully"
+      });
+
+      setResult({
+        successCount: data.totalSuccessCount || 0,
+        failedCount: data.totalFailedCount || 0
+      });
+
+      setShowResult(true);
+
+    } catch (error) {
+
+      console.error("Upload Error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text:
+          error?.response?.data?.message ||
+          "File upload failed. Please try again."
+      });
+
+    } finally {
+      setLoading(false);
+    }
+
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
+  // =========================
+  // Download Report
+  // =========================
 
-  const buttonStyle =
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] text-white " +
-    "px-6 py-2 rounded-xl shadow-md text-sm font-medium hover:opacity-90";
+  const handleDownloadReport = async () => {
+
+    try {
+
+      const response = await axiosInstance.get(
+        endpoints.daModuleEndpoints.downloadRetailerReport,
+        {
+          responseType: "blob"
+        }
+      );
+
+      const url = window.URL.createObjectURL(
+        new Blob([response.data])
+      );
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "AgentData_Report.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+    } catch (error) {
+
+      console.error("Download Error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Download Failed",
+        text: "Unable to download report"
+      });
+
+    }
+
+  };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[900px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          DA Module &gt; Capture Geo Location
-        </div>
+    <div className="p-6 text-[#226b88]">
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-6">
+      <CapsCard
+        title="DA Module > Capture Geo Location"
+        description="Upload geo location excel file"
+      />
 
-          {/* MESSAGE */}
-          {message && (
-            <div className="mb-4 text-center text-sm text-blue-700
-                            bg-blue-50 border border-blue-200 rounded-md py-2">
-              {message}
-            </div>
-          )}
+      <PageCard>
 
-          <div className="flex justify-center">
-            <div className="w-[520px]">
+        <div className="flex justify-center">
 
-              {/* FILE INPUT */}
-              <div className="mb-4 flex items-start">
-                <label className="w-[220px] text-right pr-4 pt-2 font-semibold text-sm">
-                  Please Select The File :
-                </label>
+          <div className="w-[520px] space-y-4">
 
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    accept=".xlsx"
-                    className={inputStyle}
-                    onChange={(e) => setFile(e.target.files[0])}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    .xlsx format only
+            {/* File Upload */}
+
+            <div className="grid grid-cols-[200px_10px_1fr] items-start">
+
+              <label className="text-sm font-semibold text-right pt-2">
+                Please Select The File
+              </label>
+
+              <div className="text-center pt-2">:</div>
+
+              <div>
+
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  disabled={loading}
+                  onChange={(e) => {
+                    setFile(e.target.files[0]);
+                    setShowResult(false);
+                  }}
+                  className="capsInput"
+                />
+
+                <p className="text-xs text-gray-500 mt-1">
+                  .xlsx format only
+                </p>
+
+                {file && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Selected: {file.name}
                   </p>
+                )}
 
-                  {file && (
-                    <p className="text-xs text-green-600 mt-1">
-                      Selected: {file.name}
-                    </p>
-                  )}
-                </div>
               </div>
-
-              {/* DOWNLOAD FORMAT */}
-              <div className="mb-4 flex items-center">
-                <div className="w-[220px]" />
-
-                <a
-                  href="/Geolocation.xlsx"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm text-[#3d89a6] font-medium hover:underline"
-                >
-                  Click To Download Format
-                </a>
-              </div>
-
-              {/* BUTTON */}
-              <div className="text-center mt-4">
-                <button
-                  onClick={handleSubmit}
-                  className={buttonStyle}
-                >
-                  Submit
-                </button>
-              </div>
-
-              {/* RESULT TABLE */}
-              {showResult && (
-                <div className="mt-6 overflow-x-auto">
-                  <table className="w-full border border-gray-300 text-sm text-center">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border px-3 py-2">Success Count</th>
-                        <th className="border px-3 py-2">Failed Count</th>
-                        <th className="border px-3 py-2">Report</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      <tr className="hover:bg-gray-50">
-                        <td className="border px-3 py-2 font-bold text-green-600">
-                          0
-                        </td>
-                        <td className="border px-3 py-2 font-bold text-red-600">
-                          0
-                        </td>
-                        <td className="border px-3 py-2">
-                          <a
-                            href="#"
-                            className="text-indigo-600 hover:underline"
-                          >
-                            Download Report
-                          </a>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
 
             </div>
+
+            {/* Download Format */}
+
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+
+              <div />
+              <div />
+
+              <a
+                href="/CaptureGeoLocation.xlsx"
+                download
+                className="text-sm font-semibold hover:underline"
+              >
+                Click To Download Format
+              </a>
+
+            </div>
+
+            {/* Submit Button */}
+
+            <div className="text-center pt-2">
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="capsButton px-10"
+              >
+                {loading ? "Uploading..." : "SUBMIT"}
+              </button>
+
+            </div>
+
+            {/* Result Table */}
+
+            {showResult && (
+
+              <div className="pt-4">
+
+                <table className="w-full border text-sm text-center">
+
+                  <thead className="bg-gray-100">
+
+                    <tr>
+                      <th className="border px-3 py-2">
+                        Success Count
+                      </th>
+
+                      <th className="border px-3 py-2">
+                        Failed Count
+                      </th>
+
+                      <th className="border px-3 py-2">
+                        Report
+                      </th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    <tr>
+
+                      <td className="border px-3 py-2 font-bold text-green-600">
+                        {result.successCount}
+                      </td>
+
+                      <td className="border px-3 py-2 font-bold text-red-600">
+                        {result.failedCount}
+                      </td>
+
+                      <td className="border px-3 py-2">
+
+                        <button
+                          onClick={handleDownloadReport}
+                          className="text-blue-600 underline"
+                        >
+                          Download Report
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            )}
+
           </div>
 
         </div>
-      </div>
+
+      </PageCard>
+
     </div>
+
   );
-};
+
+}
 
 export default CaptureGeoLocation;

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const BankExcelUploads = () => {
   const [formData, setFormData] = useState({
@@ -17,41 +19,34 @@ const BankExcelUploads = () => {
     console.log(formData);
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "file:mr-3 file:px-3 file:py-1.5 file:rounded-md " +
-    "file:border-0 file:text-sm file:font-medium " +
-    "file:bg-[#4c95b3] file:text-white hover:file:opacity-90 " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
-  const buttonStyle =
-    "px-6 py-2 text-white rounded-xl shadow-md text-sm font-medium " +
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
-
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Bank Excel Upload
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Bank Excel Upload"
+        description="Upload bank transaction Excel file"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-6 flex justify-center">
-          <form className="w-[520px]" onSubmit={handleSubmit}>
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <div className="flex justify-center">
+          <form onSubmit={handleSubmit}>
 
             {/* FILE UPLOAD */}
-            <div className="mb-4 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+
+              <label className="text-right font-medium">
                 Upload Excel
               </label>
+
+              <div className="text-center">:</div>
 
               <input
                 type="file"
                 name="uploadExcel"
-                className={inputStyle}
+                className="capsInput"
                 onChange={handleChange}
                 required
               />
@@ -61,7 +56,7 @@ const BankExcelUploads = () => {
             <div className="text-center mb-4">
               <a
                 href="/path/to/format"
-                className="text-sm font-semibold text-[#3b7d9a] hover:underline"
+                className="text-sm font-semibold text-[#226b88] hover:underline"
               >
                 Click To Download Format
               </a>
@@ -69,14 +64,18 @@ const BankExcelUploads = () => {
 
             {/* BUTTON */}
             <div className="text-center">
-              <button type="submit" className={buttonStyle}>
+              <button
+                type="submit"
+                className="capsButton min-w-[120px]"
+              >
                 Submit
               </button>
             </div>
 
           </form>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

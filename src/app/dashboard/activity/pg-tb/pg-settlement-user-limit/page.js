@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const PGSettlementUserLimit = () => {
   const [pgUserId, setPgUserId] = useState("");
@@ -44,219 +46,271 @@ const PGSettlementUserLimit = () => {
     alert("Submitted (frontend only)");
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
+  const badgeStyle = (enabled) =>
+    enabled
+      ? "bg-green-100 text-green-700"
+      : "bg-gray-100 text-gray-600";
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > PG Settlement User Limit"
+        description="Configure PG transaction limits"
+      />
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          PG Settlement User Limit
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[620px] space-y-4">
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-6">
+            {/* PG USER ID */}
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
+                PG User Id
+              </label>
+              <div className="text-center">:</div>
 
-          {/* ===== PG USER INPUT ===== */}
-          <div className="flex justify-center mb-6">
-            <div className="w-[500px]">
+              <input
+                value={pgUserId}
+                onChange={(e) =>
+                  setPgUserId(e.target.value.toUpperCase())
+                }
+                className="capsInput"
+                placeholder="Enter PG User ID"
+              />
+            </div>
 
-              {/* INPUT */}
-              <div className="flex items-center gap-4 mb-4">
-                <label className="font-semibold w-[120px] text-right">
-                  PG User Id
+            {/* Buttons */}
+            <div className="text-center space-x-3 pt-2">
+              <button
+                onClick={handleVerify}
+                className="capsButton px-6"
+              >
+                VERIFY
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="capsButtonSecondary px-6"
+              >
+                RESET
+              </button>
+            </div>
+
+            {/* PG ALLOW */}
+            {isVerified && (
+              <div className="text-center pt-2">
+                <label className="inline-flex items-center gap-2 text-sm font-semibold cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={pgAllow}
+                    onChange={(e) =>
+                      setPgAllow(e.target.checked)
+                    }
+                  />
+                  PG Allow
                 </label>
 
-                <input
-                  value={pgUserId}
-                  onChange={(e) =>
-                    setPgUserId(e.target.value.toUpperCase())
-                  }
-                  className={inputStyle}
-                />
+                <div className="pt-1">
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${badgeStyle(
+                      pgAllow
+                    )}`}
+                  >
+                    {pgAllow ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
               </div>
+            )}
 
-              {/* BUTTONS */}
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={handleVerify}
-                  className="px-5 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition"
-                >
-                  Verify
-                </button>
+            {/* TABLE */}
+            {isVerified && pgAllow && (
+              <>
+                <div className="pt-3 overflow-x-auto">
+                  <table className="w-full border text-sm text-center">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-3 py-2"></th>
+                        <th className="border px-3 py-2">
+                          Min Txn Limit
+                        </th>
+                        <th className="border px-3 py-2">
+                          Daily Txn Limit
+                        </th>
+                        <th className="border px-3 py-2">
+                          From Date / Time
+                        </th>
+                        <th className="border px-3 py-2">
+                          To Date / Time
+                        </th>
+                        <th className="border px-3 py-2">
+                          API ID
+                        </th>
+                      </tr>
+                    </thead>
 
-                <button
-                  onClick={handleReset}
-                  className="px-5 py-2 rounded-2xl shadow border border-gray-400
-                             hover:bg-gray-100 transition"
-                >
-                  Reset
-                </button>
-              </div>
+                    <tbody>
+                      {/* ROW 1 */}
+                      <tr className="hover:bg-gray-50">
+                        <td className="border font-semibold">
+                          PG TO API
+                        </td>
 
-            </div>
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row1.min}
+                            onChange={(e) =>
+                              setRow1({
+                                ...row1,
+                                min: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row1.daily}
+                            onChange={(e) =>
+                              setRow1({
+                                ...row1,
+                                daily: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row1.from}
+                            onChange={(e) =>
+                              setRow1({
+                                ...row1,
+                                from: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row1.to}
+                            onChange={(e) =>
+                              setRow1({
+                                ...row1,
+                                to: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row1.api}
+                            onChange={(e) =>
+                              setRow1({
+                                ...row1,
+                                api: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+                      </tr>
+
+                      {/* ROW 2 */}
+                      <tr className="hover:bg-gray-50">
+                        <td className="border font-semibold">
+                          PG TO API-NB
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row2.min}
+                            onChange={(e) =>
+                              setRow2({
+                                ...row2,
+                                min: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row2.daily}
+                            onChange={(e) =>
+                              setRow2({
+                                ...row2,
+                                daily: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row2.from}
+                            onChange={(e) =>
+                              setRow2({
+                                ...row2,
+                                from: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row2.to}
+                            onChange={(e) =>
+                              setRow2({
+                                ...row2,
+                                to: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+
+                        <td className="border p-1">
+                          <input
+                            className="capsInput"
+                            value={row2.api}
+                            onChange={(e) =>
+                              setRow2({
+                                ...row2,
+                                api: e.target.value,
+                              })
+                            }
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Continue Button */}
+                <div className="text-center pt-3">
+                  <button
+                    onClick={handleSubmit}
+                    className="capsButton px-10"
+                  >
+                    CONTINUE
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
-
-          {/* ===== PG ALLOW ===== */}
-          {isVerified && (
-            <div className="text-center mb-6">
-              <label className="inline-flex items-center gap-2 font-semibold cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={pgAllow}
-                  onChange={(e) => setPgAllow(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                PG Allow
-              </label>
-            </div>
-          )}
-
-          {/* ===== TABLE ===== */}
-          {isVerified && pgAllow && (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full border border-gray-300 text-sm text-center">
-
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border p-2"></th>
-                      <th className="border p-2">Min Txn Limit</th>
-                      <th className="border p-2">Daily Txn Limit</th>
-                      <th className="border p-2">From Date / Time</th>
-                      <th className="border p-2">To Date / Time</th>
-                      <th className="border p-2">API ID</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    <tr className="hover:bg-gray-50">
-                      <td className="border p-2 font-semibold">
-                        PG TO API
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row1.min}
-                          onChange={(e) =>
-                            setRow1({ ...row1, min: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row1.daily}
-                          onChange={(e) =>
-                            setRow1({ ...row1, daily: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row1.from}
-                          onChange={(e) =>
-                            setRow1({ ...row1, from: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row1.to}
-                          onChange={(e) =>
-                            setRow1({ ...row1, to: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row1.api}
-                          onChange={(e) =>
-                            setRow1({ ...row1, api: e.target.value })
-                          }
-                        />
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-gray-50">
-                      <td className="border p-2 font-semibold">
-                        PG TO API-NB
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row2.min}
-                          onChange={(e) =>
-                            setRow2({ ...row2, min: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row2.daily}
-                          onChange={(e) =>
-                            setRow2({ ...row2, daily: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row2.from}
-                          onChange={(e) =>
-                            setRow2({ ...row2, from: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row2.to}
-                          onChange={(e) =>
-                            setRow2({ ...row2, to: e.target.value })
-                          }
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <input
-                          className={inputStyle}
-                          value={row2.api}
-                          onChange={(e) =>
-                            setRow2({ ...row2, api: e.target.value })
-                          }
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-
-                </table>
-              </div>
-
-              {/* ===== CONTINUE BUTTON ===== */}
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition"
-                >
-                  Continue
-                </button>
-              </div>
-            </>
-          )}
-
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const AuthorizedClientActivity = () => {
   const [authorizedClientActivity, setAuthorizedClientActivity] = useState("");
@@ -21,41 +23,36 @@ const AuthorizedClientActivity = () => {
     }
   };
 
-  const selectStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
-  const buttonStyle =
-    "px-6 py-2 text-white rounded-xl shadow-md text-sm font-medium " +
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
-
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Authorized Client Activity
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Authorized Client Activity"
+        description="Select authorized client action"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-6 flex justify-center">
-          <form className="w-[520px]" onSubmit={handleSubmit}>
+      {/* MAIN CARD */}
+      <PageCard>
 
-            {/* SELECT */}
-            <div className="mb-6 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+        <div className="flex justify-center">
+          <form onSubmit={handleSubmit}>
+
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+
+              <label className="text-right font-medium">
                 Select
               </label>
 
+              <div className="text-center">:</div>
+
               <select
-                className={selectStyle}
                 value={authorizedClientActivity}
                 onChange={(e) =>
                   setAuthorizedClientActivity(e.target.value)
                 }
                 required
+                className="capsSelect"
               >
                 <option value="">--select--</option>
                 <option value="myDeposit">My Deposit</option>
@@ -66,18 +63,22 @@ const AuthorizedClientActivity = () => {
                   Trade Balance Push
                 </option>
               </select>
+
             </div>
 
-            {/* BUTTON */}
             <div className="text-center">
-              <button type="submit" className={buttonStyle}>
+              <button
+                type="submit"
+                className="capsButton min-w-[120px]"
+              >
                 Continue
               </button>
             </div>
 
           </form>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

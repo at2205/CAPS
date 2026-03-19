@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const BulkRefundTransaction = () => {
   const [formData, setFormData] = useState({
     service: "select",
@@ -117,181 +120,162 @@ const BulkRefundTransaction = () => {
     setUpdatedStatus("selected");
   };
 
+  const inputClass =
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+
+  const Row = ({ label, children }) => (
+    <div className="flex items-start justify-center mb-3">
+      <label className="w-[220px] text-right text-sm font-semibold pt-1">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="flex justify-center mt-6">
-      <div className="w-[850px] bg-white rounded-xl shadow-sm overflow-hidden">
-        
-        {/* HEADER */}
-        <div className="bg-gradient-to-r from-[#4c95b3] to-[#3d89a6] text-white text-center font-bold text-lg py-3">
-          Bulk Refund Transaction Process
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        <div className="p-6">
+      <CapsCard
+        title="Customer Care Module > Bulk Refund Transaction Process"
+        description="Bulk update refund / success transactions"
+      />
 
-          {/* MESSAGE */}
-          {message && (
-            <div className="bg-blue-100 text-blue-700 text-sm text-center px-3 py-2 rounded-md mb-4">
-              {message}
-            </div>
-          )}
+      <PageCard>
 
-          <form onSubmit={submitForm}>
-            <div className="flex justify-center">
-              <table className="w-[70%] mt-4 text-sm">
-                <tbody>
+        {/* MESSAGE */}
+        {message && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm text-center px-3 py-2 rounded-md mb-4">
+            {message}
+          </div>
+        )}
 
-                  <tr className="h-10">
-                    <td className="text-right font-semibold w-[35%]">
-                      Service
-                    </td>
-                    <td className="text-center w-[5%]">:</td>
-                    <td className="w-[60%]">
-                      <select
-                        name="service"
-                        value={formData.service}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                      >
-                        <option value="select">----select services----</option>
-                        <option value="Channel-Refund">Channel Refund</option>
-                        <option value="DMR-MYRemit">DMR-MYRemit</option>
-                        <option value="DMR-ARemit">DMR-ARemit</option>
-                      </select>
-                    </td>
-                  </tr>
+        <form onSubmit={submitForm}>
 
-                  <tr className="h-10">
-                    <td className="text-right font-semibold">
-                      Action
-                    </td>
-                    <td className="text-center">:</td>
-                    <td>
-                      <select
-                        name="actionType"
-                        value={formData.actionType}
-                        onChange={handleInputChange}
-                        className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                      >
-                        <option value="SuccessRefund">Success Refund</option>
-                        <option value="Refund">Refund</option>
-                        <option value="Success">Success</option>
-                      </select>
-                    </td>
-                  </tr>
+          <Row label="Service :">
+            <select
+              name="service"
+              value={formData.service}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              <option value="select">----select services----</option>
+              <option value="Channel-Refund">Channel Refund</option>
+              <option value="DMR-MYRemit">DMR-MYRemit</option>
+              <option value="DMR-ARemit">DMR-ARemit</option>
+            </select>
+          </Row>
 
-                  <tr>
-                    <td className="text-right font-semibold align-top pt-2">
-                      Transaction IDs
-                    </td>
-                    <td className="text-center align-top pt-2">:</td>
-                    <td>
-                      <textarea
-                        name="Tran_id"
-                        value={formData.Tran_id}
-                        onChange={handleInputChange}
-                        rows="3"
-                        placeholder="Use comma separated transaction IDs"
-                        className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2]"
-                      />
-                    </td>
-                  </tr>
+          <Row label="Action :">
+            <select
+              name="actionType"
+              value={formData.actionType}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              <option value="SuccessRefund">Success Refund</option>
+              <option value="Refund">Refund</option>
+              <option value="Success">Success</option>
+            </select>
+          </Row>
 
-                </tbody>
-              </table>
+          <Row label="Transaction IDs :">
+            <textarea
+              name="Tran_id"
+              value={formData.Tran_id}
+              onChange={handleInputChange}
+              rows="3"
+              placeholder="Use comma separated transaction IDs"
+              className={inputClass}
+            />
+          </Row>
+
+          <div className="text-center mt-4 space-x-3">
+            <button type="submit" disabled={loading} className="capsButton px-8">
+              {loading ? "Processing..." : "Submit"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={loading}
+              className="capsButtonSecondary px-8"
+            >
+              Clear
+            </button>
+          </div>
+
+        </form>
+
+        {/* RESULTS */}
+        {listofStatus && (
+          <>
+            <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm mt-6">
+              Transaction Results
             </div>
 
-            {/* BUTTONS */}
-            <div className="text-center mt-4 mb-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-[#4FA2C2] text-white text-sm px-5 py-1.5 rounded-md hover:bg-[#3d8daa] transition disabled:opacity-50 mr-2"
-              >
-                {loading ? "Processing..." : "Submit"}
-              </button>
+            <table className="w-full mt-3 border border-gray-300 text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-2 py-1">Transaction Id</th>
+                  <th className="border px-2 py-1">Updated Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(listofStatus).map(([id, status], index) => (
+                  <tr key={index}>
+                    <td className="border px-2 py-1">{id}</td>
+                    <td className="border px-2 py-1">{status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={loading}
-                className="bg-gray-500 text-white text-sm px-5 py-1.5 rounded-md hover:bg-gray-600 transition disabled:opacity-50"
-              >
-                Clear
-              </button>
+            {/* INDIVIDUAL UPDATE */}
+            <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm mt-6">
+              Individual Update
             </div>
-          </form>
 
-          {/* RESULTS */}
-          {listofStatus && (
-            <>
-              <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm">
-                Transaction Results
+            <div className="text-center mt-4">
+
+              <div className="flex justify-center items-center gap-2 mb-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={checkstatus}
+                  onChange={(e) => setCheckstatus(e.target.checked)}
+                  disabled={loading}
+                />
+                <label>Check to enable update</label>
               </div>
 
-              <table className="w-full mt-3 border border-gray-300 text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-2 py-1">Transaction Id</th>
-                    <th className="border px-2 py-1">Updated Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(listofStatus).map(([id, status], index) => (
-                    <tr key={index}>
-                      <td className="border px-2 py-1">{id}</td>
-                      <td className="border px-2 py-1">{status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <select
+                value={updatedStatus}
+                onChange={(e) => setUpdatedStatus(e.target.value)}
+                disabled={!checkstatus || loading}
+                className="w-[260px] border border-gray-300 rounded-md px-3 py-1.5 text-sm mb-3 disabled:bg-gray-100"
+              >
+                <option value="selected">Select Action</option>
+                <option value="Refund">Refund</option>
+                <option value="Success">Success</option>
+                <option value="SuccessRefund">Success Refund</option>
+              </select>
 
-              {/* INDIVIDUAL UPDATE */}
-              <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm mt-5">
-                Individual Update
-              </div>
-
-              <div className="text-center mt-4">
-
-                <div className="flex justify-center items-center gap-2 mb-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={checkstatus}
-                    onChange={(e) => setCheckstatus(e.target.checked)}
-                    disabled={loading}
-                    className="accent-[#4FA2C2]"
-                  />
-                  <label>Check to enable update</label>
-                </div>
-
-                <select
-                  value={updatedStatus}
-                  onChange={(e) => setUpdatedStatus(e.target.value)}
+              <div>
+                <button
                   disabled={!checkstatus || loading}
-                  className="w-1/2 border rounded-md px-2 py-1 text-sm mb-3 disabled:bg-gray-100"
+                  onClick={(e) => {
+                    const firstTranId = Object.keys(listofStatus)[0];
+                    updateTran(firstTranId, e);
+                  }}
+                  className="capsButton px-8"
                 >
-                  <option value="selected">Select Action</option>
-                  <option value="Refund">Refund</option>
-                  <option value="Success">Success</option>
-                  <option value="SuccessRefund">Success Refund</option>
-                </select>
-
-                <div>
-                  <button
-                    disabled={!checkstatus || loading}
-                    onClick={(e) => {
-                      const firstTranId = Object.keys(listofStatus)[0];
-                      updateTran(firstTranId, e);
-                    }}
-                    className="bg-green-600 text-white text-sm px-5 py-1.5 rounded-md hover:bg-green-700 transition disabled:opacity-50"
-                  >
-                    {loading ? "Updating..." : "Update Transaction"}
-                  </button>
-                </div>
+                  {loading ? "Updating..." : "Update Transaction"}
+                </button>
               </div>
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+          </>
+        )}
+
+      </PageCard>
     </div>
   );
 };

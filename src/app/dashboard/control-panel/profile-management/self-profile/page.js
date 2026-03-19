@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const SelfProfile = () => {
   const [form, setForm] = useState({
@@ -21,144 +23,124 @@ const SelfProfile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log(form);
   };
 
   const checkAvailability = (field) => {
     alert(`Checking availability for ${field}`);
   };
 
-  const renderRow = (label, name, type = "text") => (
-    <tr>
-      <td className="text-right font-semibold w-[35%]">{label}</td>
-      <td className="w-[5%] text-center">:</td>
-      <td className="w-[60%]">
-        <input
-          type={type}
-          name={name}
-          value={form[name]}
-          onChange={handleChange}
-          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4FA2C2]"
-        />
-      </td>
-    </tr>
+  const renderInputRow = (label, name, type = "text") => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <input
+        type={type}
+        name={name}
+        value={form[name]}
+        onChange={handleChange}
+        className="capsInput"
+      />
+    </div>
+  );
+
+  const renderSelectRow = (label, name, options) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <select
+        name={name}
+        value={form[name]}
+        onChange={handleChange}
+        className="capsInput"
+      >
+        <option value="">Select</option>
+        {options.map((opt, i) => (
+          <option key={i}>{opt}</option>
+        ))}
+      </select>
+    </div>
   );
 
   const renderCheckRow = (label, name) => (
-    <tr>
-      <td className="text-right font-semibold">{label}</td>
-      <td className="text-center">:</td>
-      <td>
-        <div className="flex items-center">
-          <input
-            name={name}
-            value={form[name]}
-            onChange={handleChange}
-            className="w-[300px] border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4FA2C2]"
-          />
-          <span
-            onClick={() => checkAvailability(label)}
-            className="text-red-500 text-xs ml-2 cursor-pointer whitespace-nowrap"
-          >
-            Check Availability
-          </span>
-        </div>
-      </td>
-    </tr>
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div className="flex items-center gap-2">
+        <input
+          name={name}
+          value={form[name]}
+          onChange={handleChange}
+          className="capsInput"
+        />
+        <span
+          onClick={() => checkAvailability(label)}
+          className="text-red-500 text-xs cursor-pointer whitespace-nowrap"
+        >
+          Check Availability
+        </span>
+      </div>
+    </div>
   );
 
   return (
-    <div className="flex justify-center mt-4">
-      <div className="w-[850px] rounded-xl shadow-sm overflow-hidden bg-white border border-gray-200">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-2 text-[18px] bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Self Profile
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        <form onSubmit={handleSubmit} className="p-6">
-          
-          {/* PERSONAL DETAILS */}
-          <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl mb-3">
-            Personal Details
-          </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Self Profile"
+        description="Update your personal and PAN details"
+      />
+
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <form onSubmit={handleSubmit}>
 
           <div className="flex justify-center">
-            <table className="w-[80%] text-sm">
-              <tbody className="space-y-2">
-                {renderRow("First Name", "firstName")}
-                {renderRow("Last Name", "lastName")}
-                {renderRow("Date of Birth", "dob", "date")}
+            <div>
 
-                <tr>
-                  <td className="text-right font-semibold">Gender</td>
-                  <td className="text-center">:</td>
-                  <td>
-                    <select
-                      name="gender"
-                      value={form.gender}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4FA2C2]"
-                    >
-                      <option value="">Select</option>
-                      <option>Male</option>
-                      <option>Female</option>
-                    </select>
-                  </td>
-                </tr>
+              {/* PERSONAL FIELDS */}
+              {renderInputRow("First Name", "firstName")}
+              {renderInputRow("Last Name", "lastName")}
+              {renderInputRow("Date of Birth", "dob", "date")}
 
-                <tr>
-                  <td className="text-right font-semibold">
-                    Company / Firm Type
-                  </td>
-                  <td className="text-center">:</td>
-                  <td>
-                    <select
-                      name="companyType"
-                      value={form.companyType}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4FA2C2]"
-                    >
-                      <option value="">Select</option>
-                      <option>Proprietorship</option>
-                      <option>Partnership</option>
-                      <option>Private Limited</option>
-                      <option>Limited</option>
-                      <option>NGO</option>
-                    </select>
-                  </td>
-                </tr>
+              {renderSelectRow("Gender", "gender", [
+                "Male",
+                "Female",
+              ])}
 
-                {renderRow("Company / Shop Name", "companyName")}
-                {renderCheckRow("Email ID", "emailId")}
-                {renderCheckRow("Mobile Number", "mobileNo")}
-              </tbody>
-            </table>
+              {renderSelectRow("Company / Firm Type", "companyType", [
+                "Proprietorship",
+                "Partnership",
+                "Private Limited",
+                "Limited",
+                "NGO",
+              ])}
+
+              {renderInputRow("Company / Shop Name", "companyName")}
+
+              {renderCheckRow("Email ID", "emailId")}
+              {renderCheckRow("Mobile Number", "mobileNo")}
+
+              {/* PAN */}
+              <div className="mt-6">
+                {renderInputRow("PAN Number", "panNo")}
+              </div>
+
+              {/* BUTTON */}
+              <div className="text-center mt-6">
+                <button type="submit" className="capsButton min-w-[140px]">
+                  Submit
+                </button>
+              </div>
+
+            </div>
           </div>
 
-          {/* PAN DETAILS */}
-          <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl mt-6 mb-3">
-            PAN Details
-          </div>
-
-          <div className="flex justify-center">
-            <table className="w-[70%] text-sm">
-              <tbody>
-                {renderRow("PAN Number", "panNo")}
-              </tbody>
-            </table>
-          </div>
-
-          {/* BUTTON */}
-          <div className="text-center mt-6">
-            <button
-              type="submit"
-              className="px-5 py-1.5 text-white text-sm rounded-md bg-[#4FA2C2] hover:opacity-90 shadow-sm"
-            >
-              Submit
-            </button>
-          </div>
         </form>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

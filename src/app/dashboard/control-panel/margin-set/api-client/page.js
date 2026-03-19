@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const EditAPIClientCommission = () => {
   const [formData, setFormData] = useState({
     corpAgentId: "",
@@ -22,9 +25,9 @@ const EditAPIClientCommission = () => {
   const [showAEPSDiv, setShowAEPSDiv] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // -------------------- FETCH SERVICES
+  /* ================= SERVICES ================= */
   useEffect(() => {
-    const mockServices = [
+    setServices([
       "Recharge",
       "Utility",
       "Flights",
@@ -36,11 +39,10 @@ const EditAPIClientCommission = () => {
       "AEPS",
       "DTH-X",
       "Ops",
-    ];
-    setServices(mockServices);
+    ]);
   }, []);
 
-  // -------------------- SUB SERVICES
+  /* ================= SUB SERVICES ================= */
   useEffect(() => {
     if (formData.service !== "-1") {
       fetchSubServices(formData.service);
@@ -55,6 +57,7 @@ const EditAPIClientCommission = () => {
 
   const fetchSubServices = (service) => {
     let mock = [];
+
     if (service === "Recharge") mock = ["Mobile", "Datacard", "DTH"];
     else if (service === "ARemit")
       mock = ["DMR-AREMIT", "AccountVerification-AREMIT"];
@@ -62,18 +65,19 @@ const EditAPIClientCommission = () => {
     else mock = [`${service}-Sub1`, `${service}-Sub2`];
 
     setSubServices(mock);
+
     if (mock.length) {
       setFormData((p) => ({ ...p, rec_subservice: mock[0] }));
     }
   };
 
-  // -------------------- INPUT HANDLER
+  /* ================= INPUT ================= */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // -------------------- TABLE HANDLERS
+  /* ================= TABLE EDIT ================= */
   const handleStatusChange = (i, val) => {
     const updated = [...operatorData];
     updated[i].status = val;
@@ -95,12 +99,13 @@ const EditAPIClientCommission = () => {
     setOperatorData(updated);
   };
 
-  // -------------------- SUBMIT
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.corpAgentId.trim())
       return alert("Please Enter Agent Id");
+
     if (formData.service === "-1")
       return alert("Please select a service");
 
@@ -137,7 +142,7 @@ const EditAPIClientCommission = () => {
     }
   };
 
-  // -------------------- SELECT HANDLING
+  /* ================= SELECTION ================= */
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
     setSelectAll(checked);
@@ -146,6 +151,7 @@ const EditAPIClientCommission = () => {
 
   const handleRowSelection = (i) => {
     let rows = [...selectedRows];
+
     rows.includes(i)
       ? (rows = rows.filter((r) => r !== i))
       : rows.push(i);
@@ -154,7 +160,6 @@ const EditAPIClientCommission = () => {
     setSelectAll(rows.length === operatorData.length);
   };
 
-  // -------------------- BUTTON ACTIONS
   const actionAlert = (text) => {
     if (!selectedRows.length)
       return alert("Please select rows to update");
@@ -164,248 +169,237 @@ const EditAPIClientCommission = () => {
   const inputClass =
     "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
 
-  const rowClass = "grid grid-cols-[220px_20px_1fr] items-center mb-2";
-  const labelClass = "text-sm font-semibold text-right";
-  const primaryBtn =
-    "mt-2 px-6 py-1.5 text-sm rounded-full text-white bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
+  const Row = ({ label, children }) => (
+    <div className="flex items-center justify-center mb-3">
+      <label className="w-[220px] text-right text-sm font-semibold">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto py-6">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-      {message && (
-        <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
-          {message}
-        </div>
-      )}
+      <CapsCard
+        title="Customer Care Module > Edit API Client Commission"
+        description="Manage commission / surcharge settings"
+      />
 
-      {/* CARD */}
-      <div className="rounded-xl shadow-xl border border-gray-300">
-        <div className="text-white font-bold text-lg px-5 py-3 rounded-t-xl bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6]">
-          Customer Care Module &gt; Edit API Client Commission
-        </div>
+      <PageCard>
 
-        {/* FORM */}
-        <div className="px-10 py-6">
-          <form onSubmit={handleSubmit}>
+        {message && (
+          <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-            <div className={rowClass}>
-              <div className={labelClass}>Enter API Client ID</div>
-              <div>:</div>
-              <input
-                name="corpAgentId"
-                value={formData.corpAgentId}
-                onChange={handleInputChange}
-                className={inputClass}
-                disabled={loading}
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
 
-            <div className={rowClass}>
-              <div className={labelClass}>Select Service</div>
-              <div>:</div>
+          <Row label="Enter API Client ID :">
+            <input
+              name="corpAgentId"
+              value={formData.corpAgentId}
+              onChange={handleInputChange}
+              className={inputClass}
+              disabled={loading}
+            />
+          </Row>
+
+          <Row label="Select Service :">
+            <select
+              name="service"
+              value={formData.service}
+              onChange={handleInputChange}
+              className={inputClass}
+              disabled={loading}
+            >
+              <option value="-1">Please Select</option>
+              {services.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </Row>
+
+          {!showARemitDiv && !showAEPSDiv && (
+            <Row label="Select Sub Service :">
               <select
-                name="service"
-                value={formData.service}
+                name="rec_subservice"
+                value={formData.rec_subservice}
                 onChange={handleInputChange}
                 className={inputClass}
-                disabled={loading}
               >
-                <option value="-1">Please Select</option>
-                {services.map((s, i) => (
-                  <option key={i} value={s}>
+                {subServices.map((s) => (
+                  <option key={s} value={s}>
                     {s}
                   </option>
                 ))}
               </select>
-            </div>
+            </Row>
+          )}
 
-            {!showARemitDiv && !showAEPSDiv && (
-              <div className={rowClass}>
-                <div className={labelClass}>Select Sub Service</div>
-                <div>:</div>
-                <select
-                  name="rec_subservice"
-                  value={formData.rec_subservice}
-                  onChange={handleInputChange}
-                  className={inputClass}
-                  disabled={loading}
-                >
-                  <option value="">Select Sub Service</option>
-                  {subServices.map((s, i) => (
-                    <option key={i} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {showARemitDiv && (
-              <div className={rowClass}>
-                <div className={labelClass}>Select Sub Service</div>
-                <div>:</div>
-                <select
-                  name="aremit_subservice"
-                  value={formData.aremit_subservice}
-                  onChange={handleInputChange}
-                  className={inputClass}
-                >
-                  <option value="DMR-AREMIT">DMR-AREMIT</option>
-                  <option value="AccountVerification-AREMIT">
-                    AccountVerification-AREMIT
-                  </option>
-                </select>
-              </div>
-            )}
-
-            {showAEPSDiv && (
-              <div className={rowClass}>
-                <div className={labelClass}>Select Sub Service</div>
-                <div>:</div>
-                <select
-                  name="aeps_subservice"
-                  value={formData.aeps_subservice}
-                  onChange={handleInputChange}
-                  className={inputClass}
-                >
-                  <option value="AEPS">AEPS</option>
-                </select>
-              </div>
-            )}
-
-            <div className={rowClass}>
-              <div className={labelClass}>Select Margin Type</div>
-              <div>:</div>
+          {showARemitDiv && (
+            <Row label="Select Sub Service :">
               <select
-                name="marginType"
-                value={formData.marginType}
+                name="aremit_subservice"
+                value={formData.aremit_subservice}
                 onChange={handleInputChange}
                 className={inputClass}
               >
-                <option value="Commission">Commission</option>
-                <option value="Surcharge">Surcharge</option>
+                <option value="DMR-AREMIT">DMR-AREMIT</option>
+                <option value="AccountVerification-AREMIT">
+                  AccountVerification-AREMIT
+                </option>
               </select>
+            </Row>
+          )}
+
+          {showAEPSDiv && (
+            <Row label="Select Sub Service :">
+              <select
+                name="aeps_subservice"
+                value={formData.aeps_subservice}
+                onChange={handleInputChange}
+                className={inputClass}
+              >
+                <option value="AEPS">AEPS</option>
+              </select>
+            </Row>
+          )}
+
+          <Row label="Select Margin Type :">
+            <select
+              name="marginType"
+              value={formData.marginType}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              <option value="Commission">Commission</option>
+              <option value="Surcharge">Surcharge</option>
+            </select>
+          </Row>
+
+          <div className="text-center mt-3">
+            <button type="submit" className="capsButton px-8">
+              {loading ? "Loading..." : "Submit"}
+            </button>
+          </div>
+
+        </form>
+
+        {/* ================= TABLE ================= */}
+        {operatorData.length > 0 && (
+          <div className="mt-6">
+
+            <div className="text-sm font-semibold mb-2">
+              Commission and Status Details
             </div>
 
-            <div className="text-center">
-              <button type="submit" className={primaryBtn} disabled={loading}>
-                {loading ? "Loading..." : "Submit"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* TABLE */}
-      {operatorData.length > 0 && (
-        <div className="rounded-xl shadow-lg border border-gray-300 p-4 mt-5">
-          <h5 className="text-sm font-semibold mb-3">
-            Commission and Status Details
-          </h5>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-300 text-sm">
-              <thead className="bg-gray-800 text-white">
-                <tr>
-                  <th className="border px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                    /> #
-                  </th>
-                  <th className="border px-2 py-1">Corporate Agent ID</th>
-                  <th className="border px-2 py-1">Operator Name</th>
-                  <th className="border px-2 py-1">Service</th>
-                  <th className="border px-2 py-1">Sub Service</th>
-                  <th className="border px-2 py-1">Status</th>
-                  <th className="border px-2 py-1">{formData.marginType}</th>
-                  <th className="border px-2 py-1">{formData.marginType} Mark</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {operatorData.map((row, i) => (
-                  <tr key={i} className="text-center">
-                    <td className="border">
+            <div className="overflow-x-auto">
+              <table className="w-full border border-gray-300 text-sm">
+                <thead className="bg-[#4fa2c2] text-white">
+                  <tr>
+                    <th className="border px-2 py-1">
                       <input
                         type="checkbox"
-                        checked={selectedRows.includes(i)}
-                        onChange={() => handleRowSelection(i)}
-                      /> {i + 1}
-                    </td>
-                    <td className="border">{row.corporateAgntId}</td>
-                    <td className="border">{row.operatorName}</td>
-                    <td className="border">{row.service}</td>
-                    <td className="border">{row.subservice}</td>
-                    <td className="border px-1">
-                      <select
-                        className="border border-gray-300 rounded px-2 py-1 text-sm"
-                        value={row.status}
-                        onChange={(e) =>
-                          handleStatusChange(i, e.target.value)
-                        }
-                      >
-                        <option value="Y">Y</option>
-                        <option value="N">N</option>
-                      </select>
-                    </td>
-                    <td className="border px-1">
-                      <input
-                        className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
-                        value={row.comm}
-                        onChange={(e) =>
-                          handleCommissionChange(i, e.target.value)
-                        }
-                      />
-                    </td>
-                    <td className="border px-1">
-                      <select
-                        className="border border-gray-300 rounded px-2 py-1 text-sm"
-                        value={row.commMark}
-                        onChange={(e) =>
-                          handleCommMarkChange(i, e.target.value)
-                        }
-                      >
-                        <option value="P">P</option>
-                        <option value="R">R</option>
-                      </select>
-                    </td>
+                        checked={selectAll}
+                        onChange={handleSelectAll}
+                      /> #
+                    </th>
+                    <th className="border">Corporate Agent ID</th>
+                    <th className="border">Operator Name</th>
+                    <th className="border">Service</th>
+                    <th className="border">Sub Service</th>
+                    <th className="border">Status</th>
+                    <th className="border">{formData.marginType}</th>
+                    <th className="border">{formData.marginType} Mark</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {operatorData.map((row, i) => (
+                    <tr key={i} className="text-center">
+                      <td className="border">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(i)}
+                          onChange={() => handleRowSelection(i)}
+                        /> {i + 1}
+                      </td>
+                      <td className="border">{row.corporateAgntId}</td>
+                      <td className="border">{row.operatorName}</td>
+                      <td className="border">{row.service}</td>
+                      <td className="border">{row.subservice}</td>
+                      <td className="border">
+                        <select
+                          className="border border-gray-300 rounded px-2 py-1"
+                          value={row.status}
+                          onChange={(e) =>
+                            handleStatusChange(i, e.target.value)
+                          }
+                        >
+                          <option value="Y">Y</option>
+                          <option value="N">N</option>
+                        </select>
+                      </td>
+                      <td className="border">
+                        <input
+                          className="border border-gray-300 rounded px-2 py-1 w-20"
+                          value={row.comm}
+                          onChange={(e) =>
+                            handleCommissionChange(i, e.target.value)
+                          }
+                        />
+                      </td>
+                      <td className="border">
+                        <select
+                          className="border border-gray-300 rounded px-2 py-1"
+                          value={row.commMark}
+                          onChange={(e) =>
+                            handleCommMarkChange(i, e.target.value)
+                          }
+                        >
+                          <option value="P">P</option>
+                          <option value="R">R</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => actionAlert("Status updated successfully")}
+                className="capsButton px-4"
+              >
+                Update Status
+              </button>
+
+              <button
+                onClick={() =>
+                  actionAlert(`${formData.marginType} updated successfully`)
+                }
+                className="capsButton px-4"
+              >
+                Update {formData.marginType}
+              </button>
+
+              <button
+                onClick={() => actionAlert("All updates applied successfully")}
+                className="capsButton px-4"
+              >
+                Update All
+              </button>
+            </div>
+
           </div>
+        )}
 
-          <div className="flex justify-end gap-2 mt-3">
-            <button
-              onClick={() => actionAlert("Status updated successfully")}
-              className="px-3 py-1.5 text-sm rounded bg-yellow-500 text-white disabled:opacity-50"
-              disabled={!selectedRows.length}
-            >
-              Update Status
-            </button>
-
-            <button
-              onClick={() =>
-                actionAlert(`${formData.marginType} updated successfully`)
-              }
-              className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
-              disabled={!selectedRows.length}
-            >
-              Update {formData.marginType}
-            </button>
-
-            <button
-              onClick={() => actionAlert("All updates applied successfully")}
-              className="px-3 py-1.5 text-sm rounded bg-green-600 text-white disabled:opacity-50"
-              disabled={!selectedRows.length}
-            >
-              Update All
-            </button>
-          </div>
-        </div>
-      )}
+      </PageCard>
     </div>
   );
 };

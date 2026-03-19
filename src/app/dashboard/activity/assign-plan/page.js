@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 const AssignPlan = () => {
   const [agentId, setAgentId] = useState("");
@@ -40,73 +42,78 @@ const AssignPlan = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Assign Plan
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-10">
-          <div className="flex justify-center">
-            <div className="w-[520px]">
+      {/* HEADER */}
+      <CapsCard
+        title="Assign Plan"
+        description="Assign pricing plan to agent"
+      />
 
-              {/* AGENT ID */}
-              <div className="mb-5 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Agent ID
-                </label>
-                <input
-                  type="text"
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                />
-              </div>
+      {/* MAIN CARD */}
+      <PageCard>
 
-              {/* PLAN */}
-              <div className="mb-5 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Assign Plan
-                </label>
-                <select
-                  value={plan}
-                  onChange={(e) => setPlan(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                >
-                  {plans.map((p, i) => (
-                    <option key={i} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <div className="flex justify-center">
+          <div>
 
-              {/* BUTTON */}
-              <div className="text-center mt-6">
-                <button
-                  onClick={submitForm}
-                  className="px-6 py-2 text-white rounded-2xl shadow 
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition"
-                >
-                  Submit
-                </button>
-              </div>
+            {/* AGENT ID */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+              <label className="text-right font-medium">
+                Agent ID
+              </label>
 
-              {/* STATUS MESSAGE */}
-              {statusMsg && (
-                <div className="text-center mt-4 font-semibold text-teal-700">
-                  {statusMsg}
-                </div>
-              )}
+              <div className="text-center">:</div>
 
+              <input
+                type="text"
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className="capsInput"
+              />
             </div>
+
+            {/* PLAN */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+              <label className="text-right font-medium">
+                Assign Plan
+              </label>
+
+              <div className="text-center">:</div>
+
+              <select
+                value={plan}
+                onChange={(e) => setPlan(e.target.value)}
+                className="capsSelect"
+              >
+                {plans.map((p, i) => (
+                  <option key={i} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center">
+              <button
+                onClick={submitForm}
+                className="capsButton min-w-[120px]"
+              >
+                Submit
+              </button>
+            </div>
+
+            {/* STATUS MESSAGE */}
+            {statusMsg && (
+              <div className="text-center mt-4 font-semibold text-green-600">
+                {statusMsg}
+              </div>
+            )}
+
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

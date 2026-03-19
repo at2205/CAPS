@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { Table } from "antd";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function VendorChannel() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -16,21 +19,12 @@ function VendorChannel() {
       render: (_, __, index) => index + 1,
       width: 70,
     },
-    {
-      title: "Service Type",
-      dataIndex: "serviceType",
-    },
-    {
-      title: "Service",
-      dataIndex: "service",
-    },
+    { title: "Service Type", dataIndex: "serviceType" },
+    { title: "Service", dataIndex: "service" },
     {
       title: "Action",
       render: (_, record) => (
-        <select
-          defaultValue={record.action}
-          className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-        >
+        <select defaultValue={record.action} className="capsInput">
           <option value="Y">Yes</option>
           <option value="N">No</option>
         </select>
@@ -39,31 +33,30 @@ function VendorChannel() {
     {
       title: "Vendor",
       render: (_, record) => (
-        <select
-          defaultValue={record.vendor}
-          className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-        >
+        <select defaultValue={record.vendor} className="capsInput">
           <option value="AESAPI">AESAPI</option>
           <option value="NA">NA</option>
         </select>
       ),
     },
-    {
-      title: "Status",
-      dataIndex: "status",
-    },
+    { title: "Status", dataIndex: "status" },
   ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
+    if (!formValues?.vertical || !formValues?.service) {
+      setError("Please select required fields");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -94,50 +87,51 @@ function VendorChannel() {
     }, 1000);
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setFormValues({});
+    setShowTable(false);
+    setTableData([]);
+    setSuccess("");
+    setError("");
+  };
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-4">
-      <label className="w-[160px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Channel Vendor Management"
+        description="Manage vendor mapping configuration"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Channel Vendor Management
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            <Row label="Vertical :">
+            <FieldRow label="Vertical">
               <select
                 name="vertical"
-                required
+                value={formValues?.vertical || ""}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput"
               >
                 <option value="">Select</option>
                 <option value="Web">Web</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Service :">
+            <FieldRow label="Service">
               <select
                 name="service"
-                required
+                value={formValues?.service || ""}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput"
               >
                 <option value="">Select</option>
                 <option value="All">All</option>
@@ -148,55 +142,53 @@ function VendorChannel() {
                 <option value="Remittance">Single Tab Remittance</option>
                 <option value="SMS Service">SMS Service</option>
               </select>
-            </Row>
+            </FieldRow>
 
             {/* STATUS */}
-            <div className="text-center min-h-[24px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-500 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+            <div className="text-center text-sm mb-2">
+              {success && <p className="text-green-600">{success}</p>}
+              {error && <p className="text-red-500">{error}</p>}
+              {loading && <p className="text-gray-500">Loading...</p>}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
                 Submit
               </button>
+
+              <button
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
+              </button>
             </div>
 
-          </form>
+            {/* TABLE */}
+            {showTable && (
+              <div className="mt-6">
+                <div className="font-semibold mb-2">
+                  Vendor Mapping Details
+                </div>
 
-          {/* TABLE */}
-          {showTable && (
-            <div className="mt-6">
-              <div className="bg-[#4fa2c2] text-white font-semibold px-3 py-1.5 rounded-md mb-3 text-sm">
-                Vendor Mapping Details
+                <Table
+                  dataSource={tableData}
+                  columns={columns}
+                  bordered
+                  size="small"
+                  pagination={false}
+                />
               </div>
+            )}
 
-              <Table
-                dataSource={tableData}
-                columns={columns}
-                bordered
-                size="small"
-                pagination={false}
-              />
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }
