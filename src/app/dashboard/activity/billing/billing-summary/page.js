@@ -1,78 +1,109 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const BillingSummary = () => {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Billing Summary Submitted");
+  const [summaryData, setSummaryData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchItem, setSearchItem] = useState("");
+
+  const fetchSummary = async (page = 1) => {
+    try {
+      setLoading(true);
+      const response = await urlencodedInstance.get(
+        `${endpoints.activityEndpoints.summary}?currentPage=${page}&recordsPerPage=10`
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setSummaryData(data.BillingSummaryDetails || []);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(data.currentPage || 1);
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No records found" });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Failed to load billing summary" });
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleSearch = async () => {
+    if (!searchItem.trim()) { fetchSummary(); return; }
+    try {
+      setLoading(true);
+      const response = await urlencodedInstance.get(
+        `${endpoints.activityEndpoints.summarySearch}?searchItem=${searchItem.trim()}`
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setSummaryData(data.BillingSummaryDetails || []);
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No records found" });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Search failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchSummary(); }, []);
+
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Billing Summary
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard title="Billing Summary" description="Overview of billing device and service counts" />
+      <PageCard>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <input className="capsInput w-60" placeholder="Search Agent ID" value={searchItem} onChange={(e) => setSearchItem(e.target.value)} />
+            <button className="capsButton" onClick={handleSearch} disabled={loading}>Search</button>
+            <button className="capsButton" onClick={() => { setSearchItem(""); fetchSummary(); }}>Reset</button>
+          </div>
         </div>
-    
-        {/* BODY */}
-        <div className="px-4 py-4">
-          <form onSubmit={handleSubmit}>
-            
-            {/* TABLE */}
-            <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300 text-center text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border p-2">S.No</th>
-                    <th className="border p-2">Request ID</th>
-                    <th className="border p-2">BILLING-MANTRA DEVICE</th>
-                    <th className="border p-2">RO ID</th>
-                    <th className="border p-2">IRCTC ID</th>
-                    <th className="border p-2">BILLING-MORPHO DEVICE</th>
-                    <th className="border p-2">BILLING-MICRO ATM</th>
-                    <th className="border p-2">BILLING-POS DEVICE</th>
-                    <th className="border p-2">BILLING-PAN CARD</th>
-                    <th className="border p-2">PENDING</th>
-                    <th className="border p-2">REFUNDED</th>
-                    <th className="border p-2">DELIVERED</th>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-[#226b88] text-center text-sm">
+            <thead>
+              <tr className="capsColor">
+                <th className="border p-2">S.No</th>
+                <th className="border p-2">Agent ID</th>
+                <th className="border p-2">Agent Name</th>
+                <th className="border p-2">Status</th>
+                <th className="border p-2">Remark</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summaryData.length === 0 ? (
+                <tr><td colSpan="5" className="border p-4 text-gray-500">{loading ? "Loading..." : "No data"}</td></tr>
+              ) : (
+                summaryData.map((item, i) => (
+                  <tr key={i} className="hover:bg-gray-50">
+                    <td className="border p-2">{i + 1}</td>
+                    <td className="border p-2">{item.agentId || item.userId}</td>
+                    <td className="border p-2">{item.agentName || item.userName}</td>
+                    <td className="border p-2 font-semibold">{item.status}</td>
+                    <td className="border p-2">{item.remark}</td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  <tr className="hover:bg-gray-50">
-                    <td className="border p-2">1</td>
-                    <td className="border p-2">AG125728</td>
-                    <td className="border p-2">1</td>
-                    <td className="border p-2">1</td>
-                    <td className="border p-2">0</td>
-                    <td className="border p-2">1</td>
-                    <td className="border p-2">1</td>
-                    <td className="border p-2">0</td>
-                    <td className="border p-2">0</td>
-                    <td className="border p-2 text-yellow-500 font-semibold">0</td>
-                    <td className="border p-2 text-red-500 font-semibold">0</td>
-                    <td className="border p-2 text-green-600 font-semibold">0</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* BUTTON */}
-            <div className="flex justify-end mt-4">
-              <button
-                type="submit"
-                className="px-6 py-2 text-white rounded-2xl shadow bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90 transition"
-              >
-                Submit
-              </button>
-            </div>
-
-          </form>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-4">
+            <button className="capsButton px-3 py-1 text-xs" disabled={currentPage <= 1} onClick={() => fetchSummary(currentPage - 1)}>Prev</button>
+            <span className="text-sm self-center">Page {currentPage} of {totalPages}</span>
+            <button className="capsButton px-3 py-1 text-xs" disabled={currentPage >= totalPages} onClick={() => fetchSummary(currentPage + 1)}>Next</button>
+          </div>
+        )}
+      </PageCard>
     </div>
   );
 };

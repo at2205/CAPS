@@ -1,5 +1,10 @@
 "use client";
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const YesBcId = () => {
   const [rows, setRows] = useState(
@@ -9,13 +14,13 @@ const YesBcId = () => {
       agentId: "",
       agentName: "",
       yesBCId: "",
-    }))
+    })),
   );
 
   const [selectAll, setSelectAll] = useState(false);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ================= INPUT =================
   const handleInputChange = (index, field, value) => {
     const updated = [...rows];
     updated[index][field] = value;
@@ -35,47 +40,84 @@ const YesBcId = () => {
     setRows(rows.map((r) => ({ ...r, checked: newVal })));
   };
 
+  // ================= VALIDATION =================
   const validateForm = () => {
     const selected = rows.filter((r) => r.checked);
 
     if (!selected.length) {
-      alert("Please select at least one row");
+      Swal.fire("Error", "Please select at least one row", "error");
       return false;
     }
 
     for (const r of selected) {
       if (!r.agentId.trim()) {
-        alert(`Enter Agent ID for row ${r.id}`);
+        Swal.fire("Error", `Enter Agent ID for row ${r.id}`, "error");
         return false;
       }
       if (!r.agentName.trim()) {
-        alert(`Enter Agent Name for row ${r.id}`);
+        Swal.fire("Error", `Enter Agent Name for row ${r.id}`, "error");
         return false;
       }
       if (!r.yesBCId.trim()) {
-        alert(`Enter Yes BC ID for row ${r.id}`);
+        Swal.fire("Error", `Enter Yes BC ID for row ${r.id}`, "error");
         return false;
       }
     }
+
     return true;
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     try {
       setLoading(true);
-      const payload = rows.filter((r) => r.checked);
-      console.log("Submitting:", payload);
 
-      await new Promise((r) => setTimeout(r, 1200));
-      setMessage("Yes BC IDs added / modified successfully!");
+      const payload = rows
+        .filter((r) => r.checked)
+        .map((r) => ({
+          agentId: r.agentId,
+          agentName: r.agentName,
+          yesBCId: r.yesBCId,
+        }));
+
+      console.log("Payload →", payload);
+
+      const response = await axiosInstance.post(
+        endpoints.controlPEndpoints.yesBcId,
+        payload,
+      );
+
+      const data =
+        typeof response.data === "string"
+          ? JSON.parse(response.data)
+          : response.data;
+
+      if (data.status === "00") {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: data.message || "Records inserted successfully",
+        });
+        handleClear();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.message || "Something went wrong",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Server Error", "error");
     } finally {
       setLoading(false);
     }
   };
 
+  // ================= RESET =================
   const handleClear = () => {
     setRows(
       Array.from({ length: 5 }, (_, i) => ({
@@ -84,181 +126,107 @@ const YesBcId = () => {
         agentId: "",
         agentName: "",
         yesBCId: "",
-      }))
+      })),
     );
     setSelectAll(false);
-    setMessage("");
   };
 
+  const inputClass = "capsInput";
+  const thClass = "py-2";
+
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="bg-white rounded-xl shadow-sm">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Add / Modify Yes BC ID"
+        description="Manage Yes Bank BC mapping"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[16px] px-6 py-3 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          Control Panel &gt; Add/Modify Yes BC ID
-        </div>
+      <PageCard>
+        <form onSubmit={handleSubmit}>
+          <div className="border rounded overflow-hidden">
+            <table className="w-full text-sm text-center">
+              <thead className="bg-[#5a97b5] text-white">
+                <tr>
+                  <th className={thClass}>
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
+                  <th>Agent Id</th>
+                  <th>Agent Name</th>
+                  <th>Yes BC Id</th>
+                </tr>
+              </thead>
 
-        {/* BODY */}
-        <div className="p-6">
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={row.id} className="border-t">
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={row.checked}
+                        onChange={() => handleCheckboxChange(index)}
+                        disabled={loading}
+                      />
+                    </td>
 
-          {message && (
-            <div className="text-center bg-green-100 text-green-700 py-2 rounded mb-4 text-sm">
-              {message}
-            </div>
-          )}
+                    <td>
+                      <input
+                        value={row.agentId}
+                        onChange={(e) =>
+                          handleInputChange(index, "agentId", e.target.value)
+                        }
+                        className={`${inputClass} w-[180px]`}
+                      />
+                    </td>
 
-          {/* INFO BOX */}
-          <div className="mb-4 p-3 rounded bg-[#e9f6fc] border-l-[5px] border-[#4e8fb1] text-sm">
-            Please fill in the details for each row and select the rows you want to submit.
-          </div>
+                    <td>
+                      <input
+                        value={row.agentName}
+                        onChange={(e) =>
+                          handleInputChange(index, "agentName", e.target.value)
+                        }
+                        className={`${inputClass} w-[200px]`}
+                      />
+                    </td>
 
-          <form onSubmit={handleSubmit}>
-            {/* TABLE */}
-            <div className="border rounded overflow-hidden">
-              <table className="w-full text-sm text-center">
-                <thead className="bg-[#5a97b5] text-white">
-                  <tr>
-                    <th className="py-2">
-                      <div className="flex items-center justify-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectAll}
-                          onChange={handleSelectAll}
-                        />
-                        Select All
-                      </div>
-                    </th>
-                    <th>Agent Id</th>
-                    <th>Agent Name</th>
-                    <th>Yes BC Id</th>
+                    <td>
+                      <input
+                        value={row.yesBCId}
+                        onChange={(e) =>
+                          handleInputChange(index, "yesBCId", e.target.value)
+                        }
+                        className={`${inputClass} w-[180px]`}
+                      />
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr
-                      key={row.id}
-                      className={`border-t ${
-                        row.checked ? "bg-[#f0faff]" : ""
-                      }`}
-                    >
-                      <td className="py-2">
-                        <div className="flex items-center justify-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={row.checked}
-                            onChange={() =>
-                              handleCheckboxChange(index)
-                            }
-                          />
-                          {row.id}
-                        </div>
-                      </td>
-
-                      <td>
-                        <input
-                          type="text"
-                          placeholder="Enter Agent ID"
-                          value={row.agentId}
-                          onChange={(e) =>
-                            handleInputChange(
-                              index,
-                              "agentId",
-                              e.target.value
-                            )
-                          }
-                          disabled={loading}
-                          className="w-[180px] px-2 py-1 border rounded-md text-sm"
-                        />
-                      </td>
-
-                      <td>
-                        <input
-                          type="text"
-                          placeholder="Enter Agent Name"
-                          value={row.agentName}
-                          onChange={(e) =>
-                            handleInputChange(
-                              index,
-                              "agentName",
-                              e.target.value
-                            )
-                          }
-                          disabled={loading}
-                          className="w-[200px] px-2 py-1 border rounded-md text-sm"
-                        />
-                      </td>
-
-                      <td>
-                        <input
-                          type="text"
-                          placeholder="Enter Yes BC ID"
-                          value={row.yesBCId}
-                          onChange={(e) =>
-                            handleInputChange(
-                              index,
-                              "yesBCId",
-                              e.target.value
-                            )
-                          }
-                          disabled={loading}
-                          className="w-[180px] px-2 py-1 border rounded-md text-sm"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* BUTTONS */}
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                )}
-                Submit
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={loading}
-                className="px-5 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#666] to-[#444] disabled:opacity-50"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-
-          {/* INSTRUCTIONS BOX */}
-          <div className="mt-10 p-4 rounded bg-[#f5fbff] border border-[#cfe7f3]">
-            <h5 className="font-bold mb-2 text-[#4e8fb1]">
-              Instructions:
-            </h5>
-            <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
-              <li>Check the box for each row you want to process</li>
-              <li>
-                All fields (Agent ID, Agent Name, and Yes BC ID)
-                are required for selected rows
-              </li>
-              <li>
-                You can select multiple rows at once using the
-                "Select All" checkbox
-              </li>
-              <li>
-                Only selected rows will be processed when you click
-                Submit
-              </li>
-            </ul>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
+
+          <div className="flex justify-center gap-5 mt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="capsButton px-10"
+            >
+              {loading ? "Submitting..." : "Submit"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={loading}
+              className="capsButtonSecondary px-10"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      </PageCard>
     </div>
   );
 };

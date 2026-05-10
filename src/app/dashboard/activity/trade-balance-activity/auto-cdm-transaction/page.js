@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const AutoCDMTransaction = () => {
   const [formData, setFormData] = useState({
@@ -20,45 +25,53 @@ const AutoCDMTransaction = () => {
     if (!/[0-9]/.test(e.key)) e.preventDefault();
   };
 
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    if (!formData.channels || !formData.bank || !formData.userId || !formData.transactionNumber || !formData.transactionAmount) {
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please fill all fields", timer: 1500, showConfirmButton: false });
+      return;
+    }
+    try {
+      setLoading(true);
+      const payload = { userId: localStorage.getItem("userId"), Channels: formData.channels, bankname: formData.bank, portalId: localStorage.getItem("portalId") || "10002", transactionNumber: formData.transactionNumber, transactionAmount: formData.transactionAmount, cdmUserId: formData.userId };
+      const response = await urlencodedInstance.post(endpoints.activityEndpoints.autoCdmTxn, new URLSearchParams({ jsonData: JSON.stringify(payload) }));
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") { Swal.fire({ icon: "success", title: "Success", text: data.message || "Transaction processed" }); }
+      else { Swal.fire({ icon: "error", title: "Failed", text: data.message || "Transaction failed" }); }
+    } catch { Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" }); }
+    finally { setLoading(false); }
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
-  const selectStyle = inputStyle;
-
-  const buttonStyle =
-    "px-6 py-2 text-white rounded-xl shadow-md text-sm font-medium " +
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
-
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Auto CDM Transaction
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Auto CDM Transaction"
+        description="Process CDM transactions for selected channels"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-6 flex justify-center">
-          <form className="w-[520px]" onSubmit={handleSubmit}>
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <div className="flex justify-center">
+          <form onSubmit={handleSubmit}>
 
             {/* CHANNEL */}
-            <div className="mb-4 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
                 All Channels
               </label>
+
+              <div className="text-center">:</div>
+
               <select
-                className={selectStyle}
                 name="channels"
                 value={formData.channels}
                 onChange={handleChange}
+                className="capsSelect"
               >
                 <option value="">--select--</option>
                 <option value="MasterDistributor">
@@ -70,15 +83,18 @@ const AutoCDMTransaction = () => {
             </div>
 
             {/* BANK */}
-            <div className="mb-4 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
                 Bank
               </label>
+
+              <div className="text-center">:</div>
+
               <select
-                className={selectStyle}
                 name="bank"
                 value={formData.bank}
                 onChange={handleChange}
+                className="capsSelect"
               >
                 <option value="">--select--</option>
                 <option value="ICICI">ICICI Bank</option>
@@ -87,58 +103,71 @@ const AutoCDMTransaction = () => {
             </div>
 
             {/* USER ID */}
-            <div className="mb-4 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
                 RO / DS / MDS User Id
               </label>
+
+              <div className="text-center">:</div>
+
               <input
                 type="text"
-                className={inputStyle}
                 name="userId"
                 value={formData.userId}
                 onChange={handleChange}
+                className="capsInput"
               />
             </div>
 
             {/* TRANSACTION NUMBER */}
-            <div className="mb-4 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
                 Transaction Number
               </label>
+
+              <div className="text-center">:</div>
+
               <input
                 type="text"
-                className={inputStyle}
                 name="transactionNumber"
                 value={formData.transactionNumber}
                 onChange={handleChange}
+                className="capsInput"
               />
             </div>
 
             {/* TRANSACTION AMOUNT */}
-            <div className="mb-6 flex items-center">
-              <label className="w-1/2 text-right pr-4 font-semibold text-sm">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+              <label className="text-right font-medium">
                 Transaction Amount
               </label>
+
+              <div className="text-center">:</div>
+
               <input
                 type="text"
-                className={inputStyle}
                 name="transactionAmount"
                 value={formData.transactionAmount}
                 onChange={handleChange}
                 onKeyPress={handleKeyPress}
+                className="capsInput"
               />
             </div>
 
             {/* BUTTON */}
             <div className="text-center">
-              <button type="submit" className={buttonStyle}>
+              <button
+                type="submit"
+                className="capsButton min-w-[120px]"
+              >
                 Continue
               </button>
             </div>
 
           </form>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

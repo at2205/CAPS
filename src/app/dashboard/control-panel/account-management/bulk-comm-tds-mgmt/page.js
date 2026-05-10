@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const BulkCommissionTDS = () => {
   const [formData, setFormData] = useState({
     actionType: "select",
@@ -141,144 +144,132 @@ const BulkCommissionTDS = () => {
     },
   ];
 
+  const inputClass =
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+
+  const Row = ({ label, children }) => (
+    <div className="flex items-start justify-center mb-3">
+      <label className="w-[220px] text-right text-sm font-semibold pt-1">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="flex justify-center mt-6">
-      <div className="w-[850px] bg-white rounded-xl shadow-sm overflow-hidden">
-        
-        {/* HEADER */}
-        <div className="bg-gradient-to-r from-[#4c95b3] to-[#3d89a6] text-white text-center font-bold text-lg py-3">
-          Bulk Commission / TDS
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        <div className="p-6">
+      <CapsCard
+        title="Customer Care Module > Bulk Commission / TDS"
+        description="Upload file for bulk commission or TDS processing"
+      />
 
-          {/* MESSAGE */}
-          {message && (
-            <div className="bg-blue-100 text-blue-700 text-sm text-center px-3 py-2 rounded-md mb-4">
-              {message}
-            </div>
-          )}
+      <PageCard>
 
-          <form onSubmit={handleSubmit}>
-            <div className="flex justify-center">
-              <table className="w-[70%] mt-4 text-sm">
-                <tbody>
+        {message && (
+          <div className="bg-blue-100 text-blue-700 text-sm text-center px-3 py-2 rounded-md mb-4">
+            {message}
+          </div>
+        )}
 
-                  <tr className="h-10">
-                    <td className="text-right font-semibold w-[35%]">
-                      Action Type
-                    </td>
-                    <td className="text-center w-[5%]">:</td>
-                    <td className="w-[60%]">
-                      <select
-                        name="actionType"
-                        value={formData.actionType}
-                        onChange={handleInputChange}
-                        disabled={loading}
-                        className="w-full border rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4FA2C2] disabled:bg-gray-100"
-                      >
-                        {actionTypeOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
+        <form onSubmit={handleSubmit}>
 
-                  <tr className="h-14">
-                    <td className="text-right font-semibold">
-                      Select File
-                    </td>
-                    <td className="text-center">:</td>
-                    <td>
-                      <input
-                        type="file"
-                        id="form_file"
-                        onChange={handleFileChange}
-                        disabled={loading}
-                        accept=".xlsx,.xls,.csv"
-                        className="w-full border rounded-md px-2 py-1 text-sm disabled:bg-gray-100"
-                      />
+          <Row label="Action Type :">
+            <select
+              name="actionType"
+              value={formData.actionType}
+              onChange={handleInputChange}
+              disabled={loading}
+              className={inputClass}
+            >
+              {actionTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </Row>
 
-                      {fileError && (
-                        <div className="text-red-600 text-xs mt-1">
-                          {fileError}
-                        </div>
-                      )}
-
-                      {formData.fileName && !fileError && (
-                        <div className="text-green-600 text-xs mt-1">
-                          {formData.fileName}
-                        </div>
-                      )}
-
-                      <div className="mt-2 text-xs text-gray-500">
-                        .xls / .xlsx / .csv Format Only
-                        <br />
-                        <button
-                          type="button"
-                          onClick={handleDownloadFormat}
-                          className="text-[#4FA2C2] hover:underline"
-                        >
-                          Click To Download Format
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-
-                </tbody>
-              </table>
-            </div>
-
-            {/* BUTTONS */}
-            <div className="text-center mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-[#4FA2C2] text-white text-sm px-5 py-1.5 rounded-md hover:bg-[#3d8daa] transition disabled:opacity-50 mr-2"
-              >
-                {loading ? "Uploading..." : "Submit"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={loading}
-                className="bg-gray-500 text-white text-sm px-5 py-1.5 rounded-md hover:bg-gray-600 transition disabled:opacity-50"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-
-          {/* PROCESSING STATUS */}
-          {pendingList.length > 0 && (
+          <Row label="Select File :">
             <>
-              <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm mt-6">
-                Processing Status
-              </div>
+              <input
+                type="file"
+                id="form_file"
+                onChange={handleFileChange}
+                disabled={loading}
+                accept=".xlsx,.xls,.csv"
+                className={inputClass}
+              />
 
-              <table className="w-full mt-3 border border-gray-300 text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-3 py-1">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingList.map((status, index) => (
-                    <tr key={index}>
-                      <td className="border px-3 py-1">
-                        {status}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {fileError && (
+                <div className="text-red-600 text-xs mt-1">
+                  {fileError}
+                </div>
+              )}
+
+              {formData.fileName && !fileError && (
+                <div className="text-green-600 text-xs mt-1">
+                  {formData.fileName}
+                </div>
+              )}
+
+              <div className="mt-2 text-xs text-gray-500">
+                .xls / .xlsx / .csv Format Only
+                <br />
+                <button
+                  type="button"
+                  onClick={handleDownloadFormat}
+                  className="text-blue-600 hover:underline"
+                >
+                  Click To Download Format
+                </button>
+              </div>
             </>
-          )}
-        </div>
-      </div>
+          </Row>
+
+          <div className="text-center mt-4 space-x-3">
+            <button type="submit" disabled={loading} className="capsButton px-8">
+              {loading ? "Uploading..." : "Submit"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={loading}
+              className="capsButtonSecondary px-8"
+            >
+              Clear
+            </button>
+          </div>
+
+        </form>
+
+        {pendingList.length > 0 && (
+          <>
+            <div className="bg-[#4FA2C2] text-white text-center font-bold py-1.5 rounded-xl text-sm mt-6">
+              Processing Status
+            </div>
+
+            <table className="w-full mt-3 border border-gray-300 text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-3 py-1">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingList.map((status, index) => (
+                  <tr key={index}>
+                    <td className="border px-3 py-1">
+                      {status}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+      </PageCard>
     </div>
   );
 };

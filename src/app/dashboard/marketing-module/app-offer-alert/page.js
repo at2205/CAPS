@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from "react";
 import CapsCard from "@/app/components/caps_card/CapsCard";
 import PageCard from "@/app/components/caps_card/PageCard";
+import Swal from "sweetalert2";
 
 function AppOfferAlert() {
-
   /* ================= STATE ================= */
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,28 +47,71 @@ function AppOfferAlert() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!service) return alert("Please select Service");
-    if (!title) return alert("Please enter Offer Title");
-    if (!fromDate || !toDate) return alert("Please select date/time");
-    if (fromDate >= toDate)
-      return alert("To Date must be greater than From Date");
+    if (!service) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Please select Service",
+      });
+      return;
+    }
+    if (!title) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Please enter Offer Title",
+      });
+      return;
+    }
+    if (!fromDate || !toDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Please select date/time",
+      });
+      return;
+    }
+    if (fromDate >= toDate) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Date",
+        text: "To Date must be greater than From Date",
+      });
+      return;
+    }
 
-    if (!imageFile) return alert("Please upload image");
+    if (!imageFile) {
+      Swal.fire({
+        icon: "warning",
+        title: "Image Required",
+        text: "Please upload image",
+      });
+      return;
+    }
 
-    if (imageFile.size > 1048576)
-      return alert("Image size must be less than 1MB");
+    if (imageFile.size > 1048576) {
+      Swal.fire({
+        icon: "error",
+        title: "File Too Large",
+        text: "Image size must be less than 1MB",
+      });
+      return;
+    }
 
     setLoading(true);
 
     setTimeout(() => {
-      setMessage("Offer submitted successfully!");
+      Swal.fire({
+        icon: "success",
+        title: "Offer Submitted",
+        text: "Offer submitted successfully!",
+      });
       setLoading(false);
     }, 1000);
   };
 
   return (
     <div className="p-6  min-h-screen text-[#226b88]">
-
       {/* HEADER CARD */}
       <CapsCard
         title="APP Offer Alert"
@@ -77,120 +120,116 @@ function AppOfferAlert() {
 
       {/* ================= FORM CARD ================= */}
       <PageCard>
-<div className='flex justify-center'>
-        {message && (
-          <p className="text-center text-green-600 font-semibold mb-4">
-            {message}
-          </p>
-        )}
-
-        <form onSubmit={handleSubmit}>
-
-          <FormRow label="Select Service">
-            <select
-              value={service}
-              onChange={(e) => setService(e.target.value)}
-              className="capsSelect w-80"
-            >
-              <option value="">Select</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </FormRow>
-
-          <FormRow label="Offer Title">
-            <input
-              className="capsInput w-80"
-              value={title}
-              maxLength={10}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </FormRow>
-
-          <FormRow label="Sent To">
-            <select
-              value={sentTo}
-              onChange={(e) => setSentTo(e.target.value)}
-              className="capsSelect w-80"
-            >
-              <option value="ALL">All Agents</option>
-              <option value="Selected">Selected Agents</option>
-            </select>
-          </FormRow>
-
-          {sentTo === "Selected" && (
-            <>
-              <FormRow label="Full AgentId (.xls/.xlsx)">
-                <input
-                  type="file"
-                  accept=".xls,.xlsx"
-                  className="capsInput w-80"
-                  onChange={(e) => setAgentFile(e.target.files[0])}
-                />
-              </FormRow>
-
-              <div className="text-center mb-4">
-                <a
-                  href="#"
-                  className="font-semibold text-blue-600"
-                >
-                  Download Sample Template
-                </a>
-              </div>
-            </>
+        <div className="flex justify-center">
+          {message && (
+            <p className="text-center text-green-600 font-semibold mb-4">
+              {message}
+            </p>
           )}
 
-          <FormRow label="From Date/Time">
-            <input
-              type="datetime-local"
-              className="capsInput w-80"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-          </FormRow>
+          <form onSubmit={handleSubmit}>
+            <FormRow label="Select Service">
+              <select
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                className="capsSelect w-80"
+              >
+                <option value="">Select</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </FormRow>
 
-          <FormRow label="To Date/Time">
-            <input
-              type="datetime-local"
-              className="capsInput w-80"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
-          </FormRow>
+            <FormRow label="Offer Title">
+              <input
+                className="capsInput w-80"
+                value={title}
+                maxLength={10}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </FormRow>
 
-          <FormRow label="Image">
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/jpg"
-              className="capsInput w-80"
-              onChange={(e) => setImageFile(e.target.files[0])}
-            />
-          </FormRow>
+            <FormRow label="Sent To">
+              <select
+                value={sentTo}
+                onChange={(e) => setSentTo(e.target.value)}
+                className="capsSelect w-80"
+              >
+                <option value="ALL">All Agents</option>
+                <option value="Selected">Selected Agents</option>
+              </select>
+            </FormRow>
 
-          <p className="text-center font-semibold mb-4">
-            Note: Image size should be less than 1 MB (jpg/jpeg/png)
-          </p>
+            {sentTo === "Selected" && (
+              <>
+                <FormRow label="Full AgentId (.xls/.xlsx)">
+                  <input
+                    type="file"
+                    accept=".xls,.xlsx"
+                    className="capsInput w-80"
+                    onChange={(e) => setAgentFile(e.target.files[0])}
+                  />
+                </FormRow>
 
-          <div className="text-center mt-6">
-            <button
-              type="submit"
-              disabled={loading}
-              className="capsButton min-w-[120px]"
-            >
-              {loading ? "Submitting..." : "Submit"}
-            </button>
-          </div>
+                <div className="text-center mb-4">
+                  <a href="#" className="font-semibold text-blue-600">
+                    Download Sample Template
+                  </a>
+                </div>
+              </>
+            )}
 
-        </form>
-</div>
+            <FormRow label="From Date/Time">
+              <input
+                type="datetime-local"
+                className="capsInput w-80"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                max={new Date().toISOString().slice(0,16)}
+              />
+            </FormRow>
+
+            <FormRow label="To Date/Time">
+              <input
+                type="datetime-local"
+                className="capsInput w-80"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                max={new Date().toISOString().slice(0,16)}
+              />
+            </FormRow>
+
+            <FormRow label="Image">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                className="capsInput w-80"
+                onChange={(e) => setImageFile(e.target.files[0])}
+              />
+            </FormRow>
+
+            <p className="text-center font-semibold mb-4">
+              Note: Image size should be less than 1 MB (jpg/jpeg/png)
+            </p>
+
+            <div className="text-center mt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="capsButton min-w-[120px]"
+              >
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+            </div>
+          </form>
+        </div>
       </PageCard>
 
       {/* ================= TABLE CARD ================= */}
       <PageCard>
-
         <h3 className="capsText font-semibold mb-4 text-center">
           Scheduled Offers
         </h3>
@@ -246,9 +285,7 @@ function AppOfferAlert() {
             </tbody>
           </table>
         </div>
-
       </PageCard>
-
     </div>
   );
 }
@@ -257,13 +294,9 @@ function AppOfferAlert() {
 
 const FormRow = ({ label, children }) => (
   <div className="grid grid-cols-[250px_20px_1fr] items-center gap-4 mb-6">
-    <label className="text-right font-medium">
-      {label}
-    </label>
+    <label className="text-right font-medium">{label}</label>
     <div className="text-center">:</div>
-    <div className="max-w-2xl">
-      {children}
-    </div>
+    <div className="max-w-2xl">{children}</div>
   </div>
 );
 

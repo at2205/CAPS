@@ -1,86 +1,92 @@
+"use client";
 import Image from "next/image";
 import CapsCard from "../components/caps_card/CapsCard";
+import { useRouter } from "next/navigation";
 
 export default function DashboardHome() {
+    const router = useRouter();
 
     const quickAccessItems = [
         {
             serviceName: "Agent - Profile Management",
-            serviceUrl: "/service1",
+            serviceUrl: "/dashboard/control-panel/profile-management/retail-user",
             imageUrl: "https://portal.bankit.in:9090/CAPS/images/agent2.png",
         },
         {
             serviceName: "TXN Status - Channel",
-            serviceUrl: "/service2",
+            serviceUrl: "/dashboard/reports/cc-module/transaction-status",
             imageUrl: "https://portal.bankit.in:9090/CAPS/images/report1.png",
         },
         {
             serviceName: "User Search - Agent",
-            serviceUrl: "/service3",
+            serviceUrl: "/dashboard/da-module/user-search?type=agent",
             imageUrl: "https://portal.bankit.in:9090/CAPS/images/report1.png",
         },
         {
             serviceName: "TXN Reports - Channel",
-            serviceUrl: "/service4",
+            serviceUrl: "/dashboard/reports/transaction-reports/channel",
             imageUrl: "https://portal.bankit.in:9090/CAPS/images/activity.png",
         },
         {
             serviceName: "A/C Statement - Agent",
-            serviceUrl: "/service5",
+            serviceUrl: "/dashboard/reports/statements/channel",
             imageUrl: "https://portal.bankit.in:9090/CAPS/images/controlPanel.png",
         },
         {
             serviceName: "DS - Profile Management",
-            serviceUrl: "/service6",
+            serviceUrl: "/dashboard/control-panel/profile-management/retail-user",
             imageUrl: "https://portal.bankit.in:9090/CAPS/images/agent3.png",
         },
     ];
 
     return (
-        <div className="p-1">
+        <div className="px-4 sm:px-6 lg:px-10 py-3">
             <CapsCard
                 title="Dashboard"
                 description="Quick summary of system users"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-20 gap-y-3 mt-4">
+            {/* Grid */}
+            <div className="grid grid-cols-2 gap-4 mt-4" >
                 {quickAccessItems.map((item, index) => (
                     <div
                         key={index}
-                        className="group perspective-1000 hover:cursor-pointer"
+                        onClick={() => router.push(item.serviceUrl)}
+                        className="group cursor-pointer"
                     >
+                        {/* Card */}
                         <div
                             className="
-                                relative
                                 bg-white
                                 rounded-lg
-                                shadow-md
-                                p-1
+                                shadow-sm
+                                p-3
                                 flex
+                                flex-col
                                 justify-center
                                 items-center
-                                transform-gpu
+                                h-[140px]
+                                border-2 border-[#d4eef6]
                                 transition-all
-                                duration-500
-                                ease-out
+                                duration-300
                                 group-hover:scale-105
-                                group-hover:-translate-y-3
-                                group-hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]
+                                group-hover:-translate-y-1
+                                group-hover:shadow-md
                             "
                         >
-                            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl w-full">
-                                <div className="flex justify-center">
-                                    <Image
-                                        src={item.imageUrl}
-                                        alt={item.serviceName}
-                                        width={120}
-                                        height={120}
-                                    />
-                                </div>
-                                <p className="text-[#226b88] text-sm text-center mt-2">
-                                    {item.serviceName}
-                                </p>
-                            </div>
+                            {/* Image */}
+                            <Image
+                                src={item.imageUrl}
+                                alt={item.serviceName}
+                                width={90}
+                                height={80}
+                                className="mb-8 object-contain"
+                            />
+
+                            {/* Text */}
+                            <p className="text-[#226b88] text-sm text-center px-2 leading-snug font-medium tracking-wider">
+                                {item.serviceName}
+                            </p>
                         </div>
                     </div>
                 ))}

@@ -1,22 +1,27 @@
 "use client";
 import React, { useState } from "react";
 import { Table } from "antd";
+import Swal from "sweetalert2";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
 
 function AESAPI() {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
   const [formValues, setFormValues] = useState({});
+  const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(false);
 
   const columns = [
-    { title: "S.N.", dataIndex: "sn", key: "sn" },
-    { title: "Service Type", dataIndex: "serviceType", key: "serviceType" },
-    { title: "Service", dataIndex: "service", key: "service" },
-    { title: "Action", dataIndex: "action", key: "action" },
-    { title: "Pipe Status", dataIndex: "pipeStatus", key: "pipeStatus" },
-    { title: "Vendor", dataIndex: "vendor", key: "vendor" },
-    { title: "Status", dataIndex: "status", key: "status" },
+    { title: "S.N.", dataIndex: "sn", width: 70 },
+    { title: "Service Type", dataIndex: "serviceType" },
+    { title: "Service", dataIndex: "service" },
+    { title: "Action", dataIndex: "action" },
+    { title: "Pipe Status", dataIndex: "pipeStatus" },
+    { title: "Vendor", dataIndex: "vendor" },
+    { title: "Status", dataIndex: "status" },
   ];
 
   const handleInputChange = (e) => {
@@ -27,126 +32,189 @@ function AESAPI() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
+  // MAIN SUBMIT (GET DATA)
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
 
-    if (!formValues.apiId || !formValues.mainService) {
-      setError("Please check input value");
-      setLoading(false);
-      setShowTable(false);
-      return;
-    }
+      const payload = {
+        userId: localStorage.getItem("userId"),
+        apiId: formValues.apiId,
+        service: formValues.service,
+      };
 
-    setTimeout(() => {
-      setSuccess("Submit successfully.");
-      setLoading(false);
+      console.log("PAYLOAD:", payload);
+
+      const body = `adminUserFormBean=${encodeURIComponent(JSON.stringify(payload))}`;
+
+      const [res1, res2] = await Promise.all([
+        axiosInstance.post(
+          endpoints.controlPEndpoints.getAesAPICustomerDetails,
+          body,
+        ),
+        axiosInstance.post(
+          endpoints.controlPEndpoints.getAPIVendorDetails,
+          body,
+        ),
+      ]);
+
+      const parse = (res) =>
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      const data2 = parse(res2);
+
+      const vendorList = data2?.vendorList || data2?.data?.vendorList || [];
+
+      const finalData = vendorList.map((item, index) => ({
+        key: index,
+        sn: index + 1,
+        serviceType: formValues.mainService,
+        service: item.operatorId || "-",
+        action: item.vendorStatus === "Y" ? "Enabled" : "Disabled",
+        pipeStatus: item.pipeStatus || "-",
+        vendor: item.vendor || "-",
+        status: item.vendorStatus === "Y" ? "Active" : "Inactive",
+      }));
+
+      setTableData(finalData);
       setShowTable(true);
-    }, 800);
+    } catch (err) {
+      console.error("ERROR:", err.response?.data);
+
+      Swal.fire("Error", "API Failed", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  // 🔥 UPDATE API
+  const handleUpdate = async () => {
+    try {
+      setLoading(true);
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-3">
-      <label className="w-[160px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+      const updateList = tableData.map((item) => ({
+        operatorId: item.service,
+        vendorStatus: item.action === "Enabled" ? "Y" : "N",
+        pipeStatus: item.pipeStatus,
+        vendor: item.vendor,
+      }));
+
+      const payload = {
+        userId: localStorage.getItem("userId") || "5155",
+        apiId: formValues.apiId,
+        service: formValues.mainService,
+        updateList: updateList,
+      };
+
+      // ✅ create body (missing in your code)
+      const body = `adminUserFormBean=${encodeURIComponent(JSON.stringify(payload))}`;
+
+      // ✅ correct endpoint
+      await axiosInstance.post(
+        endpoints.controlPEndpoints.apiUpdateDetails,
+        body,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        },
+      );
+
+      Swal.fire("Success", "Updated successfully", "success");
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Update failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="API Vendor Management"
+        description="Manage API vendor & service control"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          API Vendor Management
-        </div>
-
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            <Row label="API ID :">
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
+            <FieldRow label="API ID">
               <select
                 name="apiId"
-                className={inputClass}
+                value={formValues?.apiId || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">Select</option>
-                <option value="1">item one</option>
-                <option value="2">item two</option>
-                <option value="3">item three</option>
+                <option value="10003">API 10003</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Main Service :">
+            <FieldRow label="Main Service">
               <select
                 name="mainService"
-                className={inputClass}
+                value={formValues?.mainService || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">Select</option>
                 <option value="Recharge">Recharge</option>
-                <option value="Billpay">Utility</option>
-                <option value="A-REMIT">Money Transfer</option>
+                <option value="Utility">Utility</option>
+                <option value="Money Transfer">Money Transfer</option>
                 <option value="AEPS">AEPS</option>
                 <option value="BBPS">BBPS</option>
                 <option value="Settlement">Settlement</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            {/* STATUS */}
-            <div className="text-center min-h-[28px] mb-2">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-600 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            <div className="text-center mt-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
-                Submit
+                {loading ? "Loading..." : "Submit"}
               </button>
             </div>
-          </form>
 
-          {/* TABLE */}
-          {showTable && (
-            <>
-              <div className="text-white font-semibold text-center py-2 mb-3 mt-6 rounded-md bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-                Service Control (APIall)
+            {/* TABLE */}
+            {showTable && (
+              <div className="mt-6">
+                <div className="font-semibold mb-2 text-center">
+                  Service Control
+                </div>
+
+                <Table
+                  dataSource={tableData}
+                  columns={columns}
+                  bordered
+                  pagination={false}
+                  size="small"
+                />
+
+                {/* UPDATE BUTTON */}
+                <div className="text-center mt-4">
+                  <button
+                    onClick={handleUpdate}
+                    className="capsButton min-w-[140px]"
+                  >
+                    Update
+                  </button>
+                </div>
               </div>
-
-              <Table
-                dataSource={[]}
-                columns={columns}
-                bordered
-                pagination={false}
-              />
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

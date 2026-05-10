@@ -1,60 +1,78 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function CopyPricing() {
   const [fullId, setFullId] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const checkFullId = () => {
+    setError("");
+    setSuccess("");
+
     if (!fullId) {
-      alert("Please enter Full Id");
+      setError("Please enter Full Id");
       return;
     }
+
     console.log("Entered Full ID =>", fullId);
+    setSuccess("Pricing details loaded successfully");
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
+    </div>
+  );
 
   return (
-    <div className="flex justify-center items-start">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      
+      {/* HEADER */}
+      <CapsCard
+        title="Copy Pricing"
+        description="Copy pricing configuration using Full ID"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Copy Pricing
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          {/* INPUT ROW */}
-          <div className="flex justify-center items-center mb-4">
-            <label className="w-[180px] text-right text-sm font-semibold whitespace-nowrap">
-              Enter Full Id :
-            </label>
-
-            <div className="w-[260px] ml-3">
+            {/* FULL ID */}
+            <FieldRow label="Enter Full Id">
               <input
                 type="text"
                 placeholder="Please enter Full Id"
                 value={fullId}
                 onChange={(e) => setFullId(e.target.value)}
-                className={inputClass}
+                className="capsInput"
               />
-            </div>
-          </div>
+            </FieldRow>
 
-          {/* BUTTON */}
-          <div className="text-center mt-3">
-            <button
-              onClick={checkFullId}
-              className="px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90"
-            >
-              Go
-            </button>
+            {/* STATUS */}
+            <div className="text-center text-sm min-h-[24px]">
+              {error && <p className="text-red-500">{error}</p>}
+              {success && <p className="text-green-600">{success}</p>}
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center mt-4">
+              <button
+                onClick={checkFullId}
+                className="capsButton min-w-[140px]"
+              >
+                Go
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

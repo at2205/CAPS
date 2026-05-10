@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const MarginSet = () => {
   const [formData, setFormData] = useState({
     clientId: "",
@@ -37,7 +40,7 @@ const MarginSet = () => {
         setBulkCommission(value);
       }
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -52,17 +55,17 @@ const MarginSet = () => {
 
       const options = [
         { value: "select", label: "------- Select -------" },
-        ...res.data.map((item) => ({
+        ...(res.data || []).map((item) => ({
           value: item.id,
           label: item.name,
         })),
       ];
 
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         mdsOptions: options,
         selectedMdsId: "select",
-      });
+      }));
     } catch {
       alert("Error fetching MDS ID");
     }
@@ -84,14 +87,14 @@ const MarginSet = () => {
         shareType: formData.shareType,
       });
 
-      setSkuData(res.data.skuData || []);
+      setSkuData(res.data?.skuData || []);
       setDisplayInfo({
-        category: res.data.category || "",
-        clientId: res.data.clientId || "",
-        mdsId: res.data.mdsId || "",
+        category: res.data?.category || "",
+        clientId: res.data?.clientId || "",
+        mdsId: res.data?.mdsId || "",
       });
 
-      setMessage(res.data.message || "");
+      setMessage(res.data?.message || "");
       setSelectedRows([]);
       setSelectAll(false);
     } catch {
@@ -105,7 +108,7 @@ const MarginSet = () => {
 
     const updated = skuData.map((item) => {
       const mdShare = 100 - commission;
-      const margin = parseFloat(item.SKU_Comm);
+      const margin = parseFloat(item.SKU_Comm || 0);
       const mdsMargin = (margin * mdShare) / 100;
 
       return {
@@ -125,7 +128,7 @@ const MarginSet = () => {
 
     const updated = [...skuData];
     const mdShare = 100 - commission;
-    const margin = parseFloat(updated[i].SKU_Comm);
+    const margin = parseFloat(updated[i].SKU_Comm || 0);
     const mdsMargin = (margin * mdShare) / 100;
 
     updated[i] = {
@@ -138,7 +141,7 @@ const MarginSet = () => {
     setSkuData(updated);
   };
 
-  const handleSelectAll = (e) => {
+  const handleSelectAllRows = (e) => {
     const checked = e.target.checked;
     setSelectAll(checked);
     setSelectedRows(checked ? skuData.map((_, i) => i) : []);
@@ -152,11 +155,6 @@ const MarginSet = () => {
 
     setSelectedRows(rows);
     setSelectAll(rows.length === skuData.length);
-  };
-
-  const checkMargin = () => {
-    if (!selectedRows.length) return alert("Select rows to update");
-    alert("Updated successfully");
   };
 
   const resetFunction = () => {
@@ -178,33 +176,35 @@ const MarginSet = () => {
   const inputClass =
     "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
 
-  const rowClass = "grid grid-cols-[220px_20px_1fr] items-center mb-2";
-  const labelClass = "text-sm font-semibold text-right";
-  const primaryBtn =
-    "mt-2 px-6 py-1.5 text-sm rounded-full text-white bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
+  const Row = ({ label, children }) => (
+    <div className="flex items-center justify-center mb-3">
+      <label className="w-[200px] text-right text-sm font-semibold">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto py-6">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-      {message && (
-        <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
-          {message}
-        </div>
-      )}
+      <CapsCard
+        title="Customer Care Module > Margin Set"
+        description="Manage commission / surcharge share distribution"
+      />
 
-      {/* CARD */}
-      <div className="rounded-xl shadow-xl border border-gray-300">
-        <div className="text-white font-bold text-lg px-5 py-3 rounded-t-xl bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6]">
-          Customer Care Module &gt; Margin Set
-        </div>
+      <PageCard>
 
-        {/* FORM */}
-        <div className="px-10 py-6">
-          <form onSubmit={handleSubmit}>
+        {message && (
+          <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-            <div className="grid grid-cols-[220px_20px_1fr_90px] items-center mb-2">
-              <div className={labelClass}>Client ID</div>
-              <div>:</div>
+        <form onSubmit={handleSubmit}>
+
+          <Row label="Client ID :">
+            <div className="flex">
               <input
                 name="clientId"
                 value={formData.clientId}
@@ -214,181 +214,174 @@ const MarginSet = () => {
               <button
                 type="button"
                 onClick={getMDID}
-                className="ml-2 px-3 py-1.5 text-sm text-white rounded-md bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6]"
+                className="ml-2 px-4 capsButton"
               >
                 Go
               </button>
             </div>
+          </Row>
 
-            <div className={rowClass}>
-              <div className={labelClass}>MDS ID</div>
-              <div>:</div>
-              <select
-                name="selectedMdsId"
-                value={formData.selectedMdsId}
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                {formData.mdsOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+          <Row label="MDS ID :">
+            <select
+              name="selectedMdsId"
+              value={formData.selectedMdsId}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              {formData.mdsOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+
+          <Row label="Service :">
+            <select
+              name="serviceType"
+              value={formData.serviceType}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              <option value="">Select Service</option>
+              {services.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </Row>
+
+          <Row label="Share Type :">
+            <select
+              name="shareType"
+              value={formData.shareType}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              <option value="Commission">Commission</option>
+              <option value="Surcharge">Surcharge</option>
+            </select>
+          </Row>
+
+          <div className="text-center mt-3">
+            <button type="submit" className="capsButton px-8">
+              Submit
+            </button>
+          </div>
+
+        </form>
+
+        {/* TABLE */}
+        {skuData.length > 0 && (
+          <div className="mt-6">
+
+            <div className="grid grid-cols-3 text-sm mb-3">
+              <div><strong>Category:</strong> {displayInfo.category}</div>
+              <div><strong>Client ID:</strong> {displayInfo.clientId}</div>
+              <div><strong>MD ID:</strong> {displayInfo.mdsId}</div>
             </div>
 
-            <div className={rowClass}>
-              <div className={labelClass}>Service</div>
-              <div>:</div>
-              <select
-                name="serviceType"
-                value={formData.serviceType}
+            <div className="flex mb-3 justify-center">
+              <input
+                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-40 mr-2"
+                name="bulkCommission"
+                value={bulkCommission}
                 onChange={handleInputChange}
-                className={inputClass}
+                placeholder="Client %"
+              />
+              <button
+                onClick={applyBulkCommission}
+                className="capsButton px-4"
               >
-                <option value="">Select Service</option>
-                {services.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={rowClass}>
-              <div className={labelClass}>Select Share Type</div>
-              <div>:</div>
-              <select
-                name="shareType"
-                value={formData.shareType}
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                <option value="Commission">Commission</option>
-                <option value="Surcharge">Surcharge</option>
-              </select>
-            </div>
-
-            <div className="text-center">
-              <button type="submit" className={primaryBtn}>
-                Submit
+                Apply All
               </button>
             </div>
 
-          </form>
-        </div>
-      </div>
-
-      {/* TABLE */}
-      {skuData.length > 0 && (
-        <div className="rounded-xl shadow-lg border border-gray-300 p-4 mt-5">
-
-          <div className="grid grid-cols-3 text-sm mb-3">
-            <div><strong>Category:</strong> {displayInfo.category}</div>
-            <div><strong>Client ID:</strong> {displayInfo.clientId}</div>
-            <div><strong>MD ID:</strong> {displayInfo.mdsId}</div>
-          </div>
-
-          <div className="flex mb-3">
-            <input
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-40 mr-2"
-              name="bulkCommission"
-              value={bulkCommission}
-              onChange={handleInputChange}
-              placeholder="Client %"
-            />
-            <button
-              onClick={applyBulkCommission}
-              className="px-3 py-1.5 text-sm text-white rounded-md bg-[#4fa2c2]"
-            >
-              Apply All
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-300 text-sm">
-              <thead className="bg-gray-800 text-white">
-                <tr>
-                  <th className="border px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                    />
-                  </th>
-                  <th className="border">#</th>
-                  <th className="border">Service</th>
-                  <th className="border">Sub-Service</th>
-                  <th className="border">Operator</th>
-                  <th className="border">Category Margin</th>
-                  <th className="border">Client %</th>
-                  <th className="border">RO %</th>
-                  <th className="border">RO Margin</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {skuData.map((row, i) => (
-                  <tr key={i} className="text-center">
-                    <td className="border">
+            <div className="overflow-x-auto">
+              <table className="w-full border border-gray-300 text-sm">
+                <thead className="bg-[#4fa2c2] text-white">
+                  <tr>
+                    <th className="border px-2 py-1">
                       <input
                         type="checkbox"
-                        checked={selectedRows.includes(i)}
-                        onChange={() => handleRowSelection(i)}
+                        checked={selectAll}
+                        onChange={handleSelectAllRows}
                       />
-                    </td>
-                    <td className="border">{i + 1}</td>
-                    <td className="border">{row.Main_Service}</td>
-                    <td className="border">{row.Sub_Service}</td>
-                    <td className="border">{row.SKU_Name}</td>
-                    <td className="border">{row.SKU_Comm}</td>
-                    <td className="border px-1">
-                      <input
-                        className="border border-gray-300 rounded px-2 py-1 w-20"
-                        value={row.Client_Share || ""}
-                        onChange={(e) =>
-                          handleCommissionChange(i, e.target.value)
-                        }
-                      />
-                    </td>
-                    <td className="border">
-                      <input
-                        readOnly
-                        className="bg-gray-100 border border-gray-300 rounded px-2 py-1 w-20"
-                        value={row.MD_Share || ""}
-                      />
-                    </td>
-                    <td className="border">
-                      <input
-                        readOnly
-                        className="bg-gray-100 border border-gray-300 rounded px-2 py-1 w-24"
-                        value={row.MDSMargin || ""}
-                      />
-                    </td>
+                    </th>
+                    <th className="border">#</th>
+                    <th className="border">Service</th>
+                    <th className="border">Sub-Service</th>
+                    <th className="border">Operator</th>
+                    <th className="border">Margin</th>
+                    <th className="border">Client %</th>
+                    <th className="border">RO %</th>
+                    <th className="border">RO Margin</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {skuData.map((row, i) => (
+                    <tr key={i} className="text-center">
+                      <td className="border">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(i)}
+                          onChange={() => handleRowSelection(i)}
+                        />
+                      </td>
+                      <td className="border">{i + 1}</td>
+                      <td className="border">{row.Main_Service}</td>
+                      <td className="border">{row.Sub_Service}</td>
+                      <td className="border">{row.SKU_Name}</td>
+                      <td className="border">{row.SKU_Comm}</td>
+
+                      <td className="border">
+                        <input
+                          className="border border-gray-300 rounded px-2 py-1 w-20"
+                          value={row.Client_Share || ""}
+                          onChange={(e) =>
+                            handleCommissionChange(i, e.target.value)
+                          }
+                        />
+                      </td>
+
+                      <td className="border">
+                        <input
+                          readOnly
+                          className="bg-gray-100 border border-gray-300 rounded px-2 py-1 w-20"
+                          value={row.MD_Share || ""}
+                        />
+                      </td>
+
+                      <td className="border">
+                        <input
+                          readOnly
+                          className="bg-gray-100 border border-gray-300 rounded px-2 py-1 w-24"
+                          value={row.MDSMargin || ""}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button className="capsButton px-4">
+                Update Selected
+              </button>
+
+              <button
+                onClick={resetFunction}
+                className="px-4 py-1.5 text-sm rounded-md bg-gray-500 text-white"
+              >
+                Reset All
+              </button>
+            </div>
+
           </div>
+        )}
 
-          <div className="flex justify-end gap-2 mt-3">
-            <button
-              onClick={checkMargin}
-              className="px-4 py-1.5 text-sm rounded bg-green-600 text-white"
-            >
-              Update Selected
-            </button>
-
-            <button
-              onClick={resetFunction}
-              className="px-4 py-1.5 text-sm rounded bg-gray-500 text-white"
-            >
-              Reset All
-            </button>
-          </div>
-
-        </div>
-      )}
+      </PageCard>
     </div>
   );
 };

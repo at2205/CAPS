@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const UnblockUserOtp = () => {
   const [userType, setUserType] = useState("AG");
@@ -8,19 +13,38 @@ const UnblockUserOtp = () => {
   const [showTable, setShowTable] = useState(false);
   const [selected, setSelected] = useState([]);
 
-  const otpData = [
-    { key: "Login_OTP_Count", label: "Login OTP", count: 3 },
-    { key: "create_mpin_otp_count", label: "Create MPIN OTP", count: 1 },
-    { key: "forgot_mpin_otp_count", label: "Forgot MPIN OTP", count: 4 },
-    { key: "forgot_password_otp_count", label: "Forgot Password OTP", count: 0 },
-  ];
+  const [otpData, setOtpData] = useState([]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!userId) {
-      alert("Please Enter User ID");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please Enter User ID" });
       return;
     }
-    setShowTable(true);
+    try {
+      const payload = { userIdy: userId, userTypeData: userType };
+      const params = new URLSearchParams();
+      params.append("adminUserFormBean", JSON.stringify(payload));
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.unblockOtpDetails,
+        params
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0" && data.data) {
+        const record = data.data[0];
+        setOtpData([
+          { key: "Login_OTP_Count", label: "Login OTP", count: record.Login_OTP_Count || 0 },
+          { key: "create_mpin_otp_count", label: "Create MPIN OTP", count: record.create_mpin_otp_count || 0 },
+          { key: "forgot_mpin_otp_count", label: "Forgot MPIN OTP", count: record.forgot_mpin_otp_count || 0 },
+          { key: "forgot_password_otp_count", label: "Forgot Password OTP", count: record.forgot_password_otp_count || 0 },
+        ]);
+        setShowTable(true);
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No record found" });
+        setShowTable(false);
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Technical error. Please try again." });
+    }
   };
 
   const toggleCheckbox = (key) => {
@@ -31,170 +55,206 @@ const UnblockUserOtp = () => {
     );
   };
 
-  const updateSingle = (key) => {
-    alert(`Single update triggered for ${key}`);
+  const updateSingle = async (key) => {
+    try {
+      const payload = {
+        otpIdy: userId,
+        userTypeData: userType,
+        statusColumnName: key + "_status",
+        messageColumnName: key + "_msg",
+        countColumnName: key,
+      };
+      const params = new URLSearchParams();
+      params.append("adminUserFormBean", JSON.stringify(payload));
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.unblockOtpSingleUpdate,
+        params
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "OTP count reset.", timer: 1500, showConfirmButton: false });
+        handleSubmit();
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Update failed." });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Technical error." });
+    }
   };
 
-  const updateAll = () => {
+  const updateAll = async () => {
     if (selected.length === 0) {
-      alert("Please select at least one OTP type");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please select at least one OTP type" });
       return;
     }
-    alert(`Update all for: ${selected.join(", ")}`);
+    try {
+      const payload = {
+        otpIdy: userId,
+        userTypeData: userType,
+        columnName: selected.join(","),
+      };
+      const params = new URLSearchParams();
+      params.append("adminUserFormBean", JSON.stringify(payload));
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.unblockOtpUpdateAll,
+        params
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "All OTP counts reset.", timer: 1500, showConfirmButton: false });
+        setSelected([]);
+        handleSubmit();
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Update failed." });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Technical error." });
+    }
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
-  const buttonStyle =
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] text-white " +
-    "px-5 py-2 rounded-xl shadow-md text-sm font-medium hover:opacity-90";
-
-  const smallButton =
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] text-white " +
-    "px-4 py-1 rounded-lg shadow text-sm hover:opacity-90";
-
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Activity &gt; Unblock User OTP
+      {/* HEADER */}
+      <CapsCard
+        title="Unblock User OTP"
+        description="Reset blocked OTP counters for selected services"
+      />
+
+      {/* MAIN CARD */}
+      <PageCard>
+
+        {/* FORM */}
+        <div className="flex justify-center mb-6">
+          <div>
+
+            {/* USER TYPE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+              <label className="text-right font-medium">
+                Select User Type
+              </label>
+              <div className="text-center">:</div>
+              <select
+                className="capsInput"
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+              >
+                <option value="AG">Agent</option>
+                <option value="DS">Distributor</option>
+                <option value="MDS">Master Distributor</option>
+              </select>
+            </div>
+
+            {/* USER ID */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
+                User ID
+              </label>
+              <div className="text-center">:</div>
+              <input
+                type="text"
+                className="capsInput"
+                placeholder="User Id"
+                value={userId}
+                onChange={(e) =>
+                  setUserId(e.target.value.toUpperCase())
+                }
+              />
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center">
+              <button className="capsButton min-w-[120px]" onClick={handleSubmit}>
+                Submit
+              </button>
+            </div>
+
+          </div>
         </div>
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-6">
+        {/* TABLE */}
+        {showTable && (
+          <>
+            <div className="overflow-x-auto mt-4">
+              <table className="min-w-full border border-[#226b88] text-sm text-center">
 
-          {/* FORM */}
-          <div className="flex justify-center mb-6">
-            <div className="w-[500px]">
+                <thead>
+                  <tr className="capsColor">
+                    <th className="border px-3 py-2">
+                      <input
+                        type="checkbox"
+                        onChange={(e) =>
+                          setSelected(
+                            e.target.checked
+                              ? otpData.map((d) => d.key)
+                              : []
+                          )
+                        }
+                      />
+                    </th>
+                    <th className="border px-3 py-2">S.N.</th>
+                    <th className="border px-3 py-2">Service Name</th>
+                    <th className="border px-3 py-2">OTP Count</th>
+                    <th className="border px-3 py-2">Action</th>
+                  </tr>
+                </thead>
 
-              {/* USER TYPE */}
-              <div className="mb-4 flex items-start">
-                <label className="w-[200px] text-right pr-4 pt-2 font-semibold text-sm">
-                  Select User Type :
-                </label>
+                <tbody>
+                  {otpData.map((row, index) => (
+                    <tr key={row.key} className="hover:bg-gray-50">
 
-                <select
-                  className={inputStyle}
-                  value={userType}
-                  onChange={(e) => setUserType(e.target.value)}
-                >
-                  <option value="AG">Agent</option>
-                  <option value="DS">Distributor</option>
-                  <option value="MDS">Master Distributor</option>
-                </select>
-              </div>
-
-              {/* USER ID */}
-              <div className="mb-4 flex items-start">
-                <label className="w-[190px] text-right pr-4 pt-2 font-semibold text-sm">
-                  User ID :
-                </label>
-
-                <input
-                  type="text"
-                  className={inputStyle}
-                  placeholder="User Id"
-                  value={userId}
-                  onChange={(e) =>
-                    setUserId(e.target.value.toUpperCase())
-                  }
-                />
-              </div>
-
-              {/* BUTTON */}
-              <div className="text-center mt-6">
-                <button className={buttonStyle} onClick={handleSubmit}>
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* TABLE */}
-          {showTable && (
-            <>
-              <div className="overflow-x-auto mt-4">
-                <table className="w-full border border-gray-300 text-sm text-center">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border px-3 py-2">
+                      <td className="border px-3 py-2">
                         <input
                           type="checkbox"
-                          onChange={(e) =>
-                            setSelected(
-                              e.target.checked
-                                ? otpData.map((d) => d.key)
-                                : []
-                            )
-                          }
+                          checked={selected.includes(row.key)}
+                          onChange={() => toggleCheckbox(row.key)}
                         />
-                      </th>
-                      <th className="border px-3 py-2">S.N.</th>
-                      <th className="border px-3 py-2">Service Name</th>
-                      <th className="border px-3 py-2">OTP Count</th>
-                      <th className="border px-3 py-2">Action</th>
-                    </tr>
-                  </thead>
+                      </td>
 
-                  <tbody>
-                    {otpData.map((row, index) => (
-                      <tr key={row.key} className="hover:bg-gray-50">
-                        <td className="border px-3 py-2">
-                          <input
-                            type="checkbox"
-                            checked={selected.includes(row.key)}
-                            onChange={() => toggleCheckbox(row.key)}
-                          />
-                        </td>
+                      <td className="border px-3 py-2">
+                        {index + 1}
+                      </td>
 
-                        <td className="border px-3 py-2">
-                          {index + 1}
-                        </td>
+                      <td
+                        className={`border px-3 py-2 ${
+                          row.count >= 3
+                            ? "font-bold text-red-600"
+                            : ""
+                        }`}
+                      >
+                        {row.label}
+                      </td>
 
-                        <td
-                          className={`border px-3 py-2 ${
-                            row.count >= 3
-                              ? "font-bold text-red-600"
-                              : ""
-                          }`}
+                      <td className="border px-3 py-2">
+                        {row.count}
+                      </td>
+
+                      <td className="border px-3 py-2">
+                        <button
+                          className="capsButton px-3 py-1 text-xs"
+                          onClick={() => updateSingle(row.key)}
                         >
-                          {row.label}
-                        </td>
+                          Update
+                        </button>
+                      </td>
 
-                        <td className="border px-3 py-2">
-                          {row.count}
-                        </td>
+                    </tr>
+                  ))}
+                </tbody>
 
-                        <td className="border px-3 py-2">
-                          <button
-                            className={smallButton}
-                            onClick={() => updateSingle(row.key)}
-                          >
-                            Update
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              </table>
+            </div>
 
-              {/* UPDATE ALL */}
-              <div className="text-center mt-6">
-                <button className={buttonStyle} onClick={updateAll}>
-                  Update All
-                </button>
-              </div>
-            </>
-          )}
+            {/* UPDATE ALL */}
+            <div className="text-center mt-6">
+              <button className="capsButton min-w-[140px]" onClick={updateAll}>
+                Update All
+              </button>
+            </div>
+          </>
+        )}
 
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

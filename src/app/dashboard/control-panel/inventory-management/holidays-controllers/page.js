@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function HolidaysController() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -20,111 +23,122 @@ function HolidaysController() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("form fields", formValues);
 
     setLoading(true);
     setSuccess("");
     setError("");
 
+    if (!formValues?.slectInventoryType || formValues?.slectInventoryType === "select") {
+      setError("Please select inventory type");
+      setLoading(false);
+      return;
+    }
+
+    if (!formValues?.from || !formValues?.to) {
+      setError("Please select date range");
+      setLoading(false);
+      return;
+    }
+
+    console.log("form fields", formValues);
+
+    // 🔴 API CALL HERE
     setTimeout(() => {
       setLoading(false);
       setSuccess("Inventory updated successfully");
     }, 1000);
   };
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-3">
-      <label className="w-[220px] text-right font-semibold text-sm">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const handleClear = () => {
+    setFormValues({});
+    setSuccess("");
+    setError("");
+  };
+
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
-
   return (
-    <div className="min-h-screen flex justify-center items-start bg-white">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Controller Inventory Package
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Controller Inventory Package"
+        description="Update inventory availability date range"
+      />
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <div className="p-6">
-            <form onSubmit={handleSubmit}>
-              
-              {/* INVENTORY TYPE */}
-              <Row label="Select Inventory Type :">
-                <select
-                  name="slectInventoryType"
-                  required
-                  onChange={handleInputChange}
-                  className={inputStyle}
-                >
-                  <option value="select">select</option>
-                  <option value="Holiday">Holiday</option>
-                </select>
-              </Row>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-              {/* FROM DATE */}
-              <Row label="From :">
-                <input
-                  type="date"
-                  name="from"
-                  required
-                  onChange={handleInputChange}
-                  className={inputStyle}
-                />
-              </Row>
+            {/* INVENTORY TYPE */}
+            <FieldRow label="Select Inventory Type">
+              <select
+                name="slectInventoryType"
+                value={formValues?.slectInventoryType || "select"}
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="select">Select</option>
+                <option value="Holiday">Holiday</option>
+              </select>
+            </FieldRow>
 
-              {/* TO DATE */}
-              <Row label="To :">
-                <input
-                  type="date"
-                  name="to"
-                  required
-                  onChange={handleInputChange}
-                  className={inputStyle}
-                />
-              </Row>
+            {/* FROM DATE */}
+            <FieldRow label="From">
+              <input
+                type="date"
+                name="from"
+                value={formValues?.from || ""}
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-              {/* STATUS */}
-              <div className="text-center mb-3 text-sm">
-                {success && (
-                  <p className="text-green-600">{success}</p>
-                )}
-                {error && (
-                  <p className="text-red-500">{error}</p>
-                )}
-                {loading && (
-                  <p className="text-gray-500 animate-pulse">
-                    Loading...
-                  </p>
-                )}
-              </div>
+            {/* TO DATE */}
+            <FieldRow label="To">
+              <input
+                type="date"
+                name="to"
+                value={formValues?.to || ""}
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md 
-                  bg-[#4fa2c2] hover:opacity-90
-                  ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
-                >
-                  Submit
-                </button>
-              </div>
+            {/* STATUS */}
+            <div className="text-center mb-2 text-sm">
+              {success && <p className="text-green-600">{success}</p>}
+              {error && <p className="text-red-500">{error}</p>}
+              {loading && <p className="text-gray-500">Loading...</p>}
+            </div>
 
-            </form>
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="capsButton min-w-[140px]"
+              >
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

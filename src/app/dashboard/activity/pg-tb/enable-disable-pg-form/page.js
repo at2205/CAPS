@@ -1,5 +1,11 @@
 "use client";
+
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const EnableDisablePGForm = () => {
   const [action, setAction] = useState("0");
@@ -10,42 +16,55 @@ const EnableDisablePGForm = () => {
     setRoIds("");
   };
 
-  const updateStatus = () => {
+  const updateStatus = async () => {
     if (!roIds.trim()) {
-      alert("Please Enter RO ID.");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please Enter RO ID." });
       return;
     }
-
-    // frontend only
-    alert(`Action: ${action}\nRO IDs: ${roIds}`);
+    try {
+      const payload = { RO_Ids: roIds, KYC_action: action === "1" ? "Enable" : "Disable" };
+      const params = new URLSearchParams();
+      params.append("adminUserFormBean", JSON.stringify(payload));
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.updatePgEKYCAction,
+        params
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message });
+        setRoIds("");
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Update failed." });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong, please retry!" });
+    }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Enable / Disable PG Form"
+        description="Enable or disable PG access using RO ID"
+      />
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Enable / Disable PG Form
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px] space-y-4">
 
-        {/* ===== BODY ===== */}
-        <div className="px-5 py-6 flex justify-center">
-          <div className="w-[520px]">
-
-            {/* ACTION */}
-            <div className="mb-5 flex items-center">
-              <label className="font-semibold w-1/2 text-right mr-3">
+            {/* Select Action */}
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
                 Select Action
               </label>
+              <div className="text-center">:</div>
 
               <select
                 value={action}
                 onChange={(e) =>
                   handleActionChange(e.target.value)
                 }
-                className="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                className="capsInput"
               >
                 <option value="0">Select</option>
                 <option value="Enable">Enable</option>
@@ -53,36 +72,33 @@ const EnableDisablePGForm = () => {
               </select>
             </div>
 
-            {/* RO ID (Conditional) */}
+            {/* RO ID */}
             {action !== "0" && (
               <>
-                <div className="mb-5 flex items-start">
-                  <label className="font-semibold w-1/2 text-right mr-3 pt-2">
+                <div className="grid grid-cols-[200px_10px_1fr] items-start">
+                  <label className="text-sm font-semibold text-right pt-2">
                     Enter RO ID
                   </label>
+                  <div className="text-center pt-2">:</div>
 
                   <textarea
                     value={roIds}
                     onChange={(e) =>
                       setRoIds(e.target.value)
                     }
-                    placeholder="Full Agent ID (Use comma for multiple IDs)"
-                    className="w-full h-[100px] border border-gray-300 rounded-md px-3 py-2
-                               focus:outline-none focus:ring-2 focus:ring-[#4c95b3]
-                               resize-y"
+                    placeholder="Full Agent ID (comma separated for multiple)"
+                    className="capsInput h-[100px] resize-y"
                   />
                 </div>
 
-                {/* BUTTON */}
-                <div className="text-center">
+                {/* Button */}
+                <div className="text-center pt-2">
                   <button
                     type="button"
                     onClick={updateStatus}
-                    className="px-6 py-2 text-white rounded-2xl shadow
-                               bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                               hover:opacity-90 transition"
+                    className="capsButton px-10"
                   >
-                    Submit
+                    SUBMIT
                   </button>
                 </div>
               </>
@@ -90,7 +106,7 @@ const EnableDisablePGForm = () => {
 
           </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

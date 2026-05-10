@@ -1,5 +1,20 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
+
+const Row = React.memo(({ label, children }) => (
+  <div className="flex items-center mb-3">
+    <label className="w-[260px] text-right pr-4 text-sm font-semibold text-orange-700">
+      {label} :
+    </label>
+    <div className="w-[300px]">{children}</div>
+  </div>
+));
 
 const SalesProfiling = () => {
   const [activeTab, setActiveTab] = useState("add");
@@ -15,28 +30,45 @@ const SalesProfiling = () => {
   });
 
   const [disableData, setDisableData] = useState({
-    personName: "-1",
+    person: "-1",
   });
 
   const [salesPersonList, setSalesPersonList] = useState([]);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setSalesPersonList([
-      "JOHN DOE - BS-001",
-      "JANE SMITH - BS-002",
-      "ROBERT JOHNSON - BS-003",
-    ]);
+    fetchSalesList();
   }, []);
 
-  /* ---------------- INPUT HANDLER ---------------- */
+  const fetchSalesList = async () => {
+    try {
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.viewSalesPersonList,
+        {
+          userId: localStorage.getItem("userId"),
+        },
+      );
+
+      const data =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      let list = [];
+
+      if (Array.isArray(data)) list = data;
+      else if (Array.isArray(data.salesPersonList)) list = data.salesPersonList;
+
+      setSalesPersonList(list);
+    } catch (err) {
+      Swal.fire("Error", "Failed to load list", "error");
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((p) => ({
-      ...p,
-      [name]: name === "name" ? value.toUpperCase() : value,
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
     }));
   };
 
@@ -44,50 +76,80 @@ const SalesProfiling = () => {
     const { name, value } = e.target;
 
     if (/^\d*$/.test(value)) {
-      setFormData((p) => ({ ...p, [name]: value }));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  /* ---------------- VALIDATION ---------------- */
-  const validateAddForm = () => {
-    const {
-      name,
-      aesId,
-      agentId,
-      mobileNo,
-      emailId,
-      distributorId,
-      fulldistributorId,
-    } = formData;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    if (!name.trim()) return alert("Enter Sales Person Name"), false;
-    if (!aesId.trim()) return alert("Enter Employee BS ID"), false;
-    if (!agentId.trim()) return alert("Enter Agent ID"), false;
+    try {
+      setLoading(true);
 
-    if (!/^[6-9]\d{9}$/.test(mobileNo))
-      return alert("Enter valid 10 digit Mobile Number"), false;
+      if (activeTab === "add") {
+        const res = await axiosInstance.post(
+          endpoints.controlPEndpoints.addSalesPerson,
+          {
+            ...formData,
+            name: formData.name.toUpperCase(),
+            userId: localStorage.getItem("userId"),
+          },
+        );
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailId))
-      return alert("Enter valid Email ID"), false;
+        const result =
+          typeof res.data === "string" ? JSON.parse(res.data) : res.data;
 
-    if (!distributorId.trim())
-      return alert("Enter Distributor ID"), false;
+        const msg = result.message || result.errorMessage || "";
 
-    if (!fulldistributorId.trim())
-      return alert("Enter Full Distributor ID"), false;
+        const isSuccess =
+          result.status === "0" ||
+          result.status === "00" ||
+          result.success === true ||
+          msg.toLowerCase().includes("success");
 
-    return true;
+        if (isSuccess) {
+          Swal.fire("Success", msg || "Added Successfully", "success");
+          resetForm();
+          fetchSalesList();
+        } else {
+          Swal.fire("Error", msg || "Failed", "error");
+        }
+      }
+
+      if (activeTab === "disable") {
+        if (disableData.person === "-1") {
+          Swal.fire("Error", "Select Sales Person", "error");
+          return;
+        }
+
+        const res = await axiosInstance.post(
+          endpoints.controlPEndpoints.disableSalesPerson,
+          {
+            person: disableData.person,
+          },
+        );
+
+        const result =
+          typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+        if (result.status === "0" || result.status === "00") {
+          Swal.fire("Success", "Disabled Successfully", "success");
+          resetForm();
+          fetchSalesList();
+        } else {
+          Swal.fire("Error", result.message || "Failed", "error");
+        }
+      }
+    } catch (err) {
+      Swal.fire("Error", "Server Error", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const validateDisableForm = () => {
-    if (disableData.personName === "-1")
-      return alert("Select Sales Person to disable"), false;
-
-    return true;
-  };
-
-  /* ---------------- RESET ---------------- */
   const resetForm = () => {
     setFormData({
       name: "",
@@ -99,165 +161,143 @@ const SalesProfiling = () => {
       fulldistributorId: "",
     });
 
-    setDisableData({ personName: "-1" });
-    setMessage("");
+    setDisableData({ person: "-1" });
   };
 
-  /* ---------------- SUBMIT ---------------- */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (activeTab === "add" && !validateAddForm()) return;
-    if (activeTab === "disable" && !validateDisableForm()) return;
-
-    try {
-      setLoading(true);
-      setMessage("");
-
-      await new Promise((r) => setTimeout(r, 1200));
-
-      setMessage(
-        activeTab === "add"
-          ? "Sales person added successfully!"
-          : "Sales person disabled successfully!"
-      );
-
-      resetForm();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ---------------- ROW HELPER ---------------- */
-  const renderRow = (
-    label,
-    name,
-    placeholder,
-    handler = handleChange
-  ) => (
-    <div className="flex items-center mb-4">
-      <label className="w-[260px] text-right pr-4 font-semibold text-sm">
-        {label} <span className="text-red-500">*</span>
-      </label>
-
-      <input
-        name={name}
-        value={formData[name]}
-        onChange={handler}
-        placeholder={placeholder}
-        disabled={loading}
-        className="w-[280px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
-      />
-    </div>
-  );
+  const inputClass = "w-full border border-gray-400 rounded px-2 py-1 text-sm";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center items-start">
+    <div className="p-6 bg-[#d8c78f] min-h-screen">
+      <CapsCard title="Sales Profiling" />
 
-      {/* MAIN CARD */}
-      <div className="w-[900px] mt-10 bg-white rounded-xl shadow-sm border border-gray-200">
+      <PageCard>
+        <div className="flex justify-center gap-6 mb-6">
+          <label>
+            <input
+              type="radio"
+              checked={activeTab === "add"}
+              onChange={() => setActiveTab("add")}
+            />{" "}
+            Add New
+          </label>
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[18px] px-6 py-4 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          Sales Profiling
+          <label>
+            <input
+              type="radio"
+              checked={activeTab === "disable"}
+              onChange={() => setActiveTab("disable")}
+            />{" "}
+            Disable
+          </label>
         </div>
 
-        {/* BODY */}
-        <div className="py-10">
+        <form onSubmit={handleSubmit} className="flex flex-col items-center">
+          {activeTab === "add" ? (
+            <>
+              <Row label="Sales Person Name">
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </Row>
 
-          {/* SUCCESS MESSAGE */}
-          {message && (
-            <div className="w-1/2 mx-auto mb-6 text-center bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm">
-              {message}
-            </div>
+              <Row label="Employee BS ID">
+                <input
+                  name="aesId"
+                  value={formData.aesId}
+                  onChange={handleDigitOnly}
+                  className={inputClass}
+                />
+              </Row>
+
+              <Row label="Employee Agent ID">
+                <input
+                  name="agentId"
+                  value={formData.agentId}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </Row>
+
+              <Row label="Mobile Number">
+                <input
+                  name="mobileNo"
+                  maxLength={10}
+                  value={formData.mobileNo}
+                  onChange={handleDigitOnly}
+                  className={inputClass}
+                />
+              </Row>
+
+              <Row label="Email ID">
+                <input
+                  name="emailId"
+                  value={formData.emailId}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </Row>
+
+              <Row label="Distributor ID">
+                <input
+                  name="distributorId"
+                  value={formData.distributorId}
+                  onChange={handleDigitOnly}
+                  className={inputClass}
+                />
+              </Row>
+
+              <Row label="Full Distributor ID">
+                <input
+                  name="fulldistributorId"
+                  value={formData.fulldistributorId}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </Row>
+            </>
+          ) : (
+            <Row label="Select Sales Person">
+              <select
+                value={disableData.person}
+                onChange={(e) => setDisableData({ person: e.target.value })}
+                className={inputClass}
+              >
+                <option value="-1">Select</option>
+
+                {salesPersonList.map((item, i) => {
+                  const [name, id] = item.split("|");
+                  return (
+                    <option key={i} value={item}>
+                      {name} ({id})
+                    </option>
+                  );
+                })}
+              </select>
+            </Row>
           )}
 
-          {/* TAB BUTTONS */}
-          <div className="flex justify-center gap-6 mb-8">
-            <button
-              type="button"
-              onClick={() => setActiveTab("add")}
-              className={`px-8 py-2 text-sm text-white rounded-md transition ${
-                activeTab === "add"
-                  ? "bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1]"
-                  : "bg-gray-400"
-              }`}
-            >
-              Add New
+          <div className="flex gap-5 mt-4">
+            <button type="submit" className="capsButton">
+              {loading
+                ? "Processing..."
+                : activeTab === "add"
+                  ? "ADD"
+                  : "DISABLE"}
             </button>
 
             <button
               type="button"
-              onClick={() => setActiveTab("disable")}
-              className={`px-8 py-2 text-sm text-white rounded-md transition ${
-                activeTab === "disable"
-                  ? "bg-gradient-to-b from-[#666] to-[#444]"
-                  : "bg-gray-400"
-              }`}
+              onClick={resetForm}
+              className="capsButtonSecondary"
             >
-              Disable
+              Cancel
             </button>
           </div>
-
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="flex flex-col items-center">
-
-            {activeTab === "add" ? (
-              <>
-                {renderRow("Sales Person Name", "name", "Enter name")}
-                {renderRow("Employee BS ID", "aesId", "Enter ID", handleDigitOnly)}
-                {renderRow("Employee Agent ID", "agentId", "Enter Agent ID")}
-                {renderRow("Mobile Number", "mobileNo", "Enter Mobile", handleDigitOnly)}
-                {renderRow("Email ID", "emailId", "Enter Email")}
-                {renderRow("Distributor ID", "distributorId", "Enter Distributor ID", handleDigitOnly)}
-                {renderRow("Full Distributor ID", "fulldistributorId", "Enter Full ID")}
-              </>
-            ) : (
-              <div className="flex items-center mb-6">
-                <label className="w-[260px] text-right pr-4 font-semibold text-sm">
-                  Select Sales Person
-                </label>
-
-                <select
-                  value={disableData.personName}
-                  onChange={(e) =>
-                    setDisableData({ personName: e.target.value })
-                  }
-                  className="w-[280px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
-                >
-                  <option value="-1">Select</option>
-                  {salesPersonList.map((p, i) => (
-                    <option key={i}>{p}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* BUTTONS */}
-            <div className="flex justify-center gap-8 mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-10 py-2 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                )}
-                Submit
-              </button>
-
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={loading}
-                className="px-10 py-2 text-white text-sm rounded-full bg-gradient-to-b from-[#666] to-[#444] disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+        </form>
+      </PageCard>
     </div>
   );
 };

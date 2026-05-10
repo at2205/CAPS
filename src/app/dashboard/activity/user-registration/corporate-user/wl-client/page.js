@@ -1,7 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
 
-const WhiteLabelRegistration = ({ categoryList = [], stateList = [] }) => {
+import React, { useEffect, useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
+
+function WhiteLabelRegistration({ categoryList = [], stateList = [] }) {
   const [form, setForm] = useState({
     clientType: "-1",
     categoryName: "-1",
@@ -22,12 +28,12 @@ const WhiteLabelRegistration = ({ categoryList = [], stateList = [] }) => {
 
   const [districts, setDistricts] = useState([]);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   /* 🔒 Disable right click */
   useEffect(() => {
     const disableRightClick = (e) => {
       e.preventDefault();
-      alert("No right-click allowed");
     };
     document.addEventListener("contextmenu", disableRightClick);
     return () =>
@@ -36,12 +42,15 @@ const WhiteLabelRegistration = ({ categoryList = [], stateList = [] }) => {
 
   const populateCities = async (state) => {
     if (!state || state === "select") return;
+
     try {
-      const res = await fetch(`/distDetails.action?state=${state}`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      setDistricts(data || []);
+      const payload = { state };
+      const response = await urlencodedInstance.post(
+        endpoints.controlPEndpoints.getStateDistrict || "/api/getstatedistrict",
+        new URLSearchParams({ adminUserFormBean: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      setDistricts(data.districts || data.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -58,10 +67,17 @@ const WhiteLabelRegistration = ({ categoryList = [], stateList = [] }) => {
     if (name === "state") populateCities(value);
   };
 
+  const digitOnly = (e) => {
+    const key = e.key;
+    if (!/[0-9]/.test(key) && key !== "Backspace") {
+      e.preventDefault();
+    }
+  };
+
   const isValidEmail = (email) =>
     /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(email);
 
-  const submitForm = () => {
+  const submitForm = async () => {
     const requiredFields = [
       "clientType",
       "categoryName",
@@ -85,11 +101,28 @@ const WhiteLabelRegistration = ({ categoryList = [], stateList = [] }) => {
       !isValidEmail(form.agentPanelHelpEmailId) ||
       !isValidEmail(form.agentCellEmailId)
     ) {
-      alert("Invalid Email Address");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Invalid Email Address." });
       return;
     }
 
-    setMessage("White Label Registration Submitted Successfully");
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("model", JSON.stringify({ ...form, userId: localStorage.getItem("userId") }));
+      fd.append("idFile", form.headerHomeImage || new Blob());
+      const response = await urlencodedInstance.post(endpoints.activityEndpoints.wlClientRegistration, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status !== "1") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "White Label Registration Submitted Successfully." });
+        setMessage("White Label Registration Submitted Successfully.");
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Registration failed." });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong during registration." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetForm = () => {
@@ -110,235 +143,238 @@ const WhiteLabelRegistration = ({ categoryList = [], stateList = [] }) => {
       smsTemplate: "",
       headerHomeImage: null,
     });
+
     setDistricts([]);
     setMessage("");
   };
 
-  /* ================= UI ================= */
   const renderRow = (label, field) => (
-    <div className="mb-3 flex items-start">
-      <label className="w-[240px] text-right font-semibold mr-4 pt-2">
-        {label} :
+    <div className="grid grid-cols-[200px_10px_1fr] items-center">
+      <label className="text-sm font-semibold text-right">
+        {label}
       </label>
+      <div className="text-center">:</div>
       {field}
     </div>
   );
 
-  const inputStyle =
-    "w-[300px] border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#5fa9c7]";
-
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center items-start">
-      <div className="w-[850px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="White Label Registration"
+        description="Register new white label client"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          White Label Registration
-        </div>
+      <PageCard>
+        {message && (
+          <p className="text-center text-green-600 font-semibold mb-4 text-sm">
+            {message}
+          </p>
+        )}
 
-        {/* BODY */}
-        <div className="px-10 py-6">
+        <div className="flex justify-center">
+          <div className="w-[520px] space-y-4">
 
-          {message && (
-            <div className="mb-4 text-center bg-green-100 text-green-700 border border-green-300 rounded-md py-2">
-              {message}
+            {renderRow(
+              "Client Type",
+              <select
+                name="clientType"
+                value={form.clientType}
+                onChange={handleChange}
+                className="capsInput"
+              >
+                <option value="-1">Select</option>
+                <option value="TEP">TEP</option>
+              </select>
+            )}
+
+            {renderRow(
+              "Category",
+              <select
+                name="categoryName"
+                value={form.categoryName}
+                onChange={handleChange}
+                className="capsInput"
+              >
+                <option value="-1">Select</option>
+                {categoryList.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {renderRow(
+              "Company Name",
+              <input
+                name="companyName"
+                value={form.companyName}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Domain",
+              <input
+                name="domainName"
+                value={form.domainName}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Help Desk Email",
+              <input
+                name="agentPanelHelpEmailId"
+                value={form.agentPanelHelpEmailId}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Transaction Email",
+              <input
+                name="agentCellEmailId"
+                value={form.agentCellEmailId}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Help Desk Mobile",
+              <input
+                name="agentPanelHelpMobileNo1"
+                maxLength="10"
+                value={form.agentPanelHelpMobileNo1}
+                onKeyDown={digitOnly}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "User Info URL",
+              <input
+                name="careUrl"
+                value={form.careUrl}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "State",
+              <select
+                name="state"
+                value={form.state}
+                onChange={handleChange}
+                className="capsInput"
+              >
+                <option value="select">Select</option>
+                {stateList.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {renderRow(
+              "District",
+              <select
+                name="district"
+                value={form.district}
+                onChange={handleChange}
+                className="capsInput"
+              >
+                <option value="">Select</option>
+                {districts.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {renderRow(
+              "City",
+              <input
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Address",
+              <input
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Service By Zone",
+              <input
+                name="serviceByZone"
+                value={form.serviceByZone}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "SMS Template",
+              <input
+                name="smsTemplate"
+                maxLength="6"
+                value={form.smsTemplate}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            {renderRow(
+              "Logo Image",
+              <input
+                type="file"
+                name="headerHomeImage"
+                onChange={handleChange}
+                className="capsInput"
+              />
+            )}
+
+            <div className="text-center pt-3 space-x-4">
+              <button
+                onClick={submitForm}
+                disabled={loading}
+                className="capsButton px-10"
+              >
+                {loading ? "Submitting..." : "SUBMIT"}
+              </button>
+
+              <button
+                onClick={resetForm}
+                disabled={loading}
+                className="capsButton px-10 bg-gray-500 hover:bg-gray-600"
+              >
+                RESET
+              </button>
             </div>
-          )}
 
-          {renderRow(
-            "Client Type *",
-            <select
-              name="clientType"
-              value={form.clientType}
-              onChange={handleChange}
-              className={inputStyle}
-            >
-              <option value="-1">Select</option>
-              <option value="TEP">TEP</option>
-            </select>
-          )}
-
-          {renderRow(
-            "Category *",
-            <select
-              name="categoryName"
-              value={form.categoryName}
-              onChange={handleChange}
-              className={inputStyle}
-            >
-              <option value="-1">Select</option>
-              {categoryList.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {renderRow(
-            "Company Name *",
-            <input
-              name="companyName"
-              value={form.companyName}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Domain *",
-            <input
-              name="domainName"
-              value={form.domainName}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Help Desk Email *",
-            <input
-              name="agentPanelHelpEmailId"
-              value={form.agentPanelHelpEmailId}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Transaction Email *",
-            <input
-              name="agentCellEmailId"
-              value={form.agentCellEmailId}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Help Desk Mobile *",
-            <input
-              name="agentPanelHelpMobileNo1"
-              maxLength="10"
-              value={form.agentPanelHelpMobileNo1}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "User Info URL *",
-            <input
-              name="careUrl"
-              value={form.careUrl}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "State *",
-            <select
-              name="state"
-              value={form.state}
-              onChange={handleChange}
-              className={inputStyle}
-            >
-              <option value="select">Select</option>
-              {stateList.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {renderRow(
-            "District *",
-            <select
-              name="district"
-              value={form.district}
-              onChange={handleChange}
-              className={inputStyle}
-            >
-              <option value="">Select</option>
-              {districts.map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-          )}
-
-          {renderRow(
-            "City *",
-            <input
-              name="city"
-              value={form.city}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Address *",
-            <input
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Service By Zone *",
-            <input
-              name="serviceByZone"
-              value={form.serviceByZone}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "SMS Template *",
-            <input
-              name="smsTemplate"
-              maxLength="6"
-              value={form.smsTemplate}
-              onChange={handleChange}
-              className={inputStyle}
-            />
-          )}
-
-          {renderRow(
-            "Logo Image *",
-            <input
-              type="file"
-              name="headerHomeImage"
-              onChange={handleChange}
-              className={`${inputStyle} file:mr-3 file:px-3 file:py-1 file:border-0 file:bg-[#4c95b3] file:text-white file:rounded-md`}
-            />
-          )}
-
-          {/* BUTTONS */}
-          <div className="text-center mt-6">
-            <button
-              onClick={submitForm}
-              className="px-8 py-2 text-white rounded-[16px] shadow mr-3 bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90 transition"
-            >
-              Submit
-            </button>
-
-            <button
-              onClick={resetForm}
-              className="px-8 py-2 rounded-[16px] shadow bg-gray-500 text-white hover:bg-gray-600 transition"
-            >
-              Reset
-            </button>
           </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
-};
+}
 
 export default WhiteLabelRegistration;

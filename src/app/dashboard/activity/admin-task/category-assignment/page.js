@@ -1,70 +1,89 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const CategoryAssignment = () => {
   const [assignCategory, setAssignCategory] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!assignCategory) {
-      alert("Please Select Category.");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please Select Category.", timer: 1500, showConfirmButton: false });
       return;
     }
-    console.log("Selected Category:", assignCategory);
+    try {
+      setLoading(true);
+      const payload = { userId: localStorage.getItem("userId"), categoryName: assignCategory };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.adminCategoryAssi,
+        new URLSearchParams({ data: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "Category assigned successfully" });
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Operation failed" });
+      }
+    } catch { Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" }); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 min-h-[260px] rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Category Assignment
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <div className="flex justify-center">
-            <div className="w-[520px]">
+      {/* HEADER */}
+      <CapsCard
+        title="Category Assignment"
+        description="Assign category to selected users"
+      />
 
-              {/* CATEGORY */}
-              <div className="mb-5 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Assign Category :
-                </label>
+      {/* MAIN CARD */}
+      <PageCard>
 
-                <select
-                  value={assignCategory}
-                  onChange={(e) => setAssignCategory(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                >
-                  <option value="">Select</option>
-                  <option value="Category-D">Category-D</option>
-                  <option value="Category-Demo">Category-Demo</option>
-                  <option value="Category-Free">Category-Free</option>
-                  <option value="Category-Kalpna">Category-Kalpna</option>
-                  <option value="Category-MDMH10428">Category-MDMH10428</option>
-                  <option value="Category-MDPB10401">Category-MDPB10401</option>
-                  <option value="Category-POP-Premium">Category-POP-Premium</option>
-                  <option value="Category-Postpaid">Category-Postpaid</option>
-                  <option value="Category-Prepaid">Category-Prepaid</option>
-                </select>
-              </div>
+        <div className="flex justify-center mb-6">
+          <div className="grid grid-cols-[200px_20px_250px] items-center gap-4">
 
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-2 text-white rounded-2xl shadow bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90 transition"
-                >
-                  Update
-                </button>
-              </div>
+            <label className="text-right font-medium">
+              Assign Category
+            </label>
 
-            </div>
+            <div className="text-center">:</div>
+
+            <select
+              value={assignCategory}
+              onChange={(e) => setAssignCategory(e.target.value)}
+              className="capsSelect"
+            >
+              <option value="">Select</option>
+              <option value="Category-D">Category-D</option>
+              <option value="Category-Demo">Category-Demo</option>
+              <option value="Category-Free">Category-Free</option>
+              <option value="Category-Kalpna">Category-Kalpna</option>
+              <option value="Category-MDMH10428">Category-MDMH10428</option>
+              <option value="Category-MDPB10401">Category-MDPB10401</option>
+              <option value="Category-POP-Premium">Category-POP-Premium</option>
+              <option value="Category-Postpaid">Category-Postpaid</option>
+              <option value="Category-Prepaid">Category-Prepaid</option>
+            </select>
           </div>
         </div>
-      </div>
+
+        {/* BUTTON */}
+        <div className="text-center">
+          <button
+            onClick={handleSubmit}
+            className="capsButton min-w-[120px]"
+          >
+            Update
+          </button>
+        </div>
+
+      </PageCard>
     </div>
   );
 };

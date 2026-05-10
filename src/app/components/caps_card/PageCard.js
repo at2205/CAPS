@@ -8,11 +8,11 @@ export default function PageCard({ title, children, className = "" }) {
                             rounded-lg
                             p-5
                             border
-                            border-gray-200
+                            border-2 border-[#d4eef6]
                             ${className}
                         `}
             >
-                <div className="p-5 border border-[#226b88] rounded-md">
+                <div className="p-5 border border-[#d4eef6] rounded-md">
                     {title && (
                         <h1 className="text-lg font-semibold mb-2">
                             {title}

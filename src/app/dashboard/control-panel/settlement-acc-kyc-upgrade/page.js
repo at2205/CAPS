@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function SettlementKYC() {
   const [name, setName] = useState("");
   const [accountNo, setAccountNo] = useState("");
@@ -13,7 +16,6 @@ function SettlementKYC() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD BANK LIST ================= */
   useEffect(() => {
     axios.get("/getBankList").then((res) => {
       if (Array.isArray(res.data)) {
@@ -22,7 +24,6 @@ function SettlementKYC() {
     });
   }, []);
 
-  /* ================= DIGIT ONLY ================= */
   const digitOnly = (e) => {
     const key = e.key;
     if (!/[0-9]/.test(key) && key !== "Backspace") {
@@ -30,24 +31,11 @@ function SettlementKYC() {
     }
   };
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      alert("Please Enter Account Holder Name.");
-      return;
-    }
-    if (!accountNo.trim()) {
-      alert("Please Enter Account Number.");
-      return;
-    }
-    if (!panNo.trim()) {
-      alert("Please Enter PAN Number.");
-      return;
-    }
-    if (bankName === "0") {
-      alert("Please Select Bank Name.");
-      return;
-    }
+    if (!name.trim()) return alert("Please Enter Account Holder Name.");
+    if (!accountNo.trim()) return alert("Please Enter Account Number.");
+    if (!panNo.trim()) return alert("Please Enter PAN Number.");
+    if (bankName === "0") return alert("Please Select Bank Name.");
 
     try {
       setLoading(true);
@@ -71,46 +59,46 @@ function SettlementKYC() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start bg-gray-50 py-10">
-      <div className="w-full max-w-[950px] bg-white rounded-xl shadow-lg border-2 border-[#b7dbe8] overflow-hidden">
-        
-        {/* ===== HEADER ===== */}
-        <div className="bg-gradient-to-r from-[#4c95b3] to-[#3d89a6] text-white text-center font-bold text-[17px] py-3 tracking-wide">
-          SETTLEMENT ACCOUNT KYC UPGRADE
-        </div>
+    <div className="p-6 text-[#226b88]">
+      <CapsCard
+        title="Settlement Account KYC Upgrade"
+        description="Update settlement account holder KYC details"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-8 py-6 text-sm">
+      <PageCard>
+        {message && (
+          <p className="text-center text-red-500 font-semibold mb-4 text-sm">
+            {message}
+          </p>
+        )}
 
-          {message && (
-            <p className="text-center text-red-500 font-semibold mb-4">
-              {message}
-            </p>
-          )}
+        {/* ✅ CENTERED FORM CONTAINER */}
+        <div className="flex justify-center">
+          <div className="w-[520px] space-y-4">
 
-          <div className="space-y-4">
-
-            {/* Account Holder */}
-            <div className="flex items-center justify-center gap-4">
-              <label className="w-[220px] text-right font-semibold">
-                Account Holder Name :
+            {/* Row */}
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
+                Account Holder Name
               </label>
+              <div className="text-center">:</div>
               <input
                 type="text"
                 value={name}
                 onChange={(e) =>
                   setName(e.target.value.toUpperCase())
                 }
+                disabled={loading}
                 placeholder="Enter Account Holder Name"
-                className="input w-[280px]"
+                className="capsInput"
               />
             </div>
 
-            {/* Account No */}
-            <div className="flex items-center justify-center gap-4">
-              <label className="w-[220px] text-right font-semibold">
-                Account No. :
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
+                Account No.
               </label>
+              <div className="text-center">:</div>
               <input
                 type="text"
                 value={accountNo}
@@ -118,38 +106,41 @@ function SettlementKYC() {
                 onChange={(e) =>
                   setAccountNo(e.target.value)
                 }
+                disabled={loading}
                 placeholder="Enter Account Number"
-                className="input w-[280px]"
+                className="capsInput"
               />
             </div>
 
-            {/* PAN */}
-            <div className="flex items-center justify-center gap-4">
-              <label className="w-[220px] text-right font-semibold">
-                PAN No. :
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
+                PAN No.
               </label>
+              <div className="text-center">:</div>
               <input
                 type="text"
                 value={panNo}
                 onChange={(e) =>
                   setPanNo(e.target.value.toUpperCase())
                 }
+                disabled={loading}
                 placeholder="Enter PAN Number"
-                className="input w-[280px]"
+                className="capsInput"
               />
             </div>
 
-            {/* Bank */}
-            <div className="flex items-center justify-center gap-4">
-              <label className="w-[220px] text-right font-semibold">
-                Bank Name :
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+              <label className="text-sm font-semibold text-right">
+                Bank Name
               </label>
+              <div className="text-center">:</div>
               <select
                 value={bankName}
                 onChange={(e) =>
                   setBankName(e.target.value)
                 }
-                className="input w-[280px]"
+                disabled={loading}
+                className="capsInput"
               >
                 <option value="0">Select Bank</option>
                 {bankList.map((b, i) => (
@@ -166,20 +157,15 @@ function SettlementKYC() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="bg-[#4fa2c2] text-white px-8 py-1.5 rounded-md shadow
-                           hover:bg-[#3d89a6] transition disabled:opacity-50"
+                className="capsButton px-10"
               >
-                {loading ? (
-                  <span className="loader"></span>
-                ) : (
-                  "UPDATE"
-                )}
+                {loading ? "Updating..." : "UPDATE"}
               </button>
             </div>
 
           </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function RetailPricingPGSettlement() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -26,76 +29,85 @@ function RetailPricingPGSettlement() {
     }, 1000);
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setClientId("");
+    setSuccess("");
+    setError("");
+  };
+
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
+    </div>
+  );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      {/* HEADER */}
+      <CapsCard
+        title="Retail Pricing PG / Settlement"
+        description="Fetch and manage retail pricing settlement details"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Retail Pricing PG / Settlement
-        </div>
+      {/* MAIN CARD */}
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            {/* CLIENT ID ROW */}
-            <div className="flex items-center justify-center mb-4">
-              <label className="w-[180px] text-right text-sm font-semibold">
-                Client ID :
-              </label>
-
-              <div className="w-[260px] ml-3">
+            {/* CLIENT ID */}
+            <form onSubmit={handleSubmit}>
+              <FieldRow label="Client ID">
                 <input
                   type="text"
                   value={clientId}
                   onChange={(e) => setClientId(e.target.value)}
-                  className={inputClass}
+                  className="capsInput"
+                  placeholder="Enter Client ID"
                 />
+              </FieldRow>
+
+              {/* GO BUTTON (inline aligned) */}
+              <div className="flex justify-center mb-2">
+                <button
+                  type="button"
+                  className="capsButtonSecondary min-w-[100px]"
+                >
+                  Go
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="ml-3 px-3 py-1 text-sm text-white rounded-md bg-[#4fa2c2] hover:opacity-90 shadow"
-              >
-                Go
-              </button>
-            </div>
+              {/* STATUS */}
+              <div className="text-center text-sm mb-2">
+                {success && <p className="text-green-600">{success}</p>}
+                {error && <p className="text-red-500">{error}</p>}
+                {loading && <p className="text-gray-500">Loading...</p>}
+              </div>
 
-            {/* STATUS */}
-            <div className="text-center min-h-[24px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-500 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
+              {/* BUTTONS */}
+              <div className="text-center mt-4 flex justify-center gap-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="capsButton min-w-[140px]"
+                >
+                  {loading ? "Submitting..." : "Submit"}
+                </button>
 
-            {/* SUBMIT BUTTON */}
-            <div className="text-center mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                Submit
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="capsButtonSecondary min-w-[140px]"
+                >
+                  Clear
+                </button>
+              </div>
+            </form>
 
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

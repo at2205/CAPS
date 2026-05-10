@@ -6,6 +6,9 @@ import { ToastContainer, toast, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function CorporateUser() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -14,7 +17,8 @@ function CorporateUser() {
   const [wlTable, setWlTable] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [form, setform] = useState(true);
+  const [form, setForm] = useState(true);
+
   const [formValues, setFormValues] = useState({
     userId: "",
     userStatusType: "all",
@@ -31,8 +35,12 @@ function CorporateUser() {
     typeof window !== "undefined"
       ? localStorage.getItem("secondUserId")
       : null;
+
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
+
   const portalId =
     typeof window !== "undefined"
       ? localStorage.getItem("adminUserPortalId")
@@ -40,8 +48,8 @@ function CorporateUser() {
 
   /* ---------------- TOASTS ---------------- */
 
-  const notifySuccess = (dis) =>
-    toast.success(dis, {
+  const notifySuccess = (msg) =>
+    toast.success(msg, {
       position: "top-right",
       autoClose: 2000,
       hideProgressBar: true,
@@ -49,8 +57,8 @@ function CorporateUser() {
       transition: Bounce,
     });
 
-  const notifyError = (dis) =>
-    toast.error(dis, {
+  const notifyError = (msg) =>
+    toast.error(msg, {
       position: "top-right",
       autoClose: 1000,
       hideProgressBar: true,
@@ -78,26 +86,11 @@ function CorporateUser() {
         </button>
       ),
     },
-    {
-      title: "Client Domain",
-      dataIndex: "domainName",
-    },
-    {
-      title: "Company Name",
-      dataIndex: "companyName",
-    },
-    {
-      title: "Help Mobile No",
-      dataIndex: "mobileNo",
-    },
-    {
-      title: "Login Status",
-      dataIndex: "status",
-    },
-    {
-      title: "Block Status",
-      dataIndex: "blockStatus",
-    },
+    { title: "Client Domain", dataIndex: "domainName" },
+    { title: "Company Name", dataIndex: "companyName" },
+    { title: "Help Mobile No", dataIndex: "mobileNo" },
+    { title: "Login Status", dataIndex: "status" },
+    { title: "Block Status", dataIndex: "blockStatus" },
   ];
 
   /* ---------------- INPUT CHANGE ---------------- */
@@ -116,6 +109,10 @@ function CorporateUser() {
 
   const getWlClient = async () => {
     if (!userId || !portalId) return;
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
     const formData = new FormData();
     formData.append(
@@ -140,21 +137,24 @@ function CorporateUser() {
 
       if (result.status === "0") {
         setWlClientData(result?.whiteLabelClientSearchList);
+        setSuccess("WL clients loaded successfully.");
       } else {
         setError("Something went wrong.");
       }
     } catch (err) {
       console.error(err);
+      setError("Error fetching data.");
+    } finally {
+      setLoading(false);
     }
   };
 
   /* ---------------- ACTION API ---------------- */
 
-  const allActiveDeactiveWLClient = async (
-    userIds,
-    action,
-    endPointUrl
-  ) => {
+  const handleAction = async (userIds, action, endPointUrl) => {
+    if (!userIds.length)
+      return notifyError("Please select any user.");
+
     setLoading(true);
 
     const formData = new FormData();
@@ -184,52 +184,11 @@ function CorporateUser() {
       }
     } catch (err) {
       console.error(err);
+      notifyError("Action failed.");
     } finally {
       setLoading(false);
-      start();
+      setSelectedRowKeys([]);
     }
-  };
-
-  /* ---------------- BUTTON HANDLERS ---------------- */
-
-  const handleActive = () => {
-    if (!selectedRowKeys.length)
-      return notifyError("Please select any user.");
-    allActiveDeactiveWLClient(
-      selectedRowKeys,
-      "Active",
-      activateDeactivateWLClient
-    );
-  };
-
-  const handleDeactive = () => {
-    if (!selectedRowKeys.length)
-      return notifyError("Please select any user.");
-    allActiveDeactiveWLClient(
-      selectedRowKeys,
-      "Deactive",
-      activateDeactivateWLClient
-    );
-  };
-
-  const handleBlock = () => {
-    if (!selectedRowKeys.length)
-      return notifyError("Please select any user.");
-    allActiveDeactiveWLClient(
-      selectedRowKeys,
-      "Blocked",
-      blockUnblockWLClient
-    );
-  };
-
-  const handleUnblock = () => {
-    if (!selectedRowKeys.length)
-      return notifyError("Please select any user.");
-    allActiveDeactiveWLClient(
-      selectedRowKeys,
-      "Unblocked",
-      blockUnblockWLClient
-    );
   };
 
   const handleSubmit = (e) => {
@@ -242,7 +201,7 @@ function CorporateUser() {
 
     if (formValues?.userType === "wlClient") {
       getWlClient();
-      setform(false);
+      setForm(false);
       setWlTable(true);
     }
   };
@@ -252,105 +211,115 @@ function CorporateUser() {
     router.push("/white-label-client");
   };
 
-  const start = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setSelectedRowKeys([]);
-      setLoading(false);
-    }, 1000);
-  };
-
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
   };
 
-  const hasSelected = selectedRowKeys.length > 0;
-
   return (
-    <div className="flex justify-center mt-4">
-      <div className="w-full max-w-[850px] rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-2 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Corporate User
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Corporate User"
+        description="Search and manage WL Clients"
+      />
+
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
+
+            {form && (
+              <>
+                {/* USER TYPE */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    Select User Type
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <select
+                    name="userType"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="">Select</option>
+                    <option value="wlClient">WL Client</option>
+                  </select>
+                </div>
+
+                {/* USER ID */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    User ID
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <input
+                    name="userId"
+                    placeholder="Enter user id"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  />
+                </div>
+
+                {/* STATUS */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    User Status Type
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <select
+                    name="userStatusType"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="all">All</option>
+                    <option value="Activate">Active</option>
+                    <option value="Deactive">Deactive</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="unblocked">Unblocked</option>
+                  </select>
+                </div>
+
+                {/* STATUS MESSAGE */}
+                <div className="text-center text-sm mb-2">
+                  {success && <p className="text-green-600">{success}</p>}
+                  {error && <p className="text-red-500">{error}</p>}
+                  {loading && <p className="text-gray-500">Loading...</p>}
+                </div>
+
+                {/* BUTTONS */}
+                <div className="text-center mt-4 flex justify-center gap-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="capsButton min-w-[140px]"
+                  >
+                    Submit
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setFormValues({
+                        userId: "",
+                        userStatusType: "all",
+                      });
+                      setError("");
+                      setSuccess("");
+                    }}
+                    className="capsButtonSecondary min-w-[140px]"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* FORM */}
-        {form && (
-          <div className="px-6 py-4">
-            <form className="space-y-4">
-              
-              {/* USER TYPE */}
-              <div className="flex items-center justify-center">
-                <label className="w-40 text-right font-semibold">
-                  Select User Type :
-                </label>
-                <select
-                  name="userType"
-                  onChange={handleInputChange}
-                  className="ml-3 w-52 border rounded-md px-2 py-1 text-sm"
-                >
-                  <option value="">Select</option>
-                  <option value="wlClient">WL Client</option>
-                </select>
-              </div>
-
-              {/* USER ID */}
-              <div className="flex items-center justify-center">
-                <label className="w-40 text-right font-semibold">
-                  User ID :
-                </label>
-                <input
-                  name="userId"
-                  placeholder="Enter user id"
-                  onChange={handleInputChange}
-                  className="ml-3 w-52 border rounded-md px-2 py-1 text-sm"
-                />
-              </div>
-
-              {/* STATUS */}
-              <div className="flex items-center justify-center">
-                <label className="w-40 text-right font-semibold">
-                  User Status Type :
-                </label>
-                <select
-                  name="userStatusType"
-                  onChange={handleInputChange}
-                  className="ml-3 w-52 border rounded-md px-2 py-1 text-sm"
-                >
-                  <option value="all">All</option>
-                  <option value="Activate">Active</option>
-                  <option value="Deactive">Deactive</option>
-                  <option value="blocked">Blocked</option>
-                  <option value="unblocked">Unblocked</option>
-                </select>
-              </div>
-
-              {/* STATUS MESSAGE */}
-              <div className="text-center text-sm">
-                {success && <p className="text-green-600">{success}</p>}
-                {error && <p className="text-red-500">{error}</p>}
-                {loading && <p className="text-gray-500">Loading...</p>}
-              </div>
-
-              {/* SUBMIT */}
-              <div className="text-center">
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-1.5 text-white text-sm rounded-md bg-[#4fa2c2] hover:opacity-90"
-                >
-                  Submit
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
         {/* TABLE */}
-        {formValues?.userType === "wlClient" && wlTable && (
-          <div className="px-6 pb-6">
-            <p className="font-semibold mb-2">
+        {wlTable && (
+          <>
+            <p className="font-semibold mt-6 mb-2">
               Corporate User &gt; WL Client
             </p>
 
@@ -365,34 +334,65 @@ function CorporateUser() {
               onChange={(pag) => setPagination(pag)}
               footer={() => (
                 <div className="flex flex-wrap justify-between gap-2">
-                  <button
-                    onClick={start}
-                    disabled={!hasSelected}
-                    className="px-3 py-1 text-sm border rounded-md"
-                  >
-                    Reload
-                  </button>
-
                   <div className="flex gap-2">
-                    <button onClick={handleActive} className="btn-action">
+                    <button
+                      onClick={() =>
+                        handleAction(
+                          selectedRowKeys,
+                          "Active",
+                          activateDeactivateWLClient
+                        )
+                      }
+                      className="capsButton"
+                    >
                       Active
                     </button>
-                    <button onClick={handleDeactive} className="btn-action">
+
+                    <button
+                      onClick={() =>
+                        handleAction(
+                          selectedRowKeys,
+                          "Deactive",
+                          activateDeactivateWLClient
+                        )
+                      }
+                      className="capsButtonSecondary"
+                    >
                       Deactive
                     </button>
-                    <button onClick={handleBlock} className="btn-action">
+
+                    <button
+                      onClick={() =>
+                        handleAction(
+                          selectedRowKeys,
+                          "Blocked",
+                          blockUnblockWLClient
+                        )
+                      }
+                      className="capsButtonSecondary"
+                    >
                       Block
                     </button>
-                    <button onClick={handleUnblock} className="btn-action">
+
+                    <button
+                      onClick={() =>
+                        handleAction(
+                          selectedRowKeys,
+                          "Unblocked",
+                          blockUnblockWLClient
+                        )
+                      }
+                      className="capsButtonSecondary"
+                    >
                       Unblock
                     </button>
                   </div>
                 </div>
               )}
             />
-          </div>
+          </>
         )}
-      </div>
+      </PageCard>
 
       <ToastContainer />
     </div>

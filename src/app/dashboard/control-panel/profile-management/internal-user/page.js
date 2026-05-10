@@ -6,17 +6,15 @@ import { ToastContainer, toast, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function InternalUser() {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
   const [portalList, setPortalList] = useState();
   const [adminUserDetails, setAdminUserDetails] = useState();
   const [apiClientDetails, setApiClientDetails] = useState();
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 100,
-  });
+  const [pagination] = useState({ current: 1, pageSize: 100 });
   const [formValues, setFormValues] = useState({ mappingType: "all" });
   const [adminTable, setAdminTable] = useState(false);
   const [apiClientTable, setApiClientTable] = useState(false);
@@ -34,12 +32,16 @@ function InternalUser() {
     typeof window !== "undefined"
       ? localStorage.getItem("secondUserId")
       : null;
+
   const userType =
     typeof window !== "undefined"
       ? localStorage.getItem("adminUserType")
       : null;
+
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
 
   /* ---------------- TOASTS ---------------- */
 
@@ -69,10 +71,7 @@ function InternalUser() {
       render: (text, record, index) =>
         (pagination.current - 1) * pagination.pageSize + index + 1,
     },
-    {
-      title: "Client ID",
-      dataIndex: "portalId",
-    },
+    { title: "Client ID", dataIndex: "portalId" },
     {
       title: "Admin ID",
       dataIndex: "userId",
@@ -156,6 +155,8 @@ function InternalUser() {
   /* ---------------- FETCH USERS ---------------- */
 
   const adminUser = async () => {
+    setLoading(true);
+
     const formData = new FormData();
     formData.append(
       "adminUserFormBean",
@@ -166,20 +167,31 @@ function InternalUser() {
       })
     );
 
-    const response = await fetch(`${baseUrl}${endPoint1}`, {
-      method: "POST",
-      headers: { Authorization: token },
-      body: formData,
-    });
+    try {
+      const response = await fetch(`${baseUrl}${endPoint1}`, {
+        method: "POST",
+        headers: { Authorization: token },
+        body: formData,
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (result.status === "0") {
-      setAdminUserDetails(result?.adminUserSearchList);
+      if (result.status === "0") {
+        setAdminUserDetails(result?.adminUserSearchList);
+        notifySuccess("Admin users loaded");
+      } else {
+        notifyError("Failed to load admin users");
+      }
+    } catch {
+      notifyError("Error fetching admin users");
+    } finally {
+      setLoading(false);
     }
   };
 
   const apiClient = async () => {
+    setLoading(true);
+
     const formData = new FormData();
     formData.append(
       "adminUserFormBean",
@@ -190,16 +202,25 @@ function InternalUser() {
       })
     );
 
-    const response = await fetch(`${baseUrl}${endPoint2}`, {
-      method: "POST",
-      headers: { Authorization: token },
-      body: formData,
-    });
+    try {
+      const response = await fetch(`${baseUrl}${endPoint2}`, {
+        method: "POST",
+        headers: { Authorization: token },
+        body: formData,
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (result.status === "0") {
-      setApiClientDetails(result?.apiClientSearchList);
+      if (result.status === "0") {
+        setApiClientDetails(result?.apiClientSearchList);
+        notifySuccess("API clients loaded");
+      } else {
+        notifyError("Failed to load API clients");
+      }
+    } catch {
+      notifyError("Error fetching API clients");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -209,12 +230,14 @@ function InternalUser() {
     if (formValues.userType === "adminUser") {
       adminUser();
       setAdminTable(true);
+      setApiClientTable(false);
       setForm(false);
     }
 
     if (formValues.userType === "apiClient") {
       apiClient();
       setApiClientTable(true);
+      setAdminTable(false);
       setForm(false);
     }
   };
@@ -239,142 +262,155 @@ function InternalUser() {
   };
 
   return (
-    <div className="flex justify-center mt-4">
-      <div className="w-full max-w-[850px] rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-2 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Internal User Management
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Internal User Management"
+        description="Search and manage admin users and AES API clients"
+      />
 
-        {/* BODY */}
-        <div className="px-6 py-4">
-          
-          {form && (
-            <div className="space-y-4">
-              
-              {/* USER TYPE */}
-              <div className="flex justify-center items-center">
-                <label className="w-40 text-right font-semibold">
-                  Select User Type :
-                </label>
-                <select
-                  name="userType"
-                  onChange={handleInputChange}
-                  className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-                >
-                  <option value="">Select</option>
-                  <option value="adminUser">Admin User</option>
-                  <option value="apiClient">AES API Client</option>
-                </select>
-              </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
+            
+            {form && (
+              <>
+                {/* USER TYPE */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    Select User Type
+                  </label>
+                  <div className="text-center">:</div>
 
-              {/* CLIENT ID */}
-              <div className="flex justify-center items-center">
-                <label className="w-40 text-right font-semibold">
-                  Select Client ID :
-                </label>
-                <select
-                  name="clientId"
-                  onChange={handleInputChange}
-                  className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-                >
-                  <option value="">Select</option>
-                  {portalList?.map((item, i) => (
-                    <option key={i} value={item.portalId}>
-                      {item.portalId} — {item.companyName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* USER ID */}
-              <div className="flex justify-center items-center">
-                <label className="w-40 text-right font-semibold">
-                  User ID :
-                </label>
-                <input
-                  name="userId"
-                  placeholder="Enter user id"
-                  onChange={handleInputChange}
-                  className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-                />
-              </div>
-
-              {/* STATUS */}
-              <div className="flex justify-center items-center">
-                <label className="w-40 text-right font-semibold">
-                  User Status Type :
-                </label>
-                <select
-                  name="mappingType"
-                  onChange={handleInputChange}
-                  className="ml-3 w-56 border rounded-md px-2 py-1 text-sm"
-                >
-                  <option value="all">All</option>
-                  <option value="Activate">Active</option>
-                  <option value="Deactive">Deactive</option>
-                </select>
-              </div>
-
-              {/* LOADER */}
-              {loading && (
-                <div className="text-center text-sm text-gray-500">
-                  Loading...
+                  <select
+                    name="userType"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="">Select</option>
+                    <option value="adminUser">Admin User</option>
+                    <option value="apiClient">AES API Client</option>
+                  </select>
                 </div>
-              )}
 
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  onClick={handleSubmit}
-                  className="px-5 py-1.5 text-white text-sm rounded-md bg-[#4fa2c2] hover:opacity-90"
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          )}
+                {/* CLIENT ID */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    Select Client ID
+                  </label>
+                  <div className="text-center">:</div>
 
-          {/* ADMIN TABLE */}
-          {adminTable && (
-            <>
-              <p className="font-semibold mt-4 mb-2">
-                Internal User &gt; Admin User
-              </p>
-              <Table
-                rowSelection={rowSelection}
-                rowKey={(row) => row.userId}
-                columns={columns}
-                dataSource={adminUserDetails}
-                pagination={pagination}
-                size="small"
-                bordered
-              />
-            </>
-          )}
+                  <select
+                    name="clientId"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="">Select</option>
+                    {portalList?.map((item, i) => (
+                      <option key={i} value={item.portalId}>
+                        {item.portalId} — {item.companyName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          {/* API CLIENT TABLE */}
-          {apiClientTable && (
-            <>
-              <p className="font-semibold mt-4 mb-2">
-                Internal User &gt; AES API Client
-              </p>
-              <Table
-                rowSelection={rowSelection}
-                rowKey={(row) => row.corporateAgentId}
-                columns={columnApiClient}
-                dataSource={apiClientDetails}
-                pagination={pagination}
-                size="small"
-                bordered
-              />
-            </>
-          )}
+                {/* USER ID */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    User ID
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <input
+                    name="userId"
+                    placeholder="Enter user id"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  />
+                </div>
+
+                {/* STATUS */}
+                <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+                  <label className="text-right font-medium">
+                    User Status Type
+                  </label>
+                  <div className="text-center">:</div>
+
+                  <select
+                    name="mappingType"
+                    onChange={handleInputChange}
+                    className="capsInput"
+                  >
+                    <option value="all">All</option>
+                    <option value="Activate">Active</option>
+                    <option value="Deactive">Deactive</option>
+                  </select>
+                </div>
+
+                {/* LOADING */}
+                {loading && (
+                  <p className="text-center text-sm text-gray-500 mb-2">
+                    Loading...
+                  </p>
+                )}
+
+                {/* BUTTONS */}
+                <div className="text-center mt-4 flex justify-center gap-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="capsButton min-w-[140px]"
+                  >
+                    Submit
+                  </button>
+
+                  <button
+                    onClick={() => setFormValues({ mappingType: "all" })}
+                    className="capsButtonSecondary min-w-[140px]"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        <ToastContainer />
-      </div>
+        {/* TABLES */}
+        {adminTable && (
+          <>
+            <p className="font-semibold mt-6 mb-2">
+              Internal User &gt; Admin User
+            </p>
+            <Table
+              rowSelection={rowSelection}
+              rowKey={(row) => row.userId}
+              columns={columns}
+              dataSource={adminUserDetails}
+              pagination={pagination}
+              size="small"
+              bordered
+            />
+          </>
+        )}
+
+        {apiClientTable && (
+          <>
+            <p className="font-semibold mt-6 mb-2">
+              Internal User &gt; AES API Client
+            </p>
+            <Table
+              rowSelection={rowSelection}
+              rowKey={(row) => row.corporateAgentId}
+              columns={columnApiClient}
+              dataSource={apiClientDetails}
+              pagination={pagination}
+              size="small"
+              bordered
+            />
+          </>
+        )}
+      </PageCard>
+
+      <ToastContainer />
     </div>
   );
 }

@@ -1,138 +1,295 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
 
 function ZoneWisePipeChange() {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
+
   const [formValues, setFormValues] = useState({
     retailId: "",
     zone: "",
-    service: "",
+    service: "AEPS",
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const [retailList, setRetailList] = useState([]);
+  const [zoneList, setZoneList] = useState([]);
+  const [vendorList, setVendorList] = useState([]);
+
+  // =========================
+  // COMMON RESPONSE PARSER
+  // =========================
+  const parseResponse = (res) => {
+    const response =
+      typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+    return (
+      response?.list ||
+      response?.data ||
+      response?.vendorList ||
+      response?.retailList ||
+      response?.apiList ||
+      response ||
+      []
+    );
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
+  // =========================
+  // GET PAGE DETAILS
+  // =========================
+  const getPageDetails = async () => {
+    try {
+      const payload = new URLSearchParams();
+      payload.append(
+        "adminUserFormBean",
+        JSON.stringify({
+          userId: localStorage.getItem("userId")
+        })
+      );
 
-    if (!formValues.retailId || !formValues.zone) {
-      setError("Please select Retail ID and Zone");
-      setLoading(false);
-      return;
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.getPageDetailZWPC,
+        payload,
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }
+      );
+
+      const list = parseResponse(res);
+
+      setRetailList(Array.isArray(list) ? list : []);
+      setZoneList(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("PAGE ERROR:", err);
     }
-
-    // 🔹 Dummy submit
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess("Zone wise pipe updated successfully");
-    }, 1000);
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  useEffect(() => {
+    getPageDetails();
+  }, []);
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-4">
-      <label className="w-[170px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  // =========================
+  // HANDLE CHANGE
+  // =========================
+  const handleInputChange = async (e) => {
+    const { name, value } = e.target;
+
+    const newValues = { ...formValues, [name]: value };
+    setFormValues(newValues);
+
+    if (!newValues.retailId || !newValues.zone) return;
+
+    try {
+      const payload = new URLSearchParams();
+      payload.append(
+        "adminUserFormBean",
+        JSON.stringify({
+          userId: localStorage.getItem("userId") || "",
+          apId: newValues.retailId,
+          zone: newValues.zone,
+          service: newValues.service || "AEPS",
+        })
+      );
+
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.getZoneVendorDetails,
+        payload,
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }
+      );
+
+      const list = parseResponse(res);
+
+      setVendorList(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("VENDOR ERROR:", err);
+    }
+  };
+
+  // =========================
+  // TOGGLE
+  // =========================
+  const handleToggle = (index, field) => {
+    const updated = [...vendorList];
+    updated[index][field] =
+      updated[index][field] === "Y" ? "N" : "Y";
+    setVendorList(updated);
+  };
+
+  // =========================
+  // SUBMIT (NO PAGE RELOAD)
+  // =========================
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+
+      const updateList = vendorList.map((item) => ({
+        id: item.id || item.vendorId,
+        action: item.action || "N",
+        pipeStatus: item.pipeStatus || "N",
+        vendor: item.vendor,
+      }));
+
+      const payload = new URLSearchParams();
+      payload.append(
+        "adminUserFormBean",
+        JSON.stringify({
+          userId: localStorage.getItem("userId") || "",
+          updateList,
+        })
+      );
+
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.updateZoneVendorDetails,
+        payload,
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }
+      );
+
+      const response =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      if (response.status === "0") {
+        Swal.fire({
+          icon: "success",
+          title: "Updated Successfully",
+          confirmButtonColor: "#5fa0b5",
+        });
+      } else {
+        Swal.fire("Error", response.message || "Something went wrong", "error");
+      }
+    } catch (err) {
+      console.error("SUBMIT ERROR:", err);
+
+      if (err.response?.status === 401) {
+        Swal.fire("Session Expired", "Login again", "error");
+        localStorage.clear();
+        window.location.href = "/login";
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // UI COMPONENT
+  // =========================
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Zone Wise Pipe Change"
+        description="Update retailer pipe configuration based on zone"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Vendor Management &gt; Zone Wise Pipe Change
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <form onSubmit={handleSubmit}>
+            {/* ❌ FORM REMOVED (IMPORTANT FIX) */}
 
-            <Row label="Retail ID :">
+            {/* RETAIL */}
+            <FieldRow label="Retail ID">
               <select
                 name="retailId"
                 value={formValues.retailId}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput"
               >
                 <option value="">Select</option>
-                <option value="item">item</option>
-                <option value="item1">item1</option>
-                <option value="item2">item2</option>
+                {retailList.map((item, i) => (
+                  <option key={i} value={item.id || item.apId}>
+                    {item.name || item.displayName}
+                  </option>
+                ))}
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Zone :">
+            {/* ZONE */}
+            <FieldRow label="Zone">
               <select
                 name="zone"
                 value={formValues.zone}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput"
               >
                 <option value="">Select</option>
-                <option value="North">North</option>
-                <option value="South">South</option>
-                <option value="East">East</option>
-                <option value="West">West</option>
+                {zoneList.map((item, i) => (
+                  <option key={i} value={item.name}>
+                    {item.displayName || item.name}
+                  </option>
+                ))}
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Service :">
+            {/* SERVICE */}
+            <FieldRow label="Service">
               <input
                 type="text"
                 name="service"
                 value={formValues.service}
                 onChange={handleInputChange}
-                placeholder="Enter service"
-                className={inputClass}
+                className="capsInput"
               />
-            </Row>
+            </FieldRow>
 
-            {/* STATUS */}
-            <div className="text-center min-h-[24px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-500 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
+            {/* VENDOR LIST */}
+            {vendorList.length > 0 && (
+              <div className="mt-4 border p-3 rounded">
+                {vendorList.map((item, index) => (
+                  <div key={index} className="flex justify-between mb-2">
+                    <span>{item.vendor}</span>
 
-            {/* BUTTON */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(index, "action")}
+                        className="capsButtonSmall"
+                      >
+                        Action: {item.action}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(index, "pipeStatus")}
+                        className="capsButtonSmall"
+                      >
+                        Pipe: {item.pipeStatus}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* SUBMIT BUTTON */}
             <div className="text-center mt-4">
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
+                className="capsButton"
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
 
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

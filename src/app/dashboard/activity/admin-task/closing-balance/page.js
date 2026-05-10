@@ -1,102 +1,134 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const ClosingBalance = () => {
-  const [formData, setFormData] = useState({
-    dob: "",
-    userType: "",
-    userId: "",
-  });
+  const [formData, setFormData] = useState({ dob: "", userType: "", userId: "" });
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    if (!formData.userType || !formData.userId || !formData.dob) {
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please fill all fields", timer: 1500, showConfirmButton: false });
+      return;
+    }
+    try {
+      setLoading(true);
+      const payload = { userId: localStorage.getItem("userId"), loginType: localStorage.getItem("adminUserType"), userType: formData.userType, searchUserId: formData.userId, date: formData.dob };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.closingBalance,
+        new URLSearchParams({ data: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setResult(data);
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "Balance retrieved", timer: 1200, showConfirmButton: false });
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No records found" });
+      }
+    } catch { Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" }); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 min-h-[300px] rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Closing Balance
+    <div className="p-6 min-h-screen text-[#226b88]">
+
+      {/* HEADER */}
+      <CapsCard
+        title="Closing Balance"
+        description="Search closing balance details by user"
+      />
+
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <div className="flex justify-center">
+          <form onSubmit={handleSubmit}>
+
+            {/* DOB */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+              <label className="text-right font-medium">
+                Date of Birth
+              </label>
+
+              <div className="text-center">:</div>
+
+              <input
+                type="date"
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            </div>
+
+            {/* USER TYPE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+              <label className="text-right font-medium">
+                Type of User
+              </label>
+
+              <div className="text-center">:</div>
+
+              <select
+                name="userType"
+                value={formData.userType}
+                onChange={handleChange}
+                required
+                className="capsSelect"
+              >
+                <option value="">--select--</option>
+                <option value="Admin">Admin</option>
+                <option value="API">API</option>
+                <option value="MDS">MDS</option>
+                <option value="DS">DS</option>
+                <option value="Agents">Agents</option>
+              </select>
+            </div>
+
+            {/* USER ID */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+              <label className="text-right font-medium">
+                User Id
+              </label>
+
+              <div className="text-center">:</div>
+
+              <input
+                type="text"
+                name="userId"
+                placeholder="Enter short ID only"
+                value={formData.userId}
+                onChange={handleChange}
+                className="capsInput"
+              />
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center mt-4">
+              <button
+                type="submit"
+                className="capsButton min-w-[120px]"
+              >
+                Submit
+              </button>
+            </div>
+
+          </form>
         </div>
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          <div className="flex justify-center">
-            <form className="w-[520px]" onSubmit={handleSubmit}>
-
-              {/* DATE */}
-              <div className="mb-5 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Date of Birth :
-                </label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                />
-              </div>
-
-              {/* USER TYPE */}
-              <div className="mb-5 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Type of User :
-                </label>
-                <select
-                  name="userType"
-                  value={formData.userType}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                >
-                  <option value="">--select--</option>
-                  <option value="Admin">Admin</option>
-                  <option value="API">API</option>
-                  <option value="MDS">MDS</option>
-                  <option value="DS">DS</option>
-                  <option value="Agents">Agents</option>
-                </select>
-              </div>
-
-              {/* USER ID */}
-              <div className="mb-6 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  User Id :
-                </label>
-                <input
-                  type="text"
-                  name="userId"
-                  placeholder="Enter short ID only"
-                  value={formData.userId}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                />
-              </div>
-
-              {/* BUTTON */}
-              <div className="text-center mt-4">
-                <button
-                  type="submit"
-                  className="px-6 py-2 text-white rounded-2xl shadow bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90 transition"
-                >
-                  Submit
-                </button>
-              </div>
-
-            </form>
-          </div>
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

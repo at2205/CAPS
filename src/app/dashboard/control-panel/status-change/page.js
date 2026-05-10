@@ -1,9 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+
+import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import Swal from "sweetalert2";
 
 const PendingTransaction = () => {
-  const [searchData, setSearchData] = useState({
+  const [formData, setFormData] = useState({
     service: "DMR-ARemit",
     tranId: "",
     fromDate: "",
@@ -11,300 +15,267 @@ const PendingTransaction = () => {
   });
 
   const [tranList, setTranList] = useState([]);
-  const [selectedTransactions, setSelectedTransactions] = useState([]);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [submitLoading, setSubmitLoading] = useState(false);
 
-  useEffect(() => {
-    const now = new Date();
-    const today = now.toISOString().split("T")[0];
-
-    setSearchData((prev) => ({
-      ...prev,
-      fromDate: today,
-      toDate: today,
-    }));
-  }, []);
-
-  const handleInputChange = (e) => {
+  // INPUT
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setSearchData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckboxChange = (tranId) => {
-    setSelectedTransactions((prev) =>
-      prev.includes(tranId)
-        ? prev.filter((id) => id !== tranId)
-        : [...prev, tranId]
-    );
-  };
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = tranList.map((tran) => tran[1]);
-      setSelectedTransactions(allIds);
-    } else {
-      setSelectedTransactions([]);
-    }
-  };
-
-  const validateSearchForm = () => {
-    const { fromDate, toDate } = searchData;
-
-    if (!fromDate || !toDate) {
-      alert("Please select both From Date and To Date");
-      return false;
-    }
-
-    if (new Date(fromDate) > new Date(toDate)) {
-      alert("From Date cannot be greater than To Date");
-      return false;
-    }
-
-    return true;
-  };
-
+  // SEARCH
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!validateSearchForm()) return;
 
     try {
       setLoading(true);
-      setMessage("");
-      setTranList([]);
-      setSelectedTransactions([]);
 
-      await new Promise((r) => setTimeout(r, 1200));
+      const res = await axiosInstance.post("/controlP/statusChangeByRange", {
+        ...formData,
+        userId: localStorage.getItem("userId"),
+      });
 
-      const mockTranList = [
-        ["AGENT001", "TXN001", "DMR-ARemit", "2024-01-15", "14:30:45", "₹5,000.00", "₹50.00", "Pending", "CLIENT001"],
-        ["AGENT002", "TXN002", "AccountVerification-AREMIT", "2024-01-15", "15:45:22", "₹2,500.00", "₹25.00", "Pending", "CLIENT002"],
-      ];
+      const data =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
 
-      setTranList(mockTranList);
-      setMessage(`Found ${mockTranList.length} pending transactions`);
+      const rawList =
+        data["tranPending List"] ||
+        data.tranPendingList ||
+        data.tranList ||
+        data;
+
+      let list = [];
+
+      // ✅ HANDLE ARRAY + OBJECT
+      if (Array.isArray(rawList)) {
+        list = rawList;
+      } else if (typeof rawList === "object" && rawList !== null) {
+        list = [rawList];
+      }
+
+      // ✅ MAPPING
+      list = list.map((item) => ({
+        agentId: item.agent_id,
+        txnId: item.Transaction_Id,
+        service: item.Service,
+        date: item.Date_of_Transaction,
+        time: item.Time_of_Transaction,
+        amount: item.ReqAmount,
+        fee: item.Service_charge1,
+        status: item.Tran_status,
+        clientId: "-",
+        checked: false,
+      }));
+
+      setTranList(list);
+
+      if (list.length === 0) {
+        Swal.fire("Info", "No Data Found", "info");
+      }
+    } catch (err) {
+      Swal.fire("Error", "Failed to fetch data", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
+  // CHECKBOX
+  const handleCheck = (index) => {
+    const updated = [...tranList];
+    updated[index].checked = !updated[index].checked;
+    setTranList(updated);
+  };
 
-    if (!selectedTransactions.length) {
-      alert("You have to check at least one transaction.");
+  // UPDATE
+  const handleUpdate = async () => {
+    const selected = tranList.filter((t) => t.checked);
+
+    if (selected.length === 0) {
+      Swal.fire("Error", "Select at least one transaction", "error");
       return;
     }
 
-    if (!window.confirm("Do you want to update?")) return;
+    const confirm = await Swal.fire({
+      title: "Confirm",
+      text: "Do you want to update?",
+      icon: "warning",
+      showCancelButton: true,
+    });
+
+    if (!confirm.isConfirmed) return;
 
     try {
-      setSubmitLoading(true);
+      setLoading(true);
 
-      await new Promise((r) => setTimeout(r, 1200));
+      const res = await axiosInstance.post("/controlP/updatestatusDetails", {
+        checkstatus: selected.map((t) => t.txnId),
+        userId: localStorage.getItem("userId"),
+      });
 
-      alert("Updated Successfully");
-      setMessage(`${selectedTransactions.length} transaction(s) updated`);
-      setSelectedTransactions([]);
+      const result =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
 
-      await handleSearch({ preventDefault: () => {} });
+      const msg = result.message || result.errorMessage || "";
+
+      if (msg) {
+        Swal.fire("Success", msg, "success");
+        handleSearch(new Event("submit"));
+      } else {
+        Swal.fire("Error", "Update Failed", "error");
+      }
+    } catch (err) {
+      Swal.fire("Error", "Update Failed", "error");
     } finally {
-      setSubmitLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleClear = () => {
-    setSearchData((prev) => ({
-      ...prev,
-      service: "DMR-ARemit",
-      tranId: "",
-    }));
-    setTranList([]);
-    setSelectedTransactions([]);
-    setMessage("");
-  };
-
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("en-GB");
-
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+  const inputClass = "w-full border border-gray-400 rounded px-2 py-1 text-sm";
 
   return (
-    <div className="max-w-6xl mx-auto py-6">
-      {/* HEADER */}
-      <div className="rounded-xl shadow-lg border">
-        <div className="bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6] text-white text-lg font-bold text-center py-3 rounded-t-xl">
-          Pending Transaction Process
-        </div>
+    <div className="p-6 bg-[#d8c78f] min-h-screen">
+      <CapsCard title="Pending Transaction Process" />
 
-        <div className="p-6">
-          {/* MESSAGE */}
-          {message && (
-            <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-md py-2">
-              {message}
-            </div>
-          )}
+      <PageCard>
+        {/* FORM */}
+        <form onSubmit={handleSearch} className="w-full max-w-2xl mx-auto mt-4">
+          <div className="grid grid-cols-2 gap-4 items-center">
+            <label className="text-right font-semibold text-orange-700">
+              Services :
+            </label>
+            <select
+              name="service"
+              value={formData.service}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="DMR-ARemit">DMR-ARemit</option>
+              <option value="AccountVerification-AREMIT">
+                AccountVerification-AREMIT
+              </option>
+              <option value="DMR-MyRemit">DMR-MyRemit</option>
+              <option value="AccountVerification-MyRemit">
+                AccountVerification-MyRemit
+              </option>
+            </select>
 
-          {/* SEARCH FORM */}
-          <form onSubmit={handleSearch} className="grid md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-semibold">Services</label>
-              <select
-                name="service"
-                value={searchData.service}
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                <option value="DMR-ARemit">DMR-ARemit</option>
-                <option value="AccountVerification-AREMIT">AccountVerification-AREMIT</option>
-              </select>
-            </div>
+            <label className="text-right font-semibold text-orange-700">
+              Txn No / Txn Id :
+            </label>
+            <input
+              name="tranId"
+              value={formData.tranId}
+              onChange={handleChange}
+              className={inputClass}
+            />
 
-            <div>
-              <label className="text-sm font-semibold">Txn No / Txn Id</label>
-              <input
-                name="tranId"
-                value={searchData.tranId}
-                onChange={handleInputChange}
-                className={inputClass}
-                placeholder="Enter Transaction ID"
-              />
-            </div>
+            <label className="text-right font-semibold text-orange-700">
+              From Date :
+            </label>
+            <input
+              type="date"
+              name="fromDate"
+              value={formData.fromDate}
+              onChange={handleChange}
+              className={inputClass}
+            />
 
-            <div>
-              <label className="text-sm font-semibold">From Date</label>
-              <input
-                type="date"
-                name="fromDate"
-                value={searchData.fromDate}
-                onChange={handleInputChange}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold">To Date</label>
-              <input
-                type="date"
-                name="toDate"
-                value={searchData.toDate}
-                onChange={handleInputChange}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="md:col-span-4 flex justify-center gap-3 mt-2">
-              <button className="px-6 py-2 rounded-full text-white bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6] text-sm">
-                {loading ? "Searching..." : "Submit"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClear}
-                className="px-5 py-2 rounded-full bg-gray-500 text-white text-sm"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* TABLE */}
-      {tranList.length > 0 && (
-        <div className="mt-6 rounded-xl shadow-lg border p-4">
-          <div className="font-semibold mb-3">
-            Pending Transactions ({tranList.length})
+            <label className="text-right font-semibold text-orange-700">
+              To Date :
+            </label>
+            <input
+              type="date"
+              name="toDate"
+              value={formData.toDate}
+              onChange={handleChange}
+              className={inputClass}
+            />
           </div>
 
-          <form onSubmit={handleUpdateSubmit}>
-            <div className="overflow-x-auto">
-              <table className="w-full border text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-2 py-1">
+          <div className="flex justify-center mt-6">
+            <button type="submit" className="capsButton px-6">
+              {loading ? "Loading..." : "Submit"}
+            </button>
+          </div>
+        </form>
+
+        {/* TABLE */}
+        {tranList.length > 0 && (
+          <div className="mt-8 overflow-x-auto">
+            <table className="min-w-full border border-[#1f4e5f] text-sm table-fixed">
+              <thead>
+                <tr className="h-12">
+                  {[
+                    "Tick",
+                    "Agent ID",
+                    "Client ID",
+                    "Transaction ID",
+                    "Service",
+                    "Txn Date",
+                    "Txn Time",
+                    "Txn Amount",
+                    "Bankit Fee",
+                    "Txn Status",
+                  ].map((head, i) => (
+                    <th
+                      key={i}
+                      style={{
+                        backgroundColor: "#5fa0b5", 
+                        color: "#ffffff", 
+                        border: "1px solid #1f4e5f",
+                        padding: "10px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              {/* BODY */}
+              <tbody>
+                {tranList.map((item, i) => (
+                  <tr
+                    key={i}
+                    className={`text-center ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-100"
+                    }`}
+                  >
+                    <td className="border px-2 py-1">
                       <input
                         type="checkbox"
-                        onChange={handleSelectAll}
-                        checked={
-                          selectedTransactions.length === tranList.length
-                        }
-                      />{" "}
-                      Select All
-                    </th>
-                    <th className="border">Agent ID</th>
-                    <th className="border">Client ID</th>
-                    <th className="border">Txn ID</th>
-                    <th className="border">Service</th>
-                    <th className="border">Date</th>
-                    <th className="border">Time</th>
-                    <th className="border">Amount</th>
-                    <th className="border">Fee</th>
-                    <th className="border">Status</th>
+                        checked={item.checked}
+                        onChange={() => handleCheck(i)}
+                      />
+                    </td>
+
+                    <td className="border px-2 py-1">{item.agentId}</td>
+                    <td className="border px-2 py-1">{item.clientId}</td>
+                    <td className="border px-2 py-1 whitespace-nowrap">
+                      {item.txnId}
+                    </td>
+                    <td className="border px-2 py-1">{item.service}</td>
+                    <td className="border px-2 py-1">{item.date}</td>
+                    <td className="border px-2 py-1">{item.time}</td>
+                    <td className="border px-2 py-1">{item.amount}</td>
+                    <td className="border px-2 py-1">{item.fee}</td>
+                    <td className="border px-2 py-1 text-orange-600 font-semibold">
+                      {item.status}
+                    </td>
                   </tr>
-                </thead>
+                ))}
+              </tbody>
+            </table>
 
-                <tbody>
-                  {tranList.map((tran, i) => (
-                    <tr key={i} className="text-center">
-                      <td className="border">
-                        <input
-                          type="checkbox"
-                          checked={selectedTransactions.includes(tran[1])}
-                          onChange={() =>
-                            handleCheckboxChange(tran[1])
-                          }
-                        />
-                      </td>
-                      <td className="border">{tran[0]}</td>
-                      <td className="border">{tran[8]}</td>
-                      <td className="border">{tran[1]}</td>
-                      <td className="border">{tran[2]}</td>
-                      <td className="border">{formatDate(tran[3])}</td>
-                      <td className="border">{tran[4]}</td>
-                      <td className="border">{tran[5]}</td>
-                      <td className="border">{tran[6]}</td>
-                      <td className="border text-orange-600 font-semibold">
-                        {tran[7]}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex justify-between items-center mt-3">
-              <div className="text-sm">
-                Selected: {selectedTransactions.length}
-              </div>
-
-              <button
-                type="submit"
-                disabled={!selectedTransactions.length}
-                className="px-5 py-2 rounded-full bg-green-600 text-white text-sm disabled:opacity-50"
-              >
-                {submitLoading ? "Updating..." : "Update Selected"}
+            {/* UPDATE BUTTON */}
+            <div className="flex justify-end mt-4">
+              <button className="capsButton" onClick={handleUpdate}>
+                {loading ? "Processing..." : "Update"}
               </button>
             </div>
-          </form>
-        </div>
-      )}
-
-      {/* LOADER OVERLAY */}
-      {(loading || submitLoading) && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white px-6 py-4 rounded-lg shadow-lg text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-[#4fa2c2] border-t-transparent mx-auto mb-2"></div>
-            <div className="text-sm font-semibold">
-              {loading
-                ? "Searching transactions..."
-                : "Updating transactions..."}
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </PageCard>
     </div>
   );
 };

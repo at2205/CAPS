@@ -3,6 +3,9 @@ import CapsCard from '@/app/components/caps_card/CapsCard'
 import PageCard from '@/app/components/caps_card/PageCard'
 import Spinner from '@/app/components/Spinner';
 import React, { useState } from 'react'
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const initialFormState = {
     portalId: "",
@@ -52,7 +55,7 @@ function apiClient() {
     };
 
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const newErrors = validateForm(formData);
@@ -73,7 +76,59 @@ function apiClient() {
             return;
         }
         // If no errors
-        console.log("Form is valid");
+        setLoading(true);
+        try {
+            const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : "";
+            const payload = {
+                userId,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                dob: formData.dob,
+                panNo: formData.panNo,
+                companyName: formData.compName,
+                companyType: formData.compType,
+                officeAddress: formData.addressLine1,
+                addressLine2: formData.addressLine2,
+                state: formData.state,
+                district: formData.district,
+                country: formData.country,
+                resPincode: formData.pinCode,
+                mobileNo: formData.mobileNo,
+                emailId: formData.emailId,
+                serviceBy: formData.serviceBy || "",
+                zone: formData.zone || "",
+            };
+            const params = new URLSearchParams();
+            params.append("adminUserFormBean", JSON.stringify(payload));
+            const response = await urlencodedInstance.post(
+                endpoints.activityEndpoints.apiClientRegistration,
+                params
+            );
+            const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            if (data.status === "0") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Registration Successful",
+                    text: data.message || "API Client registered successfully.",
+                });
+                setFormData(initialFormState);
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Registration Failed",
+                    text: data.message || "Registration failed.",
+                });
+            }
+        } catch (error) {
+            console.error("API Client Registration Error:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong during registration.",
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
 

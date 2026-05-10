@@ -3,6 +3,9 @@ import CapsCard from '@/app/components/caps_card/CapsCard'
 import PageCard from '@/app/components/caps_card/PageCard'
 import Spinner from '@/app/components/Spinner';
 import React, { useState } from 'react'
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const initialFormState = {
     portalId: "",
@@ -52,7 +55,7 @@ function activityAdmin() {
     };
 
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const newErrors = validateForm(formData);
@@ -73,7 +76,47 @@ function activityAdmin() {
             return;
         }
         // If no errors
-        console.log("Form is valid");
+        setLoading(true);
+        try {
+            const payload = {
+                userId: localStorage.getItem("userId"),
+                adminUserType: localStorage.getItem("adminUserType"),
+                param: "registration",
+                selectUser: formData.userType || "activityadmin",
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                dob: formData.dob,
+                gender: formData.gender,
+                companyType: formData.compType,
+                companyName: formData.compName,
+                emailId: formData.emailId,
+                officialNumber: formData.mobileNo,
+                addressLine1: formData.addressLine1,
+                addressLine2: formData.addressLine2,
+                country: formData.country,
+                state: formData.state,
+                district: formData.district,
+                city: formData.city,
+                pincode: formData.pinCode,
+                panNo: formData.panNo,
+            };
+            const response = await urlencodedInstance.post(
+                endpoints.activityEndpoints.adminUserRegistration,
+                payload
+            );
+            const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            if (data.AdminUserRegDetailsMap) {
+                Swal.fire({ icon: "success", title: "Registration Successful", text: data.message || "User registered successfully." });
+                setFormData(initialFormState);
+            } else {
+                Swal.fire({ icon: "error", title: "Failed", text: data.message || "Registration failed." });
+            }
+        } catch (error) {
+            console.error("Registration error:", error);
+            Swal.fire({ icon: "error", title: "Error", text: "Something went wrong during registration." });
+        } finally {
+            setLoading(false);
+        }
     };
 
 

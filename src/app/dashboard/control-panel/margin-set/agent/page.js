@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const AgentMarginSet = () => {
   const [formData, setFormData] = useState({
     userType: "Select",
@@ -14,9 +17,8 @@ const AgentMarginSet = () => {
   const [message, setMessage] = useState("");
   const [displayInfo, setDisplayInfo] = useState({
     category: "",
-    userType: "",
-    userId: "",
     displayUserType: "",
+    userId: "",
   });
 
   const [bulkAgentShare, setBulkAgentShare] = useState("0");
@@ -32,9 +34,6 @@ const AgentMarginSet = () => {
     { value: "Bus", label: "Bus" },
     { value: "Hotel", label: "Hotel" },
     { value: "PayCard", label: "PayCard" },
-    { value: "TestMerit", label: "TestMerit" },
-    { value: "dth", label: "DTH-X" },
-    { value: "Ops", label: "Ops" },
   ];
 
   const userTypeOptions = [
@@ -44,12 +43,16 @@ const AgentMarginSet = () => {
   ];
 
   const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
 
-  const labelClass = "text-sm font-semibold text-right";
-  const rowClass = "grid grid-cols-[180px_20px_1fr] items-center mb-2";
-  const primaryBtn =
-    "px-6 py-1.5 text-sm rounded-full text-white bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90";
+  const Row = ({ label, children }) => (
+    <div className="flex items-center justify-center mb-3">
+      <label className="w-[200px] text-right text-sm font-semibold">
+        {label}
+      </label>
+      <div className="w-[260px] ml-3">{children}</div>
+    </div>
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -74,16 +77,18 @@ const AgentMarginSet = () => {
     e.preventDefault();
 
     if (formData.userType === "Select")
-      return alert("Please select a valid User Type");
+      return alert("Please select User Type");
+
     if (!formData.userId.trim())
-      return alert("Please enter a valid User ID");
+      return alert("Please enter User ID");
+
     if (formData.service === "select")
-      return alert("Please select a Service");
+      return alert("Please select Service");
 
     try {
       const res = await axios.post("/api/getAgentMarginDetails", formData);
 
-      setSkuData(res.data.skuData || []);
+      setSkuData(res.data?.skuData || []);
 
       const userTypeDisplay =
         formData.userType === "ByClientId"
@@ -93,13 +98,12 @@ const AgentMarginSet = () => {
           : "Agent ID";
 
       setDisplayInfo({
-        category: res.data.category || "",
-        userType: formData.userType,
-        userId: formData.userId,
+        category: res.data?.category || "",
         displayUserType: userTypeDisplay,
+        userId: formData.userId,
       });
 
-      setMessage(res.data.message || "");
+      setMessage(res.data?.message || "");
       setSelectedRows([]);
       setSelectAll(false);
     } catch {
@@ -109,29 +113,38 @@ const AgentMarginSet = () => {
 
   const applyBulkAgentShare = () => {
     const share = parseFloat(bulkAgentShare);
-    if (share > 100) return alert("Agent Share cannot exceed 100%");
+    if (share > 100) return alert("Cannot exceed 100%");
+
     const updated = skuData.map((item) => {
       const mdsMargin = parseFloat(item.MDSMargin || 0);
+
       return {
         ...item,
         AgentShare: share,
         AgentMargin: ((mdsMargin * share) / 100).toFixed(2),
       };
     });
+
     setSkuData(updated);
   };
 
   const handleAgentShareChange = (i, value) => {
     const share = parseFloat(value);
-    if (share > 100) return alert("Agent Share cannot exceed 100%");
+    if (share > 100) return alert("Cannot exceed 100%");
+
     const updated = [...skuData];
     const mdsMargin = parseFloat(updated[i].MDSMargin || 0);
-    updated[i].AgentShare = share;
-    updated[i].AgentMargin = ((mdsMargin * share) / 100).toFixed(2);
+
+    updated[i] = {
+      ...updated[i],
+      AgentShare: share,
+      AgentMargin: ((mdsMargin * share) / 100).toFixed(2),
+    };
+
     setSkuData(updated);
   };
 
-  const handleSelectAll = (e) => {
+  const handleSelectAllRows = (e) => {
     const checked = e.target.checked;
     setSelectAll(checked);
     setSelectedRows(checked ? skuData.map((_, i) => i) : []);
@@ -139,7 +152,11 @@ const AgentMarginSet = () => {
 
   const handleRowSelection = (i) => {
     let rows = [...selectedRows];
-    rows.includes(i) ? (rows = rows.filter((r) => r !== i)) : rows.push(i);
+
+    rows.includes(i)
+      ? (rows = rows.filter((r) => r !== i))
+      : rows.push(i);
+
     setSelectedRows(rows);
     setSelectAll(rows.length === skuData.length);
   };
@@ -160,183 +177,178 @@ const AgentMarginSet = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-6">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-      {message && (
-        <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
-          {message}
-        </div>
-      )}
+      <CapsCard
+        title="Customer Care Module > Agent Margin Set"
+        description="Configure agent-level margin share"
+      />
 
-      {/* CARD */}
-      <div className="rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
-        <div className="text-white font-bold text-lg px-5 py-3 rounded-t-xl bg-gradient-to-r from-[#4fa0c2] to-[#3a89a6]">
-          Customer Care Module &gt; Agent Margin Set
-        </div>
+      <PageCard>
 
-        <div className="px-10 py-6">
-          <form onSubmit={handleSubmit}>
+        {message && (
+          <div className="mb-3 text-center text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-            <div className={rowClass}>
-              <div className={labelClass}>User Type</div>
-              <div>:</div>
+        <form onSubmit={handleSubmit}>
+
+          <Row label="User Type :">
+            <select
+              name="userType"
+              value={formData.userType}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              {userTypeOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+
+          <Row label="User ID :">
+            <input
+              name="userId"
+              value={formData.userId}
+              onChange={handleInputChange}
+              placeholder="Enter User ID"
+              className={inputClass}
+            />
+          </Row>
+
+          <Row label="Service :">
+            <select
+              name="service"
+              value={formData.service}
+              onChange={handleInputChange}
+              className={inputClass}
+            >
+              {serviceOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+
+          {showSubService && (
+            <Row label="Sub Service :">
               <select
-                name="userType"
-                value={formData.userType}
+                name="subService"
+                value={formData.subService}
                 onChange={handleInputChange}
                 className={inputClass}
               >
-                {userTypeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
+                <option value="mobile">Mobile</option>
+                <option value="datacard">Datacard</option>
+                <option value="dth">DTH</option>
               </select>
+            </Row>
+          )}
+
+          <div className="text-center mt-3">
+            <button type="submit" className="capsButton px-8">
+              Submit
+            </button>
+          </div>
+
+        </form>
+
+        {/* TABLE */}
+        {skuData.length > 0 && (
+          <div className="mt-6">
+
+            <div className="grid grid-cols-3 text-sm mb-3">
+              <div><strong>Category:</strong> {displayInfo.category}</div>
+              <div><strong>User Type:</strong> {displayInfo.displayUserType}</div>
+              <div><strong>User ID:</strong> {displayInfo.userId}</div>
             </div>
 
-            <div className={rowClass}>
-              <div className={labelClass}>User ID</div>
-              <div>:</div>
+            <div className="flex justify-center mb-3">
               <input
-                name="userId"
-                value={formData.userId}
+                value={bulkAgentShare}
+                name="bulkAgentShare"
                 onChange={handleInputChange}
-                placeholder="Enter User ID"
-                className={inputClass}
+                placeholder="Agent %"
+                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-40 mr-2"
               />
-            </div>
-
-            <div className={rowClass}>
-              <div className={labelClass}>Service</div>
-              <div>:</div>
-              <select
-                name="service"
-                value={formData.service}
-                onChange={handleInputChange}
-                className={inputClass}
+              <button
+                onClick={applyBulkAgentShare}
+                type="button"
+                className="capsButton px-4"
               >
-                {serviceOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {showSubService && (
-              <div className={`${rowClass} mb-4`}>
-                <div className={labelClass}>Sub Service</div>
-                <div>:</div>
-                <select
-                  name="subService"
-                  value={formData.subService}
-                  onChange={handleInputChange}
-                  className={inputClass}
-                >
-                  <option value="mobile">Mobile</option>
-                  <option value="datacard">Datacard</option>
-                  <option value="dth">DTH</option>
-                </select>
-              </div>
-            )}
-
-            <div className="text-center mt-3">
-              <button type="submit" className={primaryBtn}>
-                Submit
+                Apply All
               </button>
             </div>
-          </form>
-        </div>
-      </div>
 
-      {/* TABLE CARD */}
-      {skuData.length > 0 && (
-        <div className="rounded-xl border border-gray-300 shadow-lg p-4 mt-5">
-
-          <div className="grid grid-cols-3 text-sm mb-3">
-            <div><strong>Category:</strong> {displayInfo.category}</div>
-            <div><strong>User Type:</strong> {displayInfo.displayUserType}</div>
-            <div><strong>User ID:</strong> {displayInfo.userId}</div>
-          </div>
-
-          <div className="flex items-center gap-2 mb-3">
-            <input
-              value={bulkAgentShare}
-              name="bulkAgentShare"
-              onChange={handleInputChange}
-              placeholder="Agent %"
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-40"
-            />
-            <button
-              onClick={applyBulkAgentShare}
-              type="button"
-              className="px-3 py-1.5 text-sm rounded-md text-white bg-[#4fa2c2]"
-            >
-              Apply All
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-300 text-sm">
-              <thead className="bg-gray-800 text-white">
-                <tr>
-                  <th className="border px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                    />
-                  </th>
-                  <th className="border px-2 py-1">#</th>
-                  <th className="border px-2 py-1">Service</th>
-                  <th className="border px-2 py-1">Sub-Service</th>
-                  <th className="border px-2 py-1">Operator</th>
-                  <th className="border px-2 py-1">Agent Share %</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {skuData.map((row, i) => (
-                  <tr key={i} className="text-center">
-                    <td className="border">
+            <div className="overflow-x-auto">
+              <table className="w-full border border-gray-300 text-sm">
+                <thead className="bg-[#4fa2c2] text-white">
+                  <tr>
+                    <th className="border px-2 py-1">
                       <input
                         type="checkbox"
-                        checked={selectedRows.includes(i)}
-                        onChange={() => handleRowSelection(i)}
+                        checked={selectAll}
+                        onChange={handleSelectAllRows}
                       />
-                    </td>
-                    <td className="border">{i + 1}</td>
-                    <td className="border">{row.Main_Service}</td>
-                    <td className="border">{row.Sub_Service}</td>
-                    <td className="border">{row.SKU_Name}</td>
-                    <td className="border px-2 py-1">
-                      <input
-                        value={row.AgentShare || ""}
-                        onChange={(e) =>
-                          handleAgentShareChange(i, e.target.value)
-                        }
-                        className="border border-gray-300 rounded-md px-2 py-1 w-24 text-sm"
-                      />
-                    </td>
+                    </th>
+                    <th className="border">#</th>
+                    <th className="border">Service</th>
+                    <th className="border">Sub-Service</th>
+                    <th className="border">Operator</th>
+                    <th className="border">Agent Share %</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
 
-          <div className="flex justify-end gap-2 mt-3">
-            <button className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white">
-              Update Selected
-            </button>
-            <button
-              onClick={resetFunction}
-              className="px-3 py-1.5 text-sm rounded-md bg-gray-500 text-white"
-            >
-              Reset All
-            </button>
+                <tbody>
+                  {skuData.map((row, i) => (
+                    <tr key={i} className="text-center">
+                      <td className="border">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(i)}
+                          onChange={() => handleRowSelection(i)}
+                        />
+                      </td>
+                      <td className="border">{i + 1}</td>
+                      <td className="border">{row.Main_Service}</td>
+                      <td className="border">{row.Sub_Service}</td>
+                      <td className="border">{row.SKU_Name}</td>
+                      <td className="border">
+                        <input
+                          value={row.AgentShare || ""}
+                          onChange={(e) =>
+                            handleAgentShareChange(i, e.target.value)
+                          }
+                          className="border border-gray-300 rounded-md px-2 py-1 w-24 text-sm"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button className="capsButton px-4">
+                Update Selected
+              </button>
+
+              <button
+                onClick={resetFunction}
+                className="px-4 py-1.5 text-sm rounded-md bg-gray-500 text-white"
+              >
+                Reset All
+              </button>
+            </div>
+
           </div>
-        </div>
-      )}
+        )}
+
+      </PageCard>
     </div>
   );
 };

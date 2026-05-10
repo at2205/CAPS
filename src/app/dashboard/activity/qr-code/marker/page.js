@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const Maker = () => {
   const [agentId, setAgentId] = useState("");
@@ -23,9 +27,16 @@ const Maker = () => {
     }
 
     try {
-      const res = await axios.post("/api/qrcode/upload", { agentId });
-      setMessage("Submitted successfully");
-      setAgentDetails(res.data || []);
+      const params = new URLSearchParams();
+      params.append("agentId", agentId.trim());
+      const response = await urlencodedInstance.post(endpoints.activityEndpoints.uploadQrCode, params);
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setMessage("Submitted successfully");
+        setAgentDetails(data.agentDetails || data.data || []);
+      } else {
+        setMessage(data.message || "Submission failed");
+      }
     } catch {
       setMessage("Technical error");
     }
@@ -38,10 +49,6 @@ const Maker = () => {
     setAgentDetails([]);
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
-
   const badgeStyle = (status) => {
     if (status === "Approved")
       return "bg-green-100 text-green-700";
@@ -51,75 +58,84 @@ const Maker = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Maker
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Maker"
+        description="Upload and verify QR code status"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-6">
+      {/* MAIN CARD */}
+      <PageCard>
 
-          {/* MESSAGE */}
-          {message && (
-            <div className="mb-4 text-center text-sm font-semibold
-                            text-blue-700 bg-blue-100 border border-blue-200
-                            rounded-lg py-2">
-              {message}
-            </div>
-          )}
+        {/* MESSAGE */}
+        {message && (
+          <div className="mb-4 text-center text-sm font-semibold
+                          bg-blue-100 text-blue-700 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-          {/* ===== FORM ===== */}
-          <form onSubmit={handleSubmit} className="mb-6">
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="mb-6">
 
-            <div className="flex justify-center mb-4">
-              <div className="w-[400px]">
-                <label className="block font-semibold mb-1">
+          <div className="flex justify-center">
+            <div>
+
+              {/* AGENT ID */}
+              <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+
+                <label className="text-right font-medium">
                   Agent Id
                 </label>
+
+                <div className="text-center">:</div>
 
                 <input
                   type="text"
                   value={agentId}
                   maxLength={12}
                   onChange={(e) => setAgentId(e.target.value)}
-                  className={inputStyle}
+                  className="capsInput"
                 />
               </div>
+
+              {/* BUTTONS */}
+              <div className="flex justify-center gap-4 mt-2">
+                <button
+                  type="submit"
+                  className="capsButton min-w-[100px]"
+                >
+                  Submit
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="px-5 py-2 rounded-md border border-gray-400
+                             hover:bg-gray-100 transition text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </form>
+
+        {/* TABLE */}
+        {agentDetails.length > 0 && (
+          <>
+            <div className="capsColor text-center py-2 font-semibold rounded-md mb-3">
+              Agent Details
             </div>
 
-            {/* BUTTONS */}
-            <div className="flex justify-center gap-4">
-              <button
-                type="submit"
-                className="px-5 py-2 text-white rounded-xl shadow text-sm
-                           bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                           hover:opacity-90 transition"
-              >
-                Submit
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-5 py-2 rounded-xl shadow border border-gray-400
-                           hover:bg-gray-100 transition text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-
-          {/* ===== TABLE ===== */}
-          {agentDetails.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300 text-sm text-center">
+              <table className="min-w-full border border-[#226b88] text-sm text-center">
 
-                <thead className="bg-gray-100 font-semibold">
-                  <tr>
+                <thead>
+                  <tr className="capsColor">
                     <th className="border p-2">Agent Name</th>
                     <th className="border p-2">Agent ID</th>
                     <th className="border p-2">Agent ID Status</th>
@@ -131,21 +147,22 @@ const Maker = () => {
 
                 <tbody>
                   {agentDetails.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
+                    <tr key={index}>
                       <td className="border p-2">
                         {item.agentName}
                       </td>
+
                       <td className="border p-2 font-medium">
                         {item.agentId}
                       </td>
+
                       <td className="border p-2">
                         {item.status}
                       </td>
 
-                      {/* QR STATUS BADGE */}
                       <td className="border p-2">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${badgeStyle(
+                          className={`px-2 py-1 rounded text-xs font-semibold ${badgeStyle(
                             item.qrStatus
                           )}`}
                         >
@@ -166,10 +183,10 @@ const Maker = () => {
 
               </table>
             </div>
-          )}
+          </>
+        )}
 
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

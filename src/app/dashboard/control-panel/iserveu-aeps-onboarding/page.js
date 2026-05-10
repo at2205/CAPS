@@ -1,10 +1,17 @@
 "use client";
-import React, { useState } from "react";
 
-const IserveuOnboarding = () => {
+import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
+
+function IserveuOnboarding() {
   const [formData, setFormData] = useState({
     apiId: "",
     agentId: "",
+    userId: typeof window !== "undefined" ? localStorage.getItem("userId") : "",
     firstName: "",
     lastName: "",
     companyName: "",
@@ -16,9 +23,9 @@ const IserveuOnboarding = () => {
     panNumber: "",
   });
 
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ================= INPUT HANDLERS =================
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -28,7 +35,7 @@ const IserveuOnboarding = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value.replace(/\s/g, ""),
+      [name]: value.replace(/\s/g, "").toUpperCase(),
     }));
   };
 
@@ -39,53 +46,79 @@ const IserveuOnboarding = () => {
     }
   };
 
+  // ================= VALIDATION =================
   const validateForm = () => {
     const f = formData;
 
-    if (!f.apiId.trim()) return alert("Please enter API ID");
+    if (!f.apiId.trim())
+      return Swal.fire("Error", "Please Enter API ID", "error");
+
     if (!f.agentId.trim() || f.agentId.length < 5)
-      return alert("Agent ID must be at least 5 characters");
+      return Swal.fire("Error", "Agent ID must be at least 5 characters", "error");
+
     if (!f.firstName.trim() || f.firstName.length < 3)
-      return alert("First name must be at least 3 characters");
-    if (!f.lastName.trim()) return alert("Please enter last name");
+      return Swal.fire("Error", "First Name must be at least 3 characters", "error");
+
+    if (!f.lastName.trim())
+      return Swal.fire("Error", "Please Enter Last Name", "error");
+
     if (!f.companyName.trim() || f.companyName.length < 3)
-      return alert("Company name must be at least 3 characters");
+      return Swal.fire("Error", "Company Name must be at least 3 characters", "error");
+
     if (!f.address.trim() || f.address.length < 5)
-      return alert("Address must be at least 5 characters");
-    if (!f.area.trim() || f.area.length < 5)
-      return alert("Area must be at least 5 characters");
+      return Swal.fire("Error", "Address must be at least 5 characters", "error");
+
+    if (!f.area.trim())
+      return Swal.fire("Error", "Please Enter Area", "error");
+
     if (!f.pincode || f.pincode.length !== 6)
-      return alert("Pincode must be 6 digits");
+      return Swal.fire("Error", "Pincode must be 6 digits", "error");
 
     const mobilePattern = /^[6-9][0-9]{9}$/;
     if (!mobilePattern.test(f.mobileNumber))
-      return alert("Enter valid mobile number");
+      return Swal.fire("Error", "Enter valid Mobile Number", "error");
 
-    if (!f.shopName.trim() || f.shopName.length < 3)
-      return alert("Shop name must be at least 3 characters");
+    if (!f.shopName.trim())
+      return Swal.fire("Error", "Enter Shop Name", "error");
+
     if (!f.panNumber || f.panNumber.length !== 10)
-      return alert("PAN number must be 10 characters");
+      return Swal.fire("Error", "PAN must be 10 characters", "error");
 
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ================= SUBMIT =================
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
       setLoading(true);
-      setMessage("");
 
-      await new Promise((r) => setTimeout(r, 1500));
+      const response = await axiosInstance.post(
+        endpoints.controlPEndpoints.iserveuOnboarding,
+        formData
+      );
 
-      setMessage("Onboarding submitted successfully!");
-      handleReset();
+      const data =
+        typeof response.data === "string"
+          ? JSON.parse(response.data)
+          : response.data;
+
+      if (data.status === "0") {
+        Swal.fire("Success", data.message || "Submitted Successfully", "success");
+        handleReset();
+      } else {
+        Swal.fire("Error", data.message || "Something went wrong", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Server Error", "error");
     } finally {
       setLoading(false);
     }
   };
 
+  // ================= RESET =================
   const handleReset = () => {
     setFormData({
       apiId: "",
@@ -100,21 +133,15 @@ const IserveuOnboarding = () => {
       shopName: "",
       panNumber: "",
     });
-    setMessage("");
   };
 
-  const renderRow = (
-    label,
-    name,
-    placeholder,
-    handler = handleChange,
-    max = 50
-  ) => (
-    <div className="flex items-center mb-4">
-      <label className="w-1/3 text-right pr-4 text-sm font-medium">
-        {label} <span className="text-red-500">*</span>
-      </label>
-
+  // ================= UI =================
+  const renderRow = (label, name, placeholder, handler = handleChange, max = 50) => (
+    <div className="grid grid-cols-[200px_10px_1fr] items-center">
+      <label className="text-sm font-semibold text-right">
+      {label} <span className="text-red-500">*</span>
+    </label>
+      <div className="text-center">:</div>
       <input
         name={name}
         value={formData[name]}
@@ -122,74 +149,54 @@ const IserveuOnboarding = () => {
         placeholder={placeholder}
         maxLength={max}
         disabled={loading}
-        className="w-[320px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
+        className="capsInput"
       />
     </div>
   );
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard title="ISERVEU AEPS Onboarding" />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[18px] px-6 py-4 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          ISERVEU AEPS Onboarding
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px] space-y-4">
 
-        {/* BODY */}
-        <div className="py-10">
-
-          {/* SUCCESS MESSAGE */}
-          {message && (
-            <div className="w-1/2 mx-auto mb-6 text-center bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm">
-              {message}
-            </div>
-          )}
-
-          {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col items-center"
-          >
             {renderRow("API ID", "apiId", "Enter API ID", handleNoSpaces)}
-            {renderRow("Full Agent ID", "agentId", "Enter Agent ID", handleNoSpaces)}
-            {renderRow("First Name", "firstName", "Enter First Name", handleNoSpaces)}
-            {renderRow("Last Name", "lastName", "Enter Last Name", handleNoSpaces)}
+            {renderRow("Agent ID", "agentId", "Enter Agent ID", handleNoSpaces)}
+            {renderRow("First Name", "firstName", "Enter First Name")}
+            {renderRow("Last Name", "lastName", "Enter Last Name")}
             {renderRow("Company Name", "companyName", "Enter Company Name")}
             {renderRow("Address", "address", "Enter Address", handleChange, 200)}
             {renderRow("Area", "area", "Enter Area")}
-            {renderRow("Pin Code", "pincode", "Enter 6 digit pincode", handleDigitOnly, 6)}
-            {renderRow("Mobile Number", "mobileNumber", "Enter 10 digit mobile number", handleDigitOnly, 10)}
-            {renderRow("Shop Name", "shopName", "Enter Shop Name")}
-            {renderRow("PAN Number", "panNumber", "Enter PAN Number", handleNoSpaces, 10)}
+            {renderRow("Pin Code", "pincode", "Enter Pincode", handleDigitOnly, 6)}
+            {renderRow("Mobile", "mobileNumber", "Enter Mobile", handleDigitOnly, 10)}
+            {renderRow("Shop Name", "shopName", "Enter Shop")}
+            {renderRow("PAN", "panNumber", "Enter PAN", handleNoSpaces, 10)}
 
-            {/* BUTTONS */}
-            <div className="flex justify-center gap-6 mt-6">
+            <div className="text-center pt-2 space-x-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className="px-8 py-2 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] hover:opacity-90 transition flex items-center gap-2 disabled:opacity-50"
+                className="capsButton px-10"
               >
-                {loading && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                )}
-                {loading ? "Submitting..." : "Submit"}
+                {loading ? "Submitting..." : "SUBMIT"}
               </button>
 
               <button
-                type="button"
                 onClick={handleReset}
                 disabled={loading}
-                className="px-8 py-2 text-white text-sm rounded-full bg-gradient-to-b from-[#666] to-[#444] hover:opacity-90 transition disabled:opacity-50"
+                className="capsButton px-10 bg-gray-500"
               >
-                Reset
+                RESET
               </button>
             </div>
-          </form>
+
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
-};
+}
 
 export default IserveuOnboarding;

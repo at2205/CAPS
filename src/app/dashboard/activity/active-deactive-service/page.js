@@ -1,94 +1,137 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const ActivateDeactivateService = () => {
-  const [formData, setFormData] = useState({
-    service: "",
-    action: "",
-  });
+  const [services, setServices] = useState([]);
+  const [formData, setFormData] = useState({ service: "", action: "" });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const payload = { userId: localStorage.getItem("userId") };
+        const response = await urlencodedInstance.post(
+          endpoints.activityEndpoints.getServices,
+          new URLSearchParams({ jsonData: JSON.stringify(payload) })
+        );
+        const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+        if (data.status === "0" && data.data) { setServices(data.data); }
+      } catch { /* ignore */ }
+    };
+    fetchServices();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.service) {
-      alert("Please select Service");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please select Service", timer: 1500, showConfirmButton: false });
       return;
     }
     if (!formData.action) {
-      alert("Please select Action");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please select Action", timer: 1500, showConfirmButton: false });
       return;
     }
-
-    console.log(formData);
-    alert("Submitted Successfully");
+    try {
+      setLoading(true);
+      const payload = { userId: localStorage.getItem("userId"), serviceId: formData.service, action: formData.action };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.activeDeactiveService,
+        new URLSearchParams({ jsonData: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "Service updated successfully" });
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Update failed" });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Activate / Deactivate Service
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* BODY */}
-        <div className="px-10 py-10">
-          <div className="flex justify-center">
-            <div className="w-[520px]">
+      {/* HEADER */}
+      <CapsCard
+        title="Activate / Deactivate Service"
+        description="Manage service activation status"
+      />
 
-              {/* SERVICE */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Select Service
-                </label>
-                <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                  name="service"
-                  value={formData.service}
-                  onChange={handleChange}
-                >
-                  <option value="">-- Select --</option>
-                  <option value="AADHAR">AADHAR</option>
-                </select>
-              </div>
+      {/* MAIN CARD */}
+      <PageCard>
 
-              {/* ACTION */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold mr-3 w-1/2 text-right">
-                  Select Action
-                </label>
-                <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                  name="action"
-                  value={formData.action}
-                  onChange={handleChange}
-                >
-                  <option value="">-- Select --</option>
-                  <option value="Activate">Activate</option>
-                  <option value="Deactivate">Deactivate</option>
-                </select>
-              </div>
+        <div className="flex justify-center">
+          <div>
 
-              {/* BUTTON */}
-              <div className="text-center mt-6">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="px-6 py-2 text-white rounded-2xl shadow bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90 transition"
-                >
-                  Continue
-                </button>
-              </div>
+            {/* SERVICE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
+                Select Service
+              </label>
 
+              <div className="text-center">:</div>
+
+              <select
+                name="service"
+                value={formData.service}
+                onChange={handleChange}
+                className="capsSelect"
+              >
+                <option value="">-- Select --</option>
+                {services.map((svc, i) => (
+                  <option key={i} value={svc.serviceId || svc.id}>{svc.serviceName || svc.name || svc}</option>
+                ))}
+              </select>
             </div>
+
+            {/* ACTION */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+              <label className="text-right font-medium">
+                Select Action
+              </label>
+
+              <div className="text-center">:</div>
+
+              <select
+                name="action"
+                value={formData.action}
+                onChange={handleChange}
+                className="capsSelect"
+              >
+                <option value="">-- Select --</option>
+                <option value="Activate">Activate</option>
+                <option value="Deactivate">Deactivate</option>
+              </select>
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="capsButton min-w-[120px]"
+              >
+                Continue
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

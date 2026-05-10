@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 const ApplyPricePlan = () => {
   const [searchData, setSearchData] = useState({
     planName: "",
@@ -48,100 +51,85 @@ const ApplyPricePlan = () => {
     setMessage("");
   };
 
+  const inputClass =
+    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#4fa2c2] outline-none";
+
+  const Row = ({ label, children }) => (
+    <div className="flex items-start justify-center mb-3">
+      <label className="w-[240px] text-right text-sm font-semibold pt-1">
+        {label}
+      </label>
+      <div className="w-[280px] ml-3">{children}</div>
+    </div>
+  );
+
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="bg-white rounded-xl shadow-sm">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Control Panel > Create Price Plan"
+        description="Load and configure pricing plans"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[18px] px-6 py-4 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          Create Price Plan
-        </div>
+      <PageCard>
+        {/* SUCCESS MESSAGE */}
+        {message && (
+          <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-md py-2">
+            {message}
+          </div>
+        )}
 
-        {/* BODY */}
-        <div className="bg-[#fafafa] py-12">
+        {/* FORM */}
+        <form onSubmit={handleSubmit}>
+          <Row label="Price Plan Name :">
+            <input
+              name="planName"
+              value={searchData.planName}
+              onChange={handleChange}
+              placeholder="Enter price plan name"
+              disabled={loading}
+              className={`${inputClass} disabled:bg-gray-100`}
+            />
+          </Row>
 
-          {/* SUCCESS MESSAGE */}
-          {message && (
-            <div className="w-1/2 mx-auto mb-6 text-center bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm">
-              {message}
-            </div>
-          )}
+          <Row label="Channel :">
+            <select
+              name="channel"
+              value={searchData.channel}
+              onChange={handleChange}
+              disabled={loading}
+              className={`${inputClass} disabled:bg-gray-100`}
+            >
+              <option value="select">Please Select Channel</option>
+              <option value="MDS">Master Distributor</option>
+              <option value="DS">Distributor</option>
+              <option value="Agent">Retailer</option>
+            </select>
+          </Row>
 
-          {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col items-center space-y-4"
-          >
+          {/* BUTTONS */}
+          <div className="flex justify-center gap-6 mt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="capsButton px-10 flex items-center gap-2 disabled:opacity-50"
+            >
+              {loading && (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              )}
+              {loading ? "Submitting..." : "Submit"}
+            </button>
 
-            {/* PRICE PLAN NAME */}
-            <div className="flex items-center">
-              <label className="w-[220px] text-right pr-4 font-bold text-[15px]">
-                Price Plan Name :
-              </label>
-
-              <input
-                name="planName"
-                value={searchData.planName}
-                onChange={handleChange}
-                placeholder="Enter price plan name"
-                disabled={loading}
-                className="w-[260px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
-              />
-            </div>
-
-            {/* CHANNEL */}
-            <div className="flex items-center">
-              <label className="w-[220px] text-right pr-4 font-bold text-[15px]">
-                Channel :
-              </label>
-
-              <select
-                name="channel"
-                value={searchData.channel}
-                onChange={handleChange}
-                disabled={loading}
-                className="w-[260px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5fa3c6]"
-              >
-                <option value="select">
-                  Please Select Channel
-                </option>
-                <option value="MDS">
-                  Master Distributor
-                </option>
-                <option value="DS">
-                  Distributor
-                </option>
-                <option value="Agent">
-                  Retailer
-                </option>
-              </select>
-            </div>
-
-            {/* BUTTONS */}
-            <div className="flex justify-center gap-6 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-2 text-white text-[15px] rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] hover:opacity-90 transition flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading && (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                )}
-                {loading ? "Submitting..." : "Submit"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={loading}
-                className="px-8 py-2 text-white text-[15px] rounded-full bg-gradient-to-b from-[#666] to-[#444] hover:opacity-90 transition disabled:opacity-50"
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={loading}
+              className="capsButtonSecondary px-10"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      </PageCard>
     </div>
   );
 };

@@ -1,59 +1,35 @@
 "use client";
 import React, { useState } from "react";
 import { Table } from "antd";
+import Swal from "sweetalert2";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
 
 function VendorChannel() {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
   const [formValues, setFormValues] = useState({});
-  const [showTable, setShowTable] = useState(false);
   const [tableData, setTableData] = useState([]);
+  const [showTable, setShowTable] = useState(false);
 
-  const columns = [
-    {
-      title: "S.N.",
-      render: (_, __, index) => index + 1,
-      width: 70,
-    },
-    {
-      title: "Service Type",
-      dataIndex: "serviceType",
-    },
-    {
-      title: "Service",
-      dataIndex: "service",
-    },
-    {
-      title: "Action",
-      render: (_, record) => (
-        <select
-          defaultValue={record.action}
-          className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-        >
-          <option value="Y">Yes</option>
-          <option value="N">No</option>
-        </select>
-      ),
-    },
-    {
-      title: "Vendor",
-      render: (_, record) => (
-        <select
-          defaultValue={record.vendor}
-          className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-        >
-          <option value="AESAPI">AESAPI</option>
-          <option value="NA">NA</option>
-        </select>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-    },
-  ];
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
+  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : "";
+
+  const serviceMap = {
+    Recharge: "Re_Mobile",
+    Utility: "Utility",
+    "My Remittance": "Remittance",
+    "SMS Service": "SMS_Service",
+    "TB Request": "TB_Request",
+    Remittance: "Remittance",
+    All: "All",
+  };
+
+  // INPUT
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({
@@ -62,82 +38,266 @@ function VendorChannel() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+  // 🔥 FLEXIBLE DATA EXTRACT
+  const extractData = (res) => {
+    if (!res) return [];
 
-    setTimeout(() => {
-      setTableData([
-        {
-          key: 1,
-          serviceType: formValues.vertical,
-          service: formValues.service,
-          action: "Y",
-          vendor: "AESAPI",
-          status: "Active",
-        },
-        {
-          key: 2,
-          serviceType: formValues.vertical,
-          service: formValues.service,
-          action: "N",
-          vendor: "NA",
-          status: "Inactive",
-        },
-      ]);
+    if (Array.isArray(res)) return res;
 
-      setShowTable(true);
-      setSuccess("Data loaded successfully");
-      setLoading(false);
-    }, 1000);
+    if (typeof res === "object") {
+      if (Array.isArray(res.data)) return res.data;
+      if (Array.isArray(res.response)) return res.response;
+      if (Array.isArray(res.result)) return res.result;
+    }
+
+    if (typeof res === "string") {
+      try {
+        const parsed = JSON.parse(res);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  // 🔥 GET DATA
+  const handleSubmit = async () => {
+    if (!formValues?.vertical || !formValues?.service) {
+      Swal.fire("Error", "Please select required fields", "error");
+      return;
+    }
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-4">
-      <label className="w-[160px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
-    </div>
-  );
+    try {
+      setLoading(true);
+
+      // 🔥 smart service handling
+      let serviceValue = formValues.service;
+
+      // problematic services ke liye mapping
+      if (
+        formValues.service === "My Remittance" ||
+        formValues.service === "Remittance" || // Single Tab Remittance
+        formValues.service === "SMS Service"
+      ) {
+        serviceValue = serviceMap?.[formValues.service];
+      }
+
+      const payload = {
+        userId: Number(localStorage.getItem("userId")) || 0,
+        vertical: formValues.vertical,
+        service: serviceValue,
+      };
+
+      console.log("FINAL PAYLOAD =>", payload);
+      const token = localStorage.getItem("token");
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.channelGetDetails,
+        new URLSearchParams({
+          adminUserFormBean: JSON.stringify(payload),
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      console.log("API RESPONSE =>", res.data);
+
+      const data = res.data?.getDetails || [];
+
+      if (!data.length) {
+        Swal.fire("Info", "No data found", "info");
+        setShowTable(false);
+        return;
+      }
+
+      setShowTable(true);
+
+      // 🔥 mapping (correct UI format)
+      const formatted = data.map((item, index) => ({
+        key: index,
+        serviceType: item.Sub_Service || "-",
+        service: item.operator || "-",
+        action: item.Active === "Y" ? "Y" : "N",
+        vendor: item.vendor || "AESAPI",
+        status: item.Active === "Y" ? "Y" : "N",
+      }));
+
+      setTableData(formatted);
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "API failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+  // SELECT ALL
+  const handleSelectAll = (checked) => {
+    setSelectAll(checked);
+    setSelectedRows(checked ? tableData.map((r) => r.key) : []);
+  };
+
+  // UPDATE
+  const handleUpdate = async () => {
+    if (selectedRows.length === 0) {
+      Swal.fire("Error", "Please select at least one row", "error");
+      return;
+    }
+
+    const selectedData = tableData.filter((row) =>
+      selectedRows.includes(row.key),
+    );
+
+    try {
+      setLoading(true);
+
+      const updateList = selectedData.map((row) => ({
+        Main_Service: formValues.service,
+        Sub_Service: row.serviceType,
+        operator: row.service,
+        vendor: row.vendor,
+        Active: row.action,
+      }));
+      const payload = {
+        userId: Number(localStorage.getItem("userId")) || 0,
+        vertical: formValues.vertical,
+        action: "updateDetails",
+        updateList,
+      };
+
+      console.log("UPDATE PAYLOAD =>", payload);
+
+      const token = localStorage.getItem("token");
+
+      await axiosInstance.post(
+        endpoints.controlPEndpoints.channelUpdateDetails,
+        new URLSearchParams({
+          adminUserFormBean: JSON.stringify(payload),
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      Swal.fire("Success", "Updated Successfully", "success");
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Update failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔥 TABLE COLUMNS (DEMO MATCH)
+  const columns = [
+    {
+      title: "S.N.",
+      render: (_, __, index) => index + 1,
+      width: 70,
+    },
+    {
+      title: (
+        <input
+          type="checkbox"
+          checked={selectAll}
+          onChange={(e) => handleSelectAll(e.target.checked)}
+        />
+      ),
+      render: (_, record) => (
+        <input
+          type="checkbox"
+          checked={selectedRows.includes(record.key)}
+          onChange={(e) => {
+            let updated = e.target.checked
+              ? [...selectedRows, record.key]
+              : selectedRows.filter((k) => k !== record.key);
+
+            setSelectedRows(updated);
+            setSelectAll(updated.length === tableData.length);
+          }}
+        />
+      ),
+      width: 60,
+    },
+    { title: "Service Type", dataIndex: "serviceType" },
+    { title: "Service", dataIndex: "service" },
+
+    {
+      title: "Action",
+      render: (_, record, index) => (
+        <select
+          value={record.action}
+          className="capsInput"
+          onChange={(e) => {
+            const updated = [...tableData];
+            updated[index].action = e.target.value;
+            setTableData(updated);
+          }}
+        >
+          <option value="Y">Y</option>
+          <option value="N">N</option>
+        </select>
+      ),
+    },
+
+    {
+      title: "Vendor",
+      render: (_, record, index) => (
+        <select
+          value={record.vendor}
+          className="capsInput"
+          onChange={(e) => {
+            const updated = [...tableData];
+            updated[index].vendor = e.target.value;
+            setTableData(updated);
+          }}
+        >
+          <option value="AESAPI">AESAPI</option>
+          <option value="EasyPay">EasyPay</option>
+          <option value="NA">NA</option>
+        </select>
+      ),
+    },
+
+    {
+      title: "Status",
+      dataIndex: "status",
+    },
+  ];
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard title="Channel Vendor Management" />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Channel Vendor Management
-        </div>
-
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            <Row label="Vertical :">
+      <PageCard>
+        <div className="flex justify-center" style={{ margin: "30px auto" }}>
+          <div className="w-[520px]">
+            <div className="mb-3">
+              <label>Vertical :</label>
               <select
                 name="vertical"
-                required
+                value={formValues?.vertical || ""}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput ml-2"
               >
                 <option value="">Select</option>
-                <option value="Web">Web</option>
+                <option value="web">web</option>
               </select>
-            </Row>
+            </div>
 
-            <Row label="Service :">
+            <div className="mb-3">
+              <label>Service :</label>
               <select
                 name="service"
-                required
+                value={formValues?.service || ""}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput ml-2"
               >
                 <option value="">Select</option>
                 <option value="All">All</option>
@@ -148,55 +308,40 @@ function VendorChannel() {
                 <option value="Remittance">Single Tab Remittance</option>
                 <option value="SMS Service">SMS Service</option>
               </select>
-            </Row>
-
-            {/* STATUS */}
-            <div className="text-center min-h-[24px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-500 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            <div className="text-center mt-4">
               <button
-                type="submit"
-                disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                onClick={handleSubmit}
+                className="capsButton min-w-[140px]"
               >
-                Submit
+                {loading ? "Loading..." : "Submit"}
               </button>
             </div>
 
-          </form>
+            {showTable && (
+              <div className="mt-6 w-full overflow-x-auto">
+                <div className="min-w-[100px]">
+                  <Table
+                    rowKey="key"
+                    dataSource={tableData}
+                    columns={columns}
+                    bordered
+                    pagination={false}
+                    scroll={{ x: true }}
+                  />
+                </div>
 
-          {/* TABLE */}
-          {showTable && (
-            <div className="mt-6">
-              <div className="bg-[#4fa2c2] text-white font-semibold px-3 py-1.5 rounded-md mb-3 text-sm">
-                Vendor Mapping Details
+                <div className="text-center mt-4">
+                  <button onClick={handleUpdate} className="capsButton">
+                    Update
+                  </button>
+                </div>
               </div>
-
-              <Table
-                dataSource={tableData}
-                columns={columns}
-                bordered
-                size="small"
-                pagination={false}
-              />
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

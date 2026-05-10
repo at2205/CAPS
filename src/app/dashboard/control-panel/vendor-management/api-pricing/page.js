@@ -1,6 +1,9 @@
 "use client";
 import React, { useState } from "react";
 
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+
 function APIPricing() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -9,111 +12,128 @@ function APIPricing() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
+    if (
+      !formValues?.apiId ||
+      !formValues?.category ||
+      !formValues?.mainService ||
+      !formValues?.pipe
+    ) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    if (
+      formValues.mainService === "AEPS" &&
+      !formValues?.subService
+    ) {
+      setError("Please select sub service");
+      return;
+    }
+
     setLoading(true);
     setSuccess("");
     setError("");
 
+    // 🔴 API CALL HERE
     setTimeout(() => {
       setLoading(false);
       setSuccess("API pricing details submitted successfully");
     }, 1000);
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setFormValues({});
+    setSuccess("");
+    setError("");
+  };
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-3">
-      <label className="w-[160px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="API Pricing"
+        description="Configure API pricing details"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          API Pricing
-        </div>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            <Row label="API ID :">
+            <FieldRow label="API ID">
               <select
                 name="apiId"
-                required
-                className={inputClass}
+                value={formValues?.apiId || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">--Select--</option>
-                <option value="1">Item One</option>
-                <option value="2">Item Two</option>
-                <option value="3">Item Three</option>
+                <option value="1">All</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Category :">
+            <FieldRow label="Category">
               <select
                 name="category"
-                required
-                className={inputClass}
+                value={formValues?.category || "Postpaid"}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="Postpaid">Postpaid</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Main Service :">
+            <FieldRow label="Main Service">
               <select
                 name="mainService"
-                required
-                className={inputClass}
+                value={formValues?.mainService || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">--Select--</option>
                 <option value="AEPS">AEPS</option>
                 <option value="Micro ATM">Micro ATM</option>
               </select>
-            </Row>
+            </FieldRow>
 
             {/* CONDITIONAL SUB SERVICE */}
             {formValues.mainService === "AEPS" && (
-              <Row label="Sub Service :">
+              <FieldRow label="Sub Service">
                 <select
                   name="subService"
-                  required
-                  className={inputClass}
+                  value={formValues?.subService || ""}
                   onChange={handleInputChange}
+                  className="capsInput"
                 >
+                  <option value="">--Select--</option>
                   <option value="Cash Withdrawal">Cash Withdrawal</option>
                   <option value="Balance Enquiry">Balance Enquiry</option>
                   <option value="Mini Statement">Mini Statement</option>
                   <option value="Aadhaar Pay">Aadhaar Pay</option>
                 </select>
-              </Row>
+              </FieldRow>
             )}
 
-            <Row label="Pipe :">
+            <FieldRow label="Pipe">
               <select
                 name="pipe"
-                required
-                className={inputClass}
+                value={formValues?.pipe || ""}
                 onChange={handleInputChange}
+                className="capsInput"
               >
                 <option value="">--Select--</option>
                 <option value="FINO">Fino Bank</option>
@@ -123,38 +143,36 @@ function APIPricing() {
                 <option value="Airtel Bank">Airtel Bank</option>
                 <option value="IserveU">IserveU</option>
               </select>
-            </Row>
+            </FieldRow>
 
             {/* STATUS */}
-            <div className="text-center min-h-[28px] mb-2">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-600 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+            <div className="text-center text-sm mb-2">
+              {success && <p className="text-green-600">{success}</p>}
+              {error && <p className="text-red-500">{error}</p>}
+              {loading && <p className="text-gray-500">Loading...</p>}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
               </button>
             </div>
 
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

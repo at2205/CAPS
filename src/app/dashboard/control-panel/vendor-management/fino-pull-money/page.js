@@ -1,106 +1,161 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
 
 function FinoPullMoney() {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
+  const [balance, setBalance] = useState("0");
   const [formValues, setFormValues] = useState({});
 
+  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : "";
+
+  // 🔥 GET BALANCE (PAGE LOAD)
+  useEffect(() => {
+    getBalance();
+  }, []);
+
+  const getBalance = async () => {
+    try {
+      const payload = {
+        userId: localStorage.getItem("userId"),
+      };
+
+      const res = await axiosInstance.post("/controlP/getFinoBalance", null, {
+        params: {
+          adminUserFormBean: JSON.stringify(payload),
+        },
+      });
+
+      console.log("BALANCE RESPONSE =>", res.data);
+
+      let data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      setBalance(data?.balance || data?.availableBalance || "0");
+    } catch (err) {
+      console.log(err);
+      Swal.fire("Error", "Failed to fetch balance", "error");
+    }
+  };
+
+  // INPUT
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess("");
-    setError("");
+  // 🔥 SUBMIT (PULL MONEY)
+  const handleSubmit = async () => {
+    if (!formValues?.amountToPull) {
+      Swal.fire("Error", "Please enter amount", "error");
+      return;
+    }
 
-    setTimeout(() => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        userId: localStorage.getItem("userId"),
+        amount: formValues.amountToPull,
+      };
+
+      const res = await axiosInstance.post("/controlP/pullFinoBalance", null, {
+        params: {
+          adminUserFormBean: JSON.stringify(payload),
+        },
+      });
+
+      console.log("SUBMIT RESPONSE =>", res.data);
+
+      let data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      if (data?.status === "0") {
+        Swal.fire({
+          icon: "success",
+          title: data?.message || "Success",
+          confirmButtonColor: "#5fa0b5",
+        });
+
+        setFormValues({});
+        getBalance();
+      } else {
+        Swal.fire("Error", data?.message || "Failed", "error");
+      }
+    } catch (err) {
+      console.log(err);
+      Swal.fire("Error", "API failed", "error");
+    } finally {
       setLoading(false);
-      setSuccess("Amount pull request submitted successfully");
-    }, 1000);
+    }
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setFormValues({});
+  };
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-3">
-      <label className="w-[200px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Fino Pull Money"
+        description="Submit pull money request"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Fino Pull Money
-        </div>
-
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          <form onSubmit={handleSubmit}>
-
-            {/* AVAILABLE BALANCE */}
-            <Row label="Available Balance :">
-              <span className="text-sm font-semibold">
-                ₹ 1000
-              </span>
-            </Row>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
+            {/* BALANCE */}
+            <FieldRow label="Available Balance">
+              <span className="font-semibold text-sm">₹ {balance}</span>
+            </FieldRow>
 
             {/* AMOUNT */}
-            <Row label="Enter Amount To Pull :">
+            <FieldRow label="Enter Amount To Pull">
               <input
                 type="number"
                 name="amountToPull"
-                required
+                value={formValues?.amountToPull || ""}
                 onChange={handleInputChange}
-                className={inputClass}
+                className="capsInput"
+                placeholder="Enter amount"
               />
-            </Row>
+            </FieldRow>
 
-            {/* STATUS */}
-            <div className="text-center min-h-[28px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-600 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
               </button>
             </div>
-
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

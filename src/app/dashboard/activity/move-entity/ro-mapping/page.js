@@ -1,46 +1,80 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 function ROMapping() {
   const [formData, setFormData] = useState({
     distributorId: "",
     retailerId: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.distributorId || !formData.retailerId) {
-      alert("Please fill all fields");
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please fill all fields", timer: 1500, showConfirmButton: false });
       return;
     }
-
-    console.log(formData);
-    alert("Move Entity submitted (frontend only)");
+    try {
+      setLoading(true);
+      const payload = {
+        userId: localStorage.getItem("userId"),
+        loginType: localStorage.getItem("adminUserType"),
+        dsid: formData.distributorId.trim(),
+        agid: formData.retailerId.trim(),
+        portalId: localStorage.getItem("portalId") || "10002",
+        transferType: "RO",
+      };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.moveEntityRO,
+        new URLSearchParams({ jsonData: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "Entity moved successfully" });
+        setFormData({ distributorId: "", retailerId: "" });
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Move entity failed" });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Move Entity
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Move Entity"
+        description="Map retailer under selected distributor"
+      />
 
-        {/* ===== BODY ===== */}
-        <div className="px-10 py-10 flex justify-center">
-          <div className="w-[520px]">
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <div className="flex justify-center">
+          <div>
 
             {/* DISTRIBUTOR ID */}
-            <div className="mb-5 flex items-center">
-              <label className="font-semibold w-1/2 text-right mr-3">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+
+              <label className="text-right font-medium">
                 Distributor ID
               </label>
+
+              <div className="text-center">:</div>
 
               <input
                 type="text"
@@ -48,16 +82,18 @@ function ROMapping() {
                 placeholder="Full Distributor Id"
                 value={formData.distributorId}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                className="capsInput"
               />
             </div>
 
             {/* RETAILER ID */}
-            <div className="mb-6 flex items-center">
-              <label className="font-semibold w-1/2 text-right mr-3">
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-6">
+
+              <label className="text-right font-medium">
                 Retailer ID
               </label>
+
+              <div className="text-center">:</div>
 
               <input
                 type="text"
@@ -65,18 +101,15 @@ function ROMapping() {
                 placeholder="Full Retailer Id"
                 value={formData.retailerId}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2
-                           focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                className="capsInput"
               />
             </div>
 
             {/* BUTTON */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-4">
               <button
                 onClick={handleSubmit}
-                className="px-6 py-2 text-white rounded-2xl shadow
-                           bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                           hover:opacity-90 transition"
+                className="capsButton min-w-[120px]"
               >
                 Continue
               </button>
@@ -84,7 +117,8 @@ function ROMapping() {
 
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 }

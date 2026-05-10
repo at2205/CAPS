@@ -1,6 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Rating from "@mui/material/Rating";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 function HolidayPackages() {
   const [loading, setLoading] = useState(false);
@@ -9,6 +12,9 @@ function HolidayPackages() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
   const [formValues, setFormValues] = useState({});
+  const [rating, setRating] = useState(3);
+
+  const fileInputRef = useRef(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const endPoint = "/";
@@ -42,10 +48,11 @@ function HolidayPackages() {
       ...prev,
       [name]: value,
       userId,
+      hotelRating: rating,
     }));
   };
 
-  const handleFileUpload = async () => {
+  const handleSubmit = async () => {
     if (!selectedFile) {
       setMessage("Please select a file");
       return;
@@ -74,146 +81,203 @@ function HolidayPackages() {
         setError("Something went wrong please try again");
       }
     } catch {
-      setError("Error uploading file.");
+      setError("Error submitting form.");
     } finally {
       setLoading(false);
     }
   };
 
-  const Row = ({ label, children, extra }) => (
-    <div className="flex items-center justify-center mb-2">
-      <div className="w-[260px] text-right font-semibold text-sm">
-        {label}
+  const handleClear = () => {
+    setFormValues({});
+    setSelectedFile(null);
+    setMessage("");
+    setSuccess("");
+    setError("");
+    setRating(3);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+  };
+
+  const FieldRow = ({ label, children, hint }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-start gap-4 mb-3">
+      <label className="text-right font-medium pt-2">{label}</label>
+      <div className="text-center pt-2">:</div>
+      <div>
+        {children}
+        {hint && (
+          <div className="text-xs text-gray-500 mt-1">{hint}</div>
+        )}
       </div>
-      <div className="w-[320px] ml-3">{children}</div>
-      {extra && <div className="w-[200px] ml-3 text-xs text-gray-500">{extra}</div>}
     </div>
   );
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
-
   return (
-    <div className="flex justify-center mt-6">
-      <div className="w-[1200px] rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Holidays Packages
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Holidays Packages"
+        description="Configure holiday package details"
+      />
 
-        <div className="px-10 py-6">
-          <form>
+      <PageCard>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-            <Row label="Holiday Package Type :">
-              <select name="holidayPackage" onChange={handleInputChange} className={inputStyle}>
-                <option>Domistic</option>
-                <option>International</option>
+            <FieldRow label="Holiday Package Type">
+              <select
+                name="holidayPackage"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="domestic">Domestic</option>
+                <option value="international">International</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row label="Depart From :">
-              <input name="departFrom" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Depart From">
+              <input
+                name="departFrom"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Arrival To :">
-              <input name="arrivalTo" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Arrival To">
+              <input
+                name="arrivalTo"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Travel By :">
-              <select name="travelBy" onChange={handleInputChange} className={inputStyle}>
+            <FieldRow label="Travel By">
+              <select
+                name="travelBy"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
                 <option>Flight</option>
                 <option>Bus</option>
                 <option>Train</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row
-              label="Package Price :"
-              extra={<input type="number" className={inputStyle} />}
-            >
-              <input type="range" className="w-full" />
-            </Row>
+            <FieldRow label="Package Price">
+              <input type="number" className="capsInput mb-2" />
+              <input type="range" />
+            </FieldRow>
 
-            <Row label="Hotel Name :">
-              <input name="hotelName" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Hotel Name">
+              <input
+                name="hotelName"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Hotel Rating :">
-              <Rating defaultValue={3} />
-            </Row>
+            <FieldRow label="Hotel Rating">
+              <Rating
+                value={rating}
+                onChange={(e, newValue) => setRating(newValue)}
+              />
+            </FieldRow>
 
-            <Row label="Meal Preferences :">
-              <select name="mealPreferences" onChange={handleInputChange} className={inputStyle}>
+            <FieldRow label="Meal Preferences">
+              <select
+                name="mealPreferences"
+                onChange={handleInputChange}
+                className="capsInput"
+              >
                 <option value="Y">Yes</option>
                 <option value="N">No</option>
               </select>
-            </Row>
+            </FieldRow>
 
-            <Row
-              label="Meal Included :"
-              extra="400 characters left"
+            <FieldRow
+              label="Meal Included"
+              hint="Max 400 characters"
             >
               <textarea
                 name="mealIncluded"
                 maxLength="400"
                 onChange={handleInputChange}
-                className={inputStyle}
+                className="capsInput"
               />
-            </Row>
+            </FieldRow>
 
-            <Row label="Upload Image :">
-              <input type="file" onChange={handleFileChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Upload Image">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Place Description :" extra="1000 characters">
+            <FieldRow
+              label="Place Description"
+              hint="Max 1000 characters"
+            >
               <textarea
                 name="placeDescription"
                 maxLength="1000"
                 onChange={handleInputChange}
-                className={inputStyle}
+                className="capsInput"
               />
-            </Row>
+            </FieldRow>
 
-            <Row label="Package Title :">
-              <input name="packateTitle" onChange={handleInputChange} className={inputStyle} />
-            </Row>
+            <FieldRow label="Package Title">
+              <input
+                name="packageTitle"
+                onChange={handleInputChange}
+                className="capsInput"
+              />
+            </FieldRow>
 
-            <Row label="Cancellation Policy :" extra="1000 characters">
+            <FieldRow
+              label="Cancellation Policy"
+              hint="Max 1000 characters"
+            >
               <textarea
                 name="cancellationPolicy"
                 maxLength="1000"
                 onChange={handleInputChange}
-                className={inputStyle}
+                className="capsInput"
               />
-            </Row>
+            </FieldRow>
 
             {/* STATUS */}
             <div className="text-center mt-4 text-sm">
               {success && <p className="text-green-600">{success}</p>}
               {error && <p className="text-red-500">{error}</p>}
               {message && <p className="text-red-500">{message}</p>}
-              {loading && (
-                <p className="text-gray-500 animate-pulse">Loading...</p>
-              )}
+              {loading && <p className="text-gray-500">Loading...</p>}
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center mt-3">
+            {/* BUTTONS */}
+            <div className="text-center mt-4 flex justify-center gap-4">
               <button
                 type="button"
-                onClick={handleFileUpload}
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="capsButton min-w-[140px]"
               >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClear}
+                className="capsButtonSecondary min-w-[140px]"
+              >
+                Clear
               </button>
             </div>
 
-          </form>
+          </div>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 }

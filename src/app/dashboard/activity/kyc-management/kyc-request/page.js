@@ -1,5 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const KYCRequest = () => {
   const [channelType, setChannelType] = useState("Mobile App");
@@ -22,29 +27,50 @@ const KYCRequest = () => {
     setShowZone(value === "DS_App");
   };
 
-  const submitForm = () => {
-    setLoading(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const recordsPerPage = 10;
 
-    setTimeout(() => {
-      setKycList([
-        {
-          id: 1,
-          formNo: "FRM123",
-          date: "2026-01-18",
-          agentId: "AG1001",
-          name: "Rahul Sharma",
-          mobile: "9876543210",
-          aadhaar: "Pending",
-          selfie: "Accept",
-          bank: "Pending",
-          poi: "Accept",
-          poa: "Pending",
-          cheque: "Not Given",
-          other: "Not Given",
-        },
-      ]);
+  const submitForm = async () => {
+    if (!fromDate || !toDate) {
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please select date range", timer: 1500, showConfirmButton: false });
+      return;
+    }
+    try {
+      setLoading(true);
+      setKycList([]);
+      const payload = {
+        userId: localStorage.getItem("userId"),
+        type: channelType,
+        fromDate,
+        toDate,
+        zone: zone === "all" ? "" : zone,
+        currentPage: String(currentPage),
+        recordsPerPage: String(recordsPerPage),
+      };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.kycProcessChannel,
+        new URLSearchParams({ jsonData: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        const pgData = data.getKYCRequestDataByPaging || {};
+        if (pgData.status === 100 && pgData.data) {
+          setKycList(pgData.data);
+          setTotalPages(pgData.totalPage || 1);
+          setCurrentPage(pgData.currentpage || 1);
+        } else {
+          Swal.fire({ icon: "info", title: "No Data", text: pgData.message || "No KYC records found" });
+        }
+      } else {
+        Swal.fire({ icon: "error", title: "Error", text: data.message || "Failed to fetch KYC data" });
+      }
+    } catch (error) {
+      console.error("KYC fetch error:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" });
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   const getBadgeStyle = (status) => {
@@ -56,109 +82,108 @@ const KYCRequest = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          KYC Request
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* ===== BODY ===== */}
-        <div className="px-4 py-5">
+      {/* HEADER */}
+      <CapsCard
+        title="KYC Request"
+        description="View and manage KYC onboarding requests"
+      />
 
-          {/* ===== FILTER FORM ===== */}
-          <div className="flex justify-center mb-6">
-            <div className="w-[520px]">
+      {/* MAIN CARD */}
+      <PageCard>
 
-              {/* CHANNEL */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold w-1/2 text-right mr-3">
-                  Channel
-                </label>
+        {/* FILTER FORM */}
+        <div className="flex justify-center mb-6">
+          <div>
+
+            {/* CHANNEL */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">Channel</label>
+              <div className="text-center">:</div>
+              <select
+                value={channelType}
+                onChange={handleChannelChange}
+                className="capsSelect"
+              >
+                <option>Mobile App</option>
+                <option>Distributor</option>
+                <option>Master Distributor</option>
+                <option value="DS_App">
+                  DS Agent Mobile Onboarding
+                </option>
+              </select>
+            </div>
+
+            {/* FROM DATE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">From Date</label>
+              <div className="text-center">:</div>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="capsInput"
+              />
+            </div>
+
+            {/* TO DATE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">To Date</label>
+              <div className="text-center">:</div>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="capsInput"
+              />
+            </div>
+
+            {/* ZONE (Conditional) */}
+            {showZone && (
+              <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+                <label className="text-right font-medium">Zone</label>
+                <div className="text-center">:</div>
                 <select
-                  value={channelType}
-                  onChange={handleChannelChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                  value={zone}
+                  onChange={(e) => setZone(e.target.value)}
+                  className="capsSelect"
                 >
-                  <option>Mobile App</option>
-                  <option>Distributor</option>
-                  <option>Master Distributor</option>
-                  <option value="DS_App">
-                    DS Agent Mobile Onboarding
-                  </option>
+                  <option value="all">All</option>
+                  <option>North</option>
+                  <option>South</option>
+                  <option>East</option>
+                  <option>West</option>
                 </select>
               </div>
+            )}
 
-              {/* FROM DATE */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold w-1/2 text-right mr-3">
-                  From Date
-                </label>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                />
-              </div>
-
-              {/* TO DATE */}
-              <div className="mb-4 flex items-center">
-                <label className="font-semibold w-1/2 text-right mr-3">
-                  To Date
-                </label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                />
-              </div>
-
-              {/* ZONE (Conditional) */}
-              {showZone && (
-                <div className="mb-4 flex items-center">
-                  <label className="font-semibold w-1/2 text-right mr-3">
-                    Zone
-                  </label>
-                  <select
-                    value={zone}
-                    onChange={(e) => setZone(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
-                  >
-                    <option value="all">All</option>
-                    <option>North</option>
-                    <option>South</option>
-                    <option>East</option>
-                    <option>West</option>
-                  </select>
-                </div>
-              )}
-
-              {/* BUTTON */}
-              <div className="text-center mt-2">
-                <button
-                  onClick={submitForm}
-                  disabled={loading}
-                  className="px-6 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition disabled:opacity-60"
-                >
-                  {loading ? "Please wait..." : "Submit"}
-                </button>
-              </div>
-
+            {/* BUTTON */}
+            <div className="text-center mt-2">
+              <button
+                onClick={submitForm}
+                disabled={loading}
+                className="capsButton min-w-[120px]"
+              >
+                {loading ? "Please wait..." : "Submit"}
+              </button>
             </div>
-          </div>
 
-          {/* ===== TABLE ===== */}
-          {kycList.length > 0 && (
+          </div>
+        </div>
+
+        {/* TABLE */}
+        {kycList.length > 0 && (
+          <>
+            <div className="capsColor text-center py-2 font-semibold rounded-md mb-4">
+              KYC Requests
+            </div>
+
             <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300 text-center text-sm">
-                
-                <thead className="bg-gray-100">
-                  <tr>
+              <table className="min-w-full border border-[#226b88] text-sm text-center">
+
+                <thead>
+                  <tr className="capsColor">
                     <th className="border p-2">S.No</th>
                     <th className="border p-2">Form No</th>
                     <th className="border p-2">Date</th>
@@ -179,7 +204,7 @@ const KYCRequest = () => {
 
                 <tbody>
                   {kycList.map((row, i) => (
-                    <tr key={row.id} className="hover:bg-gray-50">
+                    <tr key={row.id}>
                       <td className="border p-2">{i + 1}</td>
                       <td className="border p-2">{row.formNo}</td>
                       <td className="border p-2">{row.date}</td>
@@ -202,17 +227,15 @@ const KYCRequest = () => {
                       <td className="border p-2">{row.cheque}</td>
                       <td className="border p-2">{row.other}</td>
 
-                      <td className="border p-2">
+                      <td className="border p-1">
                         <input
                           placeholder="Remarks"
-                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#4c95b3]"
+                          className="capsInput px-2 py-1 text-xs"
                         />
                       </td>
 
                       <td className="border p-2">
-                        <button
-                          className="px-3 py-1 text-xs text-white rounded-md bg-green-600 hover:bg-green-700 transition"
-                        >
+                        <button className="capsButton px-4 py-1 text-xs">
                           Submit
                         </button>
                       </td>
@@ -221,10 +244,10 @@ const KYCRequest = () => {
                 </tbody>
               </table>
             </div>
-          )}
+          </>
+        )}
 
-        </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

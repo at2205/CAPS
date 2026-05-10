@@ -1,110 +1,134 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const BillingRequest = () => {
-  const [checkedRows, setCheckedRows] = useState({});
-  const [isAllChecked, setIsAllChecked] = useState(false);
+  const [billingData, setBillingData] = useState([]);
+  const [reasons, setReasons] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [searchId, setSearchId] = useState("");
+  const recordsPerPage = 100;
 
-  const handleCheckboxChange = (rowId) => {
-    setCheckedRows((prev) => ({
-      ...prev,
-      [rowId]: !prev[rowId],
-    }));
+  const fetchBillingData = async (page = 1) => {
+    try {
+      setLoading(true);
+      const response = await urlencodedInstance.get(
+        `${endpoints.activityEndpoints.billingRequestData}?currentPage=${page}&recordsPerPage=${recordsPerPage}`
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setBillingData(data.BillingReportDetails || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalRecords(data.totalRecords || 0);
+        setCurrentPage(data.currentPage || 1);
+        if (data.reasons) {
+          try { setReasons(JSON.parse(data.reasons).data || []); } catch { setReasons([]); }
+        }
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No billing data found" });
+      }
+    } catch (error) {
+      console.error("Billing fetch error:", error);
+      Swal.fire({ icon: "error", title: "Error", text: "Failed to fetch billing data" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSelectAllChange = () => {
-    const checked = !isAllChecked;
-    setIsAllChecked(checked);
-    setCheckedRows({ 1: checked });
+  const handleSearch = async () => {
+    if (!searchId.trim()) {
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please enter User ID to search", timer: 1500, showConfirmButton: false });
+      return;
+    }
+    if (!searchId.startsWith("AG") && !searchId.startsWith("DS") && !searchId.startsWith("MD")) {
+      Swal.fire({ icon: "warning", title: "Validation", text: "Please enter full User ID (AG/DS/MD prefix)", timer: 2000, showConfirmButton: false });
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await urlencodedInstance.get(
+        `${endpoints.activityEndpoints.searchById}?searchItem=${searchId.trim()}`
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setBillingData(data.BillingReportDetails || []);
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No records found" });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Search failed" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Selected Rows:", checkedRows);
-  };
+  useEffect(() => { fetchBillingData(); }, []);
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Billing Request
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard title="Billing Request" description="Review and process billing requests" />
+      <PageCard>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <input className="capsInput w-60" placeholder="Search by User ID (AG/DS/MD)" value={searchId} onChange={(e) => setSearchId(e.target.value)} />
+            <button className="capsButton" onClick={handleSearch} disabled={loading}>Search</button>
+            <button className="capsButton" onClick={() => { setSearchId(""); fetchBillingData(); }}>Reset</button>
+          </div>
+          <div className="text-sm">Total Records: {totalRecords} | Page {currentPage} of {totalPages}</div>
         </div>
 
-        {/* BODY */}
-        <div className="px-4 py-4">
-          <form onSubmit={handleSubmit}>
-
-            {/* TABLE */}
-            <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300 text-center text-sm">
-                
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border p-2">
-                      <input
-                        type="checkbox"
-                        checked={isAllChecked}
-                        onChange={handleSelectAllChange}
-                        className="w-4 h-4"
-                      />
-                    </th>
-                    <th className="border p-2">S.No</th>
-                    <th className="border p-2">Date</th>
-                    <th className="border p-2">Request By</th>
-                    <th className="border p-2">User Name</th>
-                    <th className="border p-2">Item</th>
-                    <th className="border p-2">Price</th>
-                    <th className="border p-2">Qty</th>
-                    <th className="border p-2">Status</th>
-                    <th className="border p-2">Remark</th>
-                    <th className="border p-2">Action</th>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-[#226b88] text-center text-sm">
+            <thead>
+              <tr className="capsColor">
+                <th className="border p-2">S.No</th>
+                <th className="border p-2">Date</th>
+                <th className="border p-2">Agent ID</th>
+                <th className="border p-2">Agent Name</th>
+                <th className="border p-2">Item</th>
+                <th className="border p-2">Price</th>
+                <th className="border p-2">Qty</th>
+                <th className="border p-2">Status</th>
+                <th className="border p-2">Remark</th>
+              </tr>
+            </thead>
+            <tbody>
+              {billingData.length === 0 ? (
+                <tr><td colSpan="9" className="border p-4 text-gray-500">{loading ? "Loading..." : "No data available"}</td></tr>
+              ) : (
+                billingData.map((item, i) => (
+                  <tr key={i} className="hover:bg-gray-50">
+                    <td className="border p-2">{i + 1}</td>
+                    <td className="border p-2">{item.createdDate || item.date}</td>
+                    <td className="border p-2">{item.agentId || item.userId}</td>
+                    <td className="border p-2">{item.agentName || item.userName}</td>
+                    <td className="border p-2">{item.itemName || item.item}</td>
+                    <td className="border p-2">{item.price}</td>
+                    <td className="border p-2">{item.qty || item.quantity}</td>
+                    <td className="border p-2 font-semibold">{item.status}</td>
+                    <td className="border p-2">{item.remark || item.remarks}</td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  <tr className="hover:bg-gray-50">
-                    <td className="border p-2">
-                      <input
-                        type="checkbox"
-                        checked={checkedRows[1] || false}
-                        onChange={() => handleCheckboxChange(1)}
-                        className="w-4 h-4"
-                      />
-                    </td>
-                    <td className="border p-2">1</td>
-                    <td className="border p-2">28/03/2023</td>
-                    <td className="border p-2">AG125728</td>
-                    <td className="border p-2">SATYENDRA</td>
-                    <td className="border p-2">PAN CARD</td>
-                    <td className="border p-2">1000</td>
-                    <td className="border p-2">1</td>
-                    <td className="border p-2 text-green-600 font-semibold">
-                      Success
-                    </td>
-                    <td className="border p-2">Success</td>
-                    <td className="border p-2">Success</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* BUTTON */}
-            <div className="text-center mt-5">
-              <button
-                type="submit"
-                className="px-6 py-2 text-white rounded-2xl shadow 
-                           bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                           hover:opacity-90 transition"
-              >
-                Submit
-              </button>
-            </div>
-
-          </form>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-4">
+            <button className="capsButton px-3 py-1 text-xs" disabled={currentPage <= 1} onClick={() => fetchBillingData(currentPage - 1)}>Prev</button>
+            <span className="text-sm self-center">Page {currentPage} of {totalPages}</span>
+            <button className="capsButton px-3 py-1 text-xs" disabled={currentPage >= totalPages} onClick={() => fetchBillingData(currentPage + 1)}>Next</button>
+          </div>
+        )}
+      </PageCard>
     </div>
   );
 };

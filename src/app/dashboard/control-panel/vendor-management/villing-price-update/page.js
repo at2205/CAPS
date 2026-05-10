@@ -1,18 +1,152 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table } from "antd";
+import Swal from "sweetalert2";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
 
 function BillingPriceUpdate() {
+  const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const inputClass = "capsInput";
+  const buttonClass = "capsButtonSmall";
 
-  const buttonClass =
-    "px-3 py-1 text-white text-xs rounded-md shadow-sm bg-[#4fa2c2] hover:opacity-90";
+  const userId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("userId") || "5155"
+      : "5155";
 
+  // =========================
+  // GET API
+  // =========================
+  const getBillingData = async () => {
+    try {
+      setLoading(true);
+
+      const payload = `adminUserFormBean=${encodeURIComponent(
+        JSON.stringify({ userId })
+      )}`;
+
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.getBillingPageDetails,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      const response =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      const list = response.billingList || [];
+
+      // 🔥 FIX: updateValue blank
+      const formattedData = list.map((item, index) => ({
+        key: index + 1,
+        id: item.id,
+        name: item.name,
+        cost: item.price,
+        updateValue: "", // 👈 BLANK INPUT
+      }));
+
+      setTableData(formattedData);
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Failed to load data", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getBillingData();
+  }, []);
+
+  // =========================
+  // INPUT CHANGE
+  // =========================
+  const handleChange = (value, record) => {
+    const updatedData = tableData.map((item) =>
+      item.id === record.id
+        ? { ...item, updateValue: value }
+        : item
+    );
+    setTableData(updatedData);
+  };
+
+  // =========================
+  // UPDATE API
+  // =========================
+  const handleUpdate = async (record) => {
+    try {
+      // 🔥 VALIDATION
+      if (record.updateValue === "") {
+        Swal.fire("Error", "Please enter amount", "error");
+        return;
+      }
+
+      setLoading(true);
+
+      const payload = `adminUserFormBean=${encodeURIComponent(
+        JSON.stringify({
+          userId,
+          id: record.id,
+          amount: String(record.updateValue), // 👈 FIX for 0
+        })
+      )}`;
+
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.updateBillingDetail,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      const response =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      if (response.status === "0") {
+        Swal.fire({
+          icon: "success",
+          title: "Updated Successfully",
+          confirmButtonColor: "#5fa0b5",
+        });
+
+        // 🔥 INSTANT UI UPDATE (no reload)
+        const updatedTable = tableData.map((item) =>
+          item.id === record.id
+            ? {
+                ...item,
+                cost: record.updateValue,
+                updateValue: "",
+              }
+            : item
+        );
+
+        setTableData(updatedTable);
+      } else {
+        Swal.fire("Error", response.message || "Update failed", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Something went wrong", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // TABLE
+  // =========================
   const columns = [
     {
       title: "S.N.",
@@ -29,70 +163,54 @@ function BillingPriceUpdate() {
     },
     {
       title: "Update",
-      render: () => (
-        <input type="text" className={inputClass} />
+      render: (_, record) => (
+        <input
+          type="number"
+          className={inputClass}
+          value={record.updateValue}
+          placeholder="Enter amount"
+          onChange={(e) =>
+            handleChange(e.target.value, record)
+          }
+          style={{ width: "100%" }}
+        />
       ),
     },
     {
       title: "Action",
-      render: () => (
-        <button className={buttonClass}>
+      render: (_, record) => (
+        <button
+          className={buttonClass}
+          onClick={() => handleUpdate(record)}
+        >
           Update
         </button>
       ),
-      width: 100,
+      width: 110,
     },
   ];
 
-  const data = [
-    { key: 1, name: "MICRO-ATM", cost: "111.00" },
-    { key: 2, name: "MANTRA", cost: "2400.00" },
-    { key: 3, name: "PAN ID", cost: "1000.00" },
-    { key: 4, name: "IRCTC DONGLE", cost: "2700.00" },
-    { key: 5, name: "IRCTC OTP", cost: "1400.00" },
-  ];
-
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Update Billing Price"
+        description="Modify vendor billing price configuration"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Vendor Management &gt; Update Billing Price
+      <PageCard>
+        <div className="bg-[#4fa2c2] text-white font-semibold px-3 py-1.5 rounded-md mb-3 text-sm">
+          Billing Price Details
         </div>
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-
-          {/* TITLE STRIP */}
-          <div className="bg-[#4fa2c2] text-white font-semibold px-3 py-1.5 rounded-md mb-3 text-sm">
-            Billing Price Details
-          </div>
-
-          {/* TABLE */}
-          <Table
-            dataSource={data}
-            columns={columns}
-            bordered
-            size="small"
-            pagination={false}
-          />
-
-          {/* STATUS */}
-          <div className="flex justify-center mt-4 min-h-[28px]">
-            {success && (
-              <p className="text-green-600 text-sm">{success}</p>
-            )}
-            {error && (
-              <p className="text-red-600 text-sm">{error}</p>
-            )}
-            {loading && (
-              <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-            )}
-          </div>
-
-        </div>
-      </div>
+        <Table
+          dataSource={tableData}
+          columns={columns}
+          bordered
+          size="small"
+          pagination={false}
+          loading={loading}
+        />
+      </PageCard>
     </div>
   );
 }

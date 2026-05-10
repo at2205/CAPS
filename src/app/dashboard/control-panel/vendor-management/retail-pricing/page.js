@@ -1,155 +1,228 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
 
 function RetailPricing() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [formValues, setFormValues] = useState({});
+
+  const clientIdRef = useRef(null);
+  const [mdsList, setMdsList] = useState([]);
+
+  const [formValues, setFormValues] = useState({
+    clientId: "",
+    mdsId: "",
+    category: "Postpaid",
+    mainService: "",
+    pipe: "",
+  });
+
+  // 🔥 FIXED API CALL
+  useEffect(() => {
+    const formData = new URLSearchParams();
+    formData.append("jsonData", JSON.stringify({}));
+
+    fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}${endpoints.marketingModuleEndpoints.getPGUserLimitData}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
+      },
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("API RESPONSE:", data);
+
+        const list =
+          data?.data?.userList ||
+          data?.data ||
+          data?.responseData ||
+          data?.userList ||
+          [];
+
+        setMdsList(list);
+      })
+      .catch((err) => {
+        console.error("API ERROR:", err);
+      });
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "clientId") {
+      const numericValue = value.replace(/[^0-9]/g, "");
+
+      setFormValues((prev) => ({
+        ...prev,
+        clientId: numericValue,
+      }));
+
+      setTimeout(() => {
+        clientIdRef.current?.focus();
+      }, 0);
+
+      return;
+    }
+
     setFormValues((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
+    if (
+      !formValues.clientId ||
+      !formValues.mdsId ||
+      !formValues.mainService ||
+      !formValues.pipe
+    ) {
+      setError("Please fill all required fields");
+      return;
+    }
+
     setLoading(true);
     setSuccess("");
     setError("");
 
-    // 🔹 Dummy submit
     setTimeout(() => {
       setLoading(false);
       setSuccess("Retail pricing details submitted successfully");
     }, 1000);
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]";
+  const handleClear = () => {
+    setFormValues({
+      clientId: "",
+      mdsId: "",
+      category: "Postpaid",
+      mainService: "",
+      pipe: "",
+    });
+    setSuccess("");
+    setError("");
+  };
 
-  const Row = ({ label, children }) => (
-    <div className="flex items-center justify-center mb-4">
-      <label className="w-[200px] text-right text-sm font-semibold">
-        {label}
-      </label>
-      <div className="w-[260px] ml-3">{children}</div>
+  const FieldRow = ({ label, children }) => (
+    <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-3">
+      <label className="text-right font-medium">{label}</label>
+      <div className="text-center">:</div>
+      <div>{children}</div>
     </div>
   );
 
   return (
-    <div className="flex justify-center items-start min-h-screen bg-white">
-      <div className="w-full max-w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl">
+    <div className="p-6 min-h-screen text-[#226b88]">
+      <CapsCard
+        title="Retail Pricing"
+        description="Configure retail pricing details"
+      />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Retail Pricing
-        </div>
+      <PageCard>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="flex justify-center">
+            <div className="w-[520px]">
+              <FieldRow label="Client ID">
+                <input
+                  ref={clientIdRef}
+                  type="text"
+                  inputMode="numeric"
+                  name="clientId"
+                  value={formValues.clientId}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                />
+              </FieldRow>
 
-        {/* BODY */}
-        <div className="px-10 py-6">
+              {/* 🔥 MDS FIXED */}
+              <FieldRow label="MDS ID">
+                <select
+                  name="mdsId"
+                  value={formValues.mdsId}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                >
+                  <option value="">--Select--</option>
 
-          <form onSubmit={handleSubmit}>
+                  {mdsList.map((item, index) => (
+                    <option key={index} value={item.userId || item.mdsId}>
+                      {item.userName || item.mdsId || item.userId}
+                    </option>
+                  ))}
+                </select>
+              </FieldRow>
 
-            {/* Client ID */}
-            <Row label="Client ID :">
-              <input
-                name="clientId"
-                required
-                onChange={handleInputChange}
-                className={inputClass}
-              />
-            </Row>
+              {/* बाकी same */}
+              <FieldRow label="Category">
+                <select
+                  name="category"
+                  value={formValues.category}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                >
+                  <option value="Postpaid">Postpaid</option>
+                </select>
+              </FieldRow>
 
-            {/* MDS ID */}
-            <Row label="MDS ID :">
-              <select
-                name="mdsId"
-                required
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                <option value="">--Select--</option>
-                <option value="MDS001">MDS001</option>
-              </select>
-            </Row>
+              <FieldRow label="Main Service">
+                <select
+                  name="mainService"
+                  value={formValues.mainService}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                >
+                  <option value="">--Select--</option>
+                  <option value="AEPS">AEPS</option>
+                  <option value="Micro ATM">Micro ATM</option>
+                </select>
+              </FieldRow>
 
-            {/* Category */}
-            <Row label="Category :">
-              <select
-                name="category"
-                required
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                <option value="Postpaid">Postpaid</option>
-              </select>
-            </Row>
+              <FieldRow label="Pipe">
+                <select
+                  name="pipe"
+                  value={formValues.pipe}
+                  onChange={handleInputChange}
+                  className="capsInput"
+                >
+                  <option value="">--Select--</option>
+                  <option value="FINO">Fino Bank</option>
+                  <option value="Fino Smart">FinoSmart Bank</option>
+                  <option value="Fingpay">Fingpay</option>
+                  <option value="Yes Bank">Yes Bank</option>
+                  <option value="Airtel Bank">Airtel Bank</option>
+                  <option value="IserveU">IserveU</option>
+                </select>
+              </FieldRow>
 
-            {/* Main Service */}
-            <Row label="Main Service :">
-              <select
-                name="mainService"
-                required
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                <option value="">--Select--</option>
-                <option value="AEPS">AEPS</option>
-                <option value="Micro ATM">Micro ATM</option>
-              </select>
-            </Row>
+              <div className="text-center mt-4 flex gap-4 justify-center">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="capsButton"
+                >
+                  Submit
+                </button>
 
-            {/* Pipe */}
-            <Row label="Pipe :">
-              <select
-                name="pipe"
-                required
-                onChange={handleInputChange}
-                className={inputClass}
-              >
-                <option value="FINO">Fino Bank</option>
-                <option value="Fino Smart">FinoSmart Bank</option>
-                <option value="Fingpay">Fingpay</option>
-                <option value="Yes Bank">Yes Bank</option>
-                <option value="Airtel Bank">Airtel Bank</option>
-                <option value="IserveU">IserveU</option>
-              </select>
-            </Row>
-
-            {/* STATUS */}
-            <div className="text-center min-h-[24px]">
-              {success && (
-                <p className="text-green-600 text-sm">{success}</p>
-              )}
-              {error && (
-                <p className="text-red-500 text-sm">{error}</p>
-              )}
-              {loading && (
-                <div className="flex justify-center">
-                  <div className="h-4 w-4 border-2 border-[#4fa2c2] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="capsButtonSecondary"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
-
-            {/* BUTTON */}
-            <div className="text-center mt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`px-6 py-1.5 text-white text-sm rounded-md shadow-md bg-[#4fa2c2] hover:opacity-90
-                ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                Submit
-              </button>
-            </div>
-
-          </form>
-        </div>
-      </div>
+          </div>
+        </form>
+      </PageCard>
     </div>
   );
 }

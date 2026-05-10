@@ -1,74 +1,223 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
-const ProfileUpload = () => {
+function ProfileUpdate() {
+
   const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [result, setResult] = useState(null);
 
-  const handleSubmit = () => {
-    if (!file) {
-      setMessage("Please select the File.");
-      return;
+  /* ================= DOWNLOAD REPORT ================= */
+
+  const handleDownloadReport = async () => {
+
+    try {
+
+      const response = await axiosInstance.get(
+        endpoints.daModuleEndpoints.downloadProfileUpdateReport,
+        {
+          responseType: "blob"
+        }
+      );
+
+      const url = window.URL.createObjectURL(
+        new Blob([response.data])
+      );
+
+      const link = document.createElement("a");
+
+      link.href = url;
+
+      link.setAttribute(
+        "download",
+        "Profile_Update_Report.xlsx"
+      );
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+    } catch (error) {
+
+      console.error("Download Error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Download Failed",
+        text: "Unable to download report",
+        timer: 1800,
+        showConfirmButton: false
+      });
+
     }
 
-    const ext = file.name.split(".").pop().toLowerCase();
-    if (!["xls", "xlsx", "csv"].includes(ext)) {
-      setMessage("Please select the file in excel format only.");
-      return;
-    }
-
-    setMessage("Profile upload successful (API later)");
-    setShowResult(true);
   };
 
-  const inputStyle =
-    "w-full border border-gray-300 rounded-md px-3 py-2 text-sm " +
-    "focus:outline-none focus:ring-2 focus:ring-[#4c95b3]";
+  /* ================= FILE UPLOAD ================= */
 
-  const buttonStyle =
-    "bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] text-white " +
-    "px-6 py-2 rounded-xl shadow-md text-sm font-medium hover:opacity-90";
+  const handleSubmit = async () => {
+
+    if (!file) {
+
+      Swal.fire({
+        icon: "warning",
+        title: "File Required",
+        text: "Please Select File.",
+        timer: 1800,
+        showConfirmButton: false
+      });
+
+      return;
+
+    }
+
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+
+      Swal.fire({
+        icon: "error",
+        title: "Invalid File",
+        text: "Please Upload File Having Extension .xlsx Only."
+
+      });
+
+      return;
+
+    }
+
+    setLoading(true);
+    setShowResult(false);
+
+    try {
+
+      const formData = new FormData();
+
+      formData.append("file1", file);
+
+      const adminPayload = {
+        userId: localStorage.getItem("userId"),
+        loginType: localStorage.getItem("adminUserType"),
+        portalId: localStorage.getItem("portalId")
+      };
+
+      formData.append(
+        "adminUserFormBean",
+        JSON.stringify(adminPayload)
+      );
+
+      const response = await axiosInstance.post(
+        endpoints.daModuleEndpoints.profileUpdate,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
+
+      const data =
+        typeof response.data === "string"
+          ? JSON.parse(response.data)
+          : response.data;
+
+      if (data?.status === "1") {
+
+        Swal.fire({
+          icon: "error",
+          title: "Upload Failed",
+          text: data?.message || "Upload Failed",
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+        return;
+
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: data?.message || "File Uploaded Successfully"
+      });
+
+      setResult({
+        successCount: data.successCount || 0,
+        failedCount: data.failedCount || 0
+      });
+
+      setShowResult(true);
+
+    } catch (error) {
+
+      console.error("Upload Error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text:
+          error?.response?.data?.message ||
+          "File upload failed. Please try again.",
+          timer: 1800,
+          showConfirmButton: false
+      });
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[900px] mt-10 bg-white rounded-xl shadow-lg border-[3px] border-[#b7dbe8]">
 
-        {/* ===== HEADER ===== */}
-        <div className="text-white font-bold text-center py-3 text-[18px]
-                        rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Profile Update
-        </div>
+    <div className="p-6 text-[#226b88]">
 
-        {/* ===== BODY ===== */}
-        <div className="px-6 py-6 flex justify-center">
-          <div className="w-[520px]">
+      <CapsCard
+        title="CC Module > Profile Update"
+        description="Upload profile update excel file"
+      />
 
-            {/* MESSAGE */}
-            {message && (
-              <div className="mb-4 text-center text-sm text-green-700
-                              bg-green-50 border border-green-200 rounded-md py-2">
-                {message}
-              </div>
-            )}
+      <PageCard>
 
-            {/* FILE INPUT */}
-            <div className="mb-4 flex items-start">
-              <label className="w-[220px] text-right pr-4 pt-2 font-semibold text-sm">
-                Please Select The File :
+        <div className="flex justify-center">
+
+          <div className="w-[520px] space-y-4">
+
+            {/* File Upload */}
+
+            <div className="grid grid-cols-[200px_10px_1fr] items-start">
+
+              <label className="text-sm font-semibold text-right pt-2">
+                Please Select The File
               </label>
 
-              <div className="flex-1">
+              <div className="text-center pt-2">:</div>
+
+              <div>
+
                 <input
                   type="file"
-                  accept=".xls,.xlsx,.csv"
-                  className={inputStyle}
-                  onChange={(e) => setFile(e.target.files[0])}
+                  accept=".xlsx"
+                  disabled={loading}
+                  onChange={(e) => {
+                    setFile(e.target.files[0]);
+                    setShowResult(false);
+                    setResult(null);
+                  }}
+                  className="capsInput"
                 />
 
                 <p className="text-xs text-gray-500 mt-1">
-                  .xls / .xlsx / .csv format only
+                  .xlsx format only
                 </p>
 
                 {file && (
@@ -76,67 +225,126 @@ const ProfileUpload = () => {
                     Selected: {file.name}
                   </p>
                 )}
+
               </div>
+
             </div>
 
-            {/* DOWNLOAD FORMAT */}
-            <div className="mb-4 flex items-center">
-              <div className="w-[220px]" />
+            {/* Download Format */}
+
+            <div className="grid grid-cols-[200px_10px_1fr] items-center">
+
+              <div />
+              <div />
 
               <a
-                href="/ProfileUpdateSample.xlsx"
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-[#3d89a6] font-medium hover:underline"
+                href="/ProfileUpdate.xlsx"
+                download
+                className="text-sm font-semibold hover:underline"
               >
                 Click To Download Format
               </a>
+
             </div>
 
-            {/* BUTTON */}
-            <div className="text-center">
+            {/* Submit */}
+
+            <div className="text-center pt-2">
+
               <button
+                type="button"
                 onClick={handleSubmit}
-                className={buttonStyle}
+                disabled={loading}
+                className="capsButton px-10"
               >
-                Submit
+
+                {loading ? "Uploading..." : "SUBMIT"}
+
               </button>
+
             </div>
 
-            {/* RESULT TABLE */}
-            {showResult && (
-              <div className="mt-6 overflow-x-auto">
-                <table className="w-full border border-gray-300 text-sm text-center">
+            {/* Result Table */}
+
+            {showResult && result && (
+
+              <div className="pt-4">
+
+                <table className="w-full border text-sm text-center">
+
                   <thead className="bg-gray-100">
+
                     <tr>
-                      <th className="border px-3 py-2">Success Count</th>
-                      <th className="border px-3 py-2">Failed Count</th>
-                      <th className="border px-3 py-2">Report</th>
+
+                      <th className="border px-3 py-2">
+                        Success Count
+                      </th>
+
+                      <th className="border px-3 py-2">
+                        Failed Count
+                      </th>
+
+                      <th className="border px-3 py-2">
+                        Report
+                      </th>
+
                     </tr>
+
                   </thead>
 
                   <tbody>
-                    <tr className="hover:bg-gray-50">
+
+                    <tr>
+
                       <td className="border px-3 py-2 font-bold text-green-600">
-                        0
+                        {result.successCount}
                       </td>
+
                       <td className="border px-3 py-2 font-bold text-red-600">
-                        0
+                        {result.failedCount}
                       </td>
-                      <td className="border px-3 py-2 text-gray-400">
-                        Download Report
+
+                      <td className="border px-3 py-2">
+
+                        {result.failedCount > 0 ? (
+
+                          <button
+                            className="text-blue-600 underline"
+                            onClick={handleDownloadReport}
+                          >
+                            Download Report
+                          </button>
+
+                        ) : (
+
+                          <span className="text-gray-400">
+                            No Failed Records
+                          </span>
+
+                        )}
+
                       </td>
+
                     </tr>
+
                   </tbody>
+
                 </table>
+
               </div>
+
             )}
 
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
-export default ProfileUpload;
+        </div>
+
+      </PageCard>
+
+    </div>
+
+  );
+
+}
+
+export default ProfileUpdate;

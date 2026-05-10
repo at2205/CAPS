@@ -1,282 +1,214 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import axiosInstance from "@/utilities/axiosInstance/axios";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const ParkingTransaction = () => {
   const [transactionType, setTransactionType] = useState("neft");
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
   const [parkTransactions, setParkTransactions] = useState([]);
-  const [message, setMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [checkedList, setCheckedList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
+  // ================= FETCH =================
   useEffect(() => {
-    fetchParkTransactions();
-  }, []);
+    fetchData();
+  }, [transactionType]);
 
-  const fetchParkTransactions = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 1000));
 
-      setParkTransactions([
+      const res = await axiosInstance.post(
+        endpoints.controlPEndpoints.getTransaction,
         {
-          aesApiId: "API001",
-          companyName: "ABC Corporation Pvt. Ltd.",
-          transactionCount: 25,
-          status: true,
-          transactionStatus: "Active",
+          agentIdList: [],
+          transactionType,
         },
-        {
-          aesApiId: "API002",
-          companyName: "XYZ Enterprises",
-          transactionCount: 18,
-          status: false,
-          transactionStatus: "Inactive",
-        },
-        {
-          aesApiId: "API003",
-          companyName: "PQR Solutions",
-          transactionCount: 42,
-          status: true,
-          transactionStatus: "Active",
-        },
-        {
-          aesApiId: "API004",
-          companyName: "MNO Industries",
-          transactionCount: 12,
-          status: false,
-          transactionStatus: "Inactive",
-        },
-        {
-          aesApiId: "API005",
-          companyName: "DEF Technologies",
-          transactionCount: 31,
-          status: true,
-          transactionStatus: "Active",
-        },
-      ]);
+      );
+
+      const data =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      console.log("GET RESPONSE →", data);
+
+      let list = [];
+      if (Array.isArray(data)) list = data;
+      else if (Array.isArray(data.data)) list = data.data;
+      else if (Array.isArray(data.list)) list = data.list;
+
+      setParkTransactions(list);
+    } catch (err) {
+      Swal.fire("Error", "Failed to load data", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCheckboxChange = (id) => {
-    setSelectedItems((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    const newVal = !selectAll;
-    setSelectAll(newVal);
-
-    if (newVal) {
-      setSelectedItems(parkTransactions.map((i) => i.aesApiId));
+  // ================= CHECKBOX =================
+  const handleCheckbox = (id, checked) => {
+    if (checked) {
+      setCheckedList((prev) => [...prev, id]);
     } else {
-      setSelectedItems([]);
+      setCheckedList((prev) => prev.filter((x) => x !== id));
     }
   };
 
-  const handleAction = async (type) => {
-    if (!selectedItems.length)
-      return alert("Select at least one transaction");
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setCheckedList(parkTransactions.map((i) => i.aesApiId));
+    } else {
+      setCheckedList([]);
+    }
+  };
 
-    if (!window.confirm(`Confirm ${type} for selected transactions?`))
-      return;
+  // ================= ACTION =================
+  const handleAction = async (type) => {
+    console.log("Clicked:", type);
+
+    if (checkedList.length === 0) {
+      return Swal.fire("Error", "Select at least one row", "error");
+    }
 
     try {
-      setActionLoading(true);
-      setMessage("");
-      setErrorMessage("");
+      const payload = {
+        agentIdList: checkedList,
+        transactionType,
+        userId: localStorage.getItem("userId"),
+      };
 
-      await new Promise((r) => setTimeout(r, 1200));
+      console.log("PAYLOAD →", payload);
 
-      setMessage(
-        `${type === "PARK" ? "Parked" : "Released"} ${
-          selectedItems.length
-        } transaction(s) successfully!`
-      );
+      const api =
+        type === "PARK"
+          ? "/controlP/parkTransaction"
+          : "/controlP/releaseTransactions"; // 🔥 hardcode for test
 
-      await fetchParkTransactions();
-      setSelectedItems([]);
-      setSelectAll(false);
-    } finally {
-      setActionLoading(false);
+      const res = await axiosInstance.post(api, payload);
+
+      console.log("RAW RESPONSE →", res);
+
+      const result =
+        typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      console.log("FINAL RESPONSE →", result);
+
+      if (
+        result.status === "00" ||
+        result.status === "0" ||
+        result.status === 0
+      ) {
+        Swal.fire("Success", result.message || "Success", "success");
+        fetchData();
+        setCheckedList([]);
+      } else {
+        Swal.fire("Error", result.message || "Failed", "error");
+      }
+    } catch (err) {
+      console.error("ERROR →", err);
+
+      Swal.fire("Error", err?.response?.data || "Server Error", "error");
     }
   };
-
-  const badgeClass = (active, type = "status") => {
-    if (type === "parking") {
-      return active
-        ? "text-[#0a8f08] bg-[#eaf8ef] border-[#b7e3c2]"
-        : "text-[#d11a2a] bg-[#fdecea] border-[#f5b5b5]";
-    }
-
-    return active
-      ? "text-[#0a4fd1] bg-[#eef4ff] border-[#b7ccff]"
-      : "text-[#666] bg-[#f5f5f5] border-[#ddd]";
-  };
-
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="bg-white rounded-xl shadow-sm">
+    <div className="p-6 text-[#226b88]">
+      <CapsCard title="Parking Transaction" />
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-[16px] px-6 py-3 rounded-t-xl bg-gradient-to-r from-[#4e8fb1] to-[#5fa3c6]">
-          Parking Transaction
+      <PageCard>
+        {/* RADIO */}
+        <div className="text-center mb-4">
+          {["neft", "imps", "both"].map((t) => (
+            <label key={t} className="mx-3">
+              <input
+                type="radio"
+                checked={transactionType === t}
+                onChange={() => setTransactionType(t)}
+              />{" "}
+              {t.toUpperCase()}
+            </label>
+          ))}
         </div>
 
-        {/* BODY */}
-        <div className="p-4">
-
-          {message && (
-            <div className="text-center bg-green-100 text-green-700 py-2 rounded mb-3 text-sm">
-              {message}
-            </div>
-          )}
-
-          {errorMessage && (
-            <div className="text-center bg-red-100 text-red-600 py-2 rounded mb-3 text-sm">
-              {errorMessage}
-            </div>
-          )}
-
-          {/* RADIO BUTTONS */}
-          <div className="flex justify-center gap-6 mb-4 text-sm">
-            {["neft", "imps", "both"].map((type) => (
-              <label key={type} className="flex items-center gap-2 cursor-pointer">
+        {/* TABLE */}
+        <table className="w-full border text-sm text-center">
+          <thead className="bg-[#4fa2c2] text-white">
+            {" "}
+            <tr>
+              <th>
                 <input
-                  type="radio"
-                  checked={transactionType === type}
-                  onChange={() => setTransactionType(type)}
-                  className="accent-[#4e8fb1]"
+                  type="checkbox"
+                  onChange={(e) => handleSelectAll(e.target.checked)}
                 />
-                {type.toUpperCase()}
-              </label>
-            ))}
-          </div>
+              </th>
+              <th>Sr. No.</th>
+              <th>API ID</th>
+              <th>Name</th>
+              <th>Transaction Count</th>
+              <th>Action</th>
+              <th>Transaction Status</th>
+            </tr>
+          </thead>
 
-          {/* LOADER */}
-          {loading ? (
-            <div className="text-center py-6">
-              <div className="flex justify-center">
-                <div className="w-6 h-6 border-2 border-[#4e8fb1] border-t-transparent rounded-full animate-spin"></div>
-              </div>
-              <div className="mt-2 text-sm">Loading transactions...</div>
-            </div>
-          ) : (
-            <>
-              {/* TABLE */}
-              <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm text-center">
-                  <thead className="bg-[#5a97b5] text-white">
-                    <tr>
-                      <th className="py-2">
-                        <input
-                          type="checkbox"
-                          checked={selectAll}
-                          onChange={handleSelectAll}
-                        />
-                      </th>
-                      <th>Sr. No.</th>
-                      <th>API ID</th>
-                      <th>Name</th>
-                      <th>Transaction Count</th>
-                      <th>Action</th>
-                      <th>Transaction Status</th>
-                    </tr>
-                  </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="7">Loading...</td>
+              </tr>
+            ) : parkTransactions.length === 0 ? (
+              <tr>
+                <td colSpan="7">No Data Found</td>
+              </tr>
+            ) : (
+              parkTransactions.map((item, index) => (
+                <tr key={item.aesApiId}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={checkedList.includes(item.aesApiId)}
+                      onChange={(e) =>
+                        handleCheckbox(item.aesApiId, e.target.checked)
+                      }
+                    />
+                  </td>
 
-                  <tbody>
-                    {parkTransactions.map((item, index) => (
-                      <tr
-                        key={item.aesApiId}
-                        className={`border-t ${
-                          selectedItems.includes(item.aesApiId)
-                            ? "bg-[#f0faff]"
-                            : ""
-                        }`}
-                      >
-                        <td className="py-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedItems.includes(item.aesApiId)}
-                            onChange={() =>
-                              handleCheckboxChange(item.aesApiId)
-                            }
-                          />
-                        </td>
-                        <td>{index + 1}</td>
-                        <td className="font-bold text-blue-600">
-                          {item.aesApiId}
-                        </td>
-                        <td>{item.companyName}</td>
-                        <td className="font-bold text-green-600">
-                          {item.transactionCount}
-                        </td>
-                        <td>
-                          <span
-                            className={`px-3 py-1 rounded-full border text-xs font-bold ${badgeClass(
-                              item.status,
-                              "parking"
-                            )}`}
-                          >
-                            {item.status ? "PARKING ON" : "PARKING OFF"}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`px-3 py-1 rounded-full border text-xs font-bold ${badgeClass(
-                              item.transactionStatus === "Active"
-                            )}`}
-                          >
-                            {item.transactionStatus.toUpperCase()}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  <td>{index + 1}</td>
 
-              {/* FOOTER */}
-              <div className="flex justify-between items-center mt-4">
-                <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded text-sm">
-                  Selected: {selectedItems.length} item(s)
-                </div>
+                  <td>{item.aesApiId}</td>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleAction("PARK")}
-                    disabled={actionLoading || !selectedItems.length}
-                    className="px-5 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#5fa3c6] to-[#4e8fb1] disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {actionLoading && (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    )}
-                    PARK
-                  </button>
+                  <td>{item.companyName}</td>
 
-                  <button
-                    onClick={() => handleAction("RELEASE")}
-                    disabled={actionLoading || !selectedItems.length}
-                    className="px-5 py-1.5 text-white text-sm rounded-full bg-gradient-to-b from-[#666] to-[#444] disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {actionLoading && (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    )}
-                    RELEASE
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
+                  <td>{item.transactionCount}</td>
+
+                  <td>{item.status === true ? "Parking On" : "Parking Off"}</td>
+
+                  <td>{item.transactionStatus}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* BUTTONS (JSP SAME LOGIC) */}
+        <div className="flex justify-end gap-4 mt-4">
+          <button
+            onClick={() => handleAction("PARK")}
+            disabled={checkedList.length === 0}
+            className="capsButton px-6"
+          >
+            PARK
+          </button>
+
+          <button
+            onClick={() => handleAction("RELEASE")}
+            disabled={checkedList.length === 0}
+            className="capsButtonSecondary px-6"
+          >
+            RELEASE
+          </button>
         </div>
-      </div>
+      </PageCard>
     </div>
   );
 };

@@ -1,68 +1,103 @@
 "use client";
 
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
+import urlencodedInstance from "@/utilities/axiosInstance/urlencodedInstance";
+import endpoints from "@/utilities/apiUrl/apiEndPoints";
+import Swal from "sweetalert2";
 
 const ViewMATMDocuments = () => {
   const [channel, setChannel] = useState("");
   const [agentId, setAgentId] = useState("");
   const [showResult, setShowResult] = useState(false);
+  const [matmList, setMatmList] = useState([]);
   const [action, setAction] = useState("Approve");
   const [remark, setRemark] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [referenceNo, setReferenceNo] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!channel) {
-      alert("Please select channel");
-      return;
+    if (!channel) { Swal.fire({ icon: "warning", title: "Validation", text: "Please select channel", timer: 1500, showConfirmButton: false }); return; }
+    if (!agentId) { Swal.fire({ icon: "warning", title: "Validation", text: "Please enter agent id", timer: 1500, showConfirmButton: false }); return; }
+    try {
+      setLoading(true);
+      const payload = { userId: localStorage.getItem("userId"), userType: channel, agentId: agentId.trim() };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.getMatmDocuments,
+        new URLSearchParams({ adminUserFormBean: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        setMatmList(data.matmList || []);
+        setReferenceNo(data.referenceNo || "");
+        setShowResult(true);
+      } else {
+        Swal.fire({ icon: "info", title: "No Data", text: data.message || "No records found" });
+        setShowResult(false);
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" });
+    } finally {
+      setLoading(false);
     }
-    if (!agentId) {
-      alert("Please enter agent id");
-      return;
-    }
-
-    setShowResult(true);
   };
 
-  const handleActionSubmit = () => {
-    if (
-      (action === "Reject" || action === "Pending At Bank") &&
-      !remark
-    ) {
-      alert("Remark is required");
+  const handleActionSubmit = async () => {
+    if ((action === "Reject" || action === "Pending At Bank") && !remark) {
+      Swal.fire({ icon: "warning", title: "Validation", text: "Remark is required", timer: 1500, showConfirmButton: false });
       return;
     }
-
-    alert("Action submitted (API later)");
+    try {
+      setLoading(true);
+      const payload = { userId: localStorage.getItem("userId"), agentId: agentId.trim(), action: action.toLowerCase(), remark, referenceNo };
+      const response = await urlencodedInstance.post(
+        endpoints.activityEndpoints.updateMatmDocumentStatus,
+        new URLSearchParams({ adminUserFormBean: JSON.stringify(payload) })
+      );
+      const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      if (data.status === "0") {
+        Swal.fire({ icon: "success", title: "Success", text: data.message || "Status updated successfully" });
+        handleSubmit({ preventDefault: () => {} });
+      } else {
+        Swal.fire({ icon: "error", title: "Failed", text: data.message || "Update failed" });
+      }
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "Something went wrong" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start">
-      <div className="w-[850px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-lg bg-white">
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-3 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          View MATM Document
-        </div>
+      {/* HEADER */}
+      <CapsCard
+        title="View MATM Document"
+        description="Search and verify MATM uploaded documents"
+      />
 
-        {/* BODY */}
-        <div className="px-10 py-6 flex justify-center">
-          <div className="w-[620px]">
+      {/* MAIN CARD */}
+      <PageCard>
+
+        <div className="flex justify-center">
+          <div>
 
             {/* SEARCH FORM */}
             <form onSubmit={handleSubmit}>
 
               {/* CHANNEL */}
-              <div className="mb-5 flex items-start">
-                <label className="w-[200px] text-right font-semibold pt-2 mr-4">
-                  Channel :
+              <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+                <label className="text-right font-medium">
+                  Channel
                 </label>
-
+                <div className="text-center">:</div>
                 <select
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 
-                             focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                  className="capsInput"
                 >
                   <option value="">Select Channel</option>
                   <option value="AG">Retailer</option>
@@ -71,11 +106,11 @@ const ViewMATMDocuments = () => {
               </div>
 
               {/* AGENT ID */}
-              <div className="mb-6 flex items-start">
-                <label className="w-[200px] text-right font-semibold pt-2 mr-4">
-                  Enter Full Agent ID :
+              <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-5">
+                <label className="text-right font-medium">
+                  Enter Full Agent ID
                 </label>
-
+                <div className="text-center">:</div>
                 <input
                   type="text"
                   placeholder="Enter Full Agent ID"
@@ -83,35 +118,30 @@ const ViewMATMDocuments = () => {
                   onChange={(e) =>
                     setAgentId(e.target.value.toUpperCase())
                   }
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 
-                             focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                  className="capsInput"
                 />
               </div>
 
               {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  type="submit"
-                  className="px-6 py-2 text-white rounded-2xl shadow
-                             bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                             hover:opacity-90 transition"
-                >
+              <div className="text-center mb-4">
+                <button type="submit" className="capsButton min-w-[120px]">
                   Submit
                 </button>
               </div>
+
             </form>
 
             {/* RESULT */}
             {showResult && (
               <>
-                <div className="font-bold text-center mt-10 mb-5 text-lg">
+                <div className="capsColor text-center py-2 font-semibold rounded-md mb-6">
                   MATM Details
                 </div>
 
                 {/* INFO CARDS */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
 
-                  <div className="border rounded-lg p-4 text-center shadow-sm">
+                  <div className="border border-[#226b88] rounded-lg p-4 text-center shadow-sm">
                     <div className="text-sm text-gray-500 font-medium">
                       Agent ID
                     </div>
@@ -120,7 +150,7 @@ const ViewMATMDocuments = () => {
                     </div>
                   </div>
 
-                  <div className="border rounded-lg p-4 text-center shadow-sm">
+                  <div className="border border-[#226b88] rounded-lg p-4 text-center shadow-sm">
                     <div className="text-sm text-gray-500 font-medium">
                       Channel
                     </div>
@@ -138,7 +168,7 @@ const ViewMATMDocuments = () => {
                   <img
                     src="https://via.placeholder.com/500x280?text=MATM+Device+Image"
                     alt="MATM"
-                    className="rounded-lg border border-gray-300 shadow-sm"
+                    className="rounded-lg border border-[#226b88] shadow-sm"
                   />
                 </div>
 
@@ -148,8 +178,7 @@ const ViewMATMDocuments = () => {
                   <select
                     value={action}
                     onChange={(e) => setAction(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-2 
-                               focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                    className="capsInput w-[200px]"
                   >
                     <option value="Approve">Approve</option>
                     <option value="Pending At Bank">
@@ -168,16 +197,13 @@ const ViewMATMDocuments = () => {
                       onChange={(e) =>
                         setRemark(e.target.value)
                       }
-                      className="border border-gray-300 rounded-md px-3 py-2 
-                                 focus:outline-none focus:ring-2 focus:ring-[#4c95b3]"
+                      className="capsInput w-[260px]"
                     />
                   )}
 
                   <button
                     onClick={handleActionSubmit}
-                    className="px-5 py-2 text-white rounded-2xl shadow
-                               bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6]
-                               hover:opacity-90 transition"
+                    className="capsButton min-w-[120px]"
                   >
                     Submit
                   </button>
@@ -188,7 +214,8 @@ const ViewMATMDocuments = () => {
 
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 };

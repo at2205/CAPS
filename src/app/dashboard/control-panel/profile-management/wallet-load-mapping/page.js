@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import CapsCard from "@/app/components/caps_card/CapsCard";
+import PageCard from "@/app/components/caps_card/PageCard";
 
 function WalletLoadMapping() {
   const [loading, setLoading] = useState(false);
@@ -19,8 +21,11 @@ function WalletLoadMapping() {
     typeof window !== "undefined"
       ? localStorage.getItem("secondUserId")
       : null;
+
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
 
   /* ---------------- HELPERS ---------------- */
 
@@ -59,16 +64,22 @@ function WalletLoadMapping() {
 
     const formData = new FormData();
     formData.append("ExcelFile", selectedFile);
-    formData.append("adminUserFormBean", JSON.stringify(formValues));
+    formData.append(
+      "adminUserFormBean",
+      JSON.stringify(formValues)
+    );
 
     try {
-      const response = await fetch(`${baseUrl}${endPoint}`, {
-        method: "POST",
-        headers: {
-          Authorization: token,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        `${baseUrl}${endPoint}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token,
+          },
+          body: formData,
+        }
+      );
 
       const result = await response.json();
 
@@ -89,115 +100,118 @@ function WalletLoadMapping() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start bg-white">
-      <div className="w-[900px] mt-10 rounded-xl border-[3px] border-[#b7dbe8] shadow-xl bg-white">
-        
-        {/* HEADER */}
-        <div className="text-white font-bold text-center py-2 text-[18px] rounded-t-xl bg-gradient-to-r from-[#4c95b3] to-[#3d89a6]">
-          Wallet Load Mapping
-        </div>
+    <div className="p-6 min-h-screen text-[#226b88]">
 
-        {/* BODY */}
-        <div className="px-10 py-6">
-          
-          {/* TITLE STRIP */}
-          <div className="bg-[#4fa2c2] text-white text-center font-semibold py-1.5 rounded-md mb-5">
-            Wallet Load Mapping Details Upload
-          </div>
+      {/* HEADER */}
+      <CapsCard
+        title="Wallet Load Mapping"
+        description="Upload wallet mapping Excel file"
+      />
 
-          <div className="flex justify-center">
-            <div className="w-[520px]">
-              
-              {/* MAPPING TYPE */}
-              <div className="mb-4 flex items-center">
-                <label className="w-1/2 text-right pr-3 font-semibold text-sm">
-                  Mapping Type
-                </label>
+      {/* MAIN CARD */}
+      <PageCard>
 
-                <select
-                  name="mappingType"
-                  value={formValues.mappingType}
-                  onChange={handleInputChange}
-                  className="w-1/2 border border-gray-300 rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-                >
-                  <option value="">--select--</option>
-                  <option>CMD CardNumber</option>
-                  <option>IserveU AEPS</option>
-                  <option>ICICI Bank AEPS</option>
-                  <option>Yes Bank AEPS</option>
-                  <option>Fino Bank AEPS</option>
-                  <option>PaysPrint Bank AEPS</option>
-                  <option>MPOS Device</option>
-                  <option>APMAHESH BBPS</option>
-                  <option>Paytm BBPS</option>
-                  <option>Paytm Wallet Mapping</option>
-                  <option>ICICI Virtual Account Mapping</option>
-                  <option>AXIS Virtual Account Mapppping</option>
-                  <option>Paytm QR Code</option>
-                  <option>
-                    Bankit Micro ATM Register Device Details
-                  </option>
-                </select>
-              </div>
+        <div className="flex justify-center">
+          <div className="w-[520px]">
 
-              {/* FILE */}
-              <div className="mb-2 flex items-center">
-                <label className="w-1/2 text-right pr-3 font-semibold text-sm">
-                  Upload File
-                </label>
+            {/* MAPPING TYPE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-4">
+              <label className="text-right font-medium">
+                Mapping Type
+              </label>
+              <div className="text-center">:</div>
 
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="w-1/2 border border-gray-300 rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4fa2c2]"
-                />
-              </div>
-
-              <div className="text-center text-gray-500 text-sm mb-3">
-                (.xls / .xlsx format only)
-              </div>
-
-              {message && (
-                <p className="text-red-500 text-center text-sm mb-2">
-                  {message}
-                </p>
-              )}
-
-              {/* DOWNLOAD */}
-              <div className="text-center mb-3 text-sm">
-                <a
-                  href="https://portal.bankit.in:9090/Demo/Links/WalletMapping.xlsx"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  Click here
-                </a>{" "}
-                to download excel format
-              </div>
-
-              {/* STATUS */}
-              <div className="text-center mb-3 text-sm">
-                {success && <p className="text-green-600">{success}</p>}
-                {error && <p className="text-red-500">{error}</p>}
-                {loading && (
-                  <p className="text-gray-500">Loading...</p>
-                )}
-              </div>
-
-              {/* BUTTON */}
-              <div className="text-center">
-                <button
-                  onClick={handleFileUpload}
-                  className="px-8 py-2 text-white text-sm rounded-full shadow-md bg-gradient-to-b from-[#5fa9c7] to-[#3d89a6] hover:opacity-90"
-                >
-                  Submit
-                </button>
-              </div>
+              <select
+                name="mappingType"
+                value={formValues.mappingType}
+                onChange={handleInputChange}
+                className="capsInput"
+              >
+                <option value="">--select--</option>
+                <option>CMD CardNumber</option>
+                <option>IserveU AEPS</option>
+                <option>ICICI Bank AEPS</option>
+                <option>Yes Bank AEPS</option>
+                <option>Fino Bank AEPS</option>
+                <option>PaysPrint Bank AEPS</option>
+                <option>MPOS Device</option>
+                <option>APMAHESH BBPS</option>
+                <option>Paytm BBPS</option>
+                <option>Paytm Wallet Mapping</option>
+                <option>ICICI Virtual Account Mapping</option>
+                <option>AXIS Virtual Account Mapppping</option>
+                <option>Paytm QR Code</option>
+                <option>
+                  Bankit Micro ATM Register Device Details
+                </option>
+              </select>
             </div>
+
+            {/* FILE */}
+            <div className="grid grid-cols-[200px_20px_250px] items-center gap-4 mb-1">
+              <label className="text-right font-medium">
+                Upload File
+              </label>
+              <div className="text-center">:</div>
+
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="capsInput"
+              />
+            </div>
+
+            <div className="text-center text-gray-500 text-sm mb-3">
+              (.xls / .xlsx format only)
+            </div>
+
+            {/* VALIDATION MESSAGE */}
+            {message && (
+              <p className="text-red-500 text-center text-sm mb-2">
+                {message}
+              </p>
+            )}
+
+            {/* DOWNLOAD */}
+            <div className="text-center mb-3 text-sm">
+              <a
+                href="https://portal.bankit.in:9090/Demo/Links/WalletMapping.xlsx"
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Click here
+              </a>{" "}
+              to download excel format
+            </div>
+
+            {/* STATUS */}
+            <div className="text-center mb-3 text-sm">
+              {success && (
+                <p className="text-green-600">{success}</p>
+              )}
+              {error && (
+                <p className="text-red-500">{error}</p>
+              )}
+              {loading && (
+                <p className="text-gray-500">Loading...</p>
+              )}
+            </div>
+
+            {/* BUTTON */}
+            <div className="text-center mt-4">
+              <button
+                onClick={handleFileUpload}
+                className="capsButton min-w-[160px]"
+              >
+                {loading ? "Uploading..." : "Submit"}
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+
+      </PageCard>
     </div>
   );
 }
